@@ -1,123 +1,78 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import * as service from "../services/person.service";
+import { ResponseBuilder } from "../shared/ResponseBuilder";
 
-export const createPerson = async (req: Request, res: Response) => {
+// ==================== PERSON CONTROLLER (Single Responsibility: HTTP handling) ====================
+
+export const createPerson = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.createPerson(req.body);
-    res.status(201).json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.created(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const getAll = async (req: Request, res: Response) => {
+export const getAll = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const activeOnly = req.query.active === "true";
     const data = await service.getAll(activeOnly);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const getById = async (req: Request, res: Response) => {
+export const getById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.getById(req.params.id);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(404).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const getByQRCode = async (req: Request, res: Response) => {
+export const getByQRCode = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.getByQRCode(req.params.qrCode);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(404).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const updateById = async (req: Request, res: Response) => {
+export const updateById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.updateById(req.params.id, req.body);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const deleteById = async (req: Request, res: Response) => {
+export const deleteById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.deleteById(req.params.id);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const hardDeleteById = async (req: Request, res: Response) => {
+export const hardDeleteById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.hardDeleteById(req.params.id);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const getStats = async (req: Request, res: Response) => {
+export const getStats = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.getPersonStats(req.params.id);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(404).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };

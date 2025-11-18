@@ -1,7 +1,10 @@
 import prisma from "../database/prisma";
 import { hashPassword, comparePassword } from "../utils/bcrypt";
 import { generateToken } from "../utils/jwt";
+import { Validator } from "../shared/Validator";
+import { UnauthorizedError, ConflictError } from "../shared/errors";
 
+// ==================== DTOs ====================
 export interface CreateUserDto {
   email: string;
   password: string;
@@ -14,14 +17,23 @@ export interface LoginDto {
   password: string;
 }
 
+// ==================== AUTH SERVICE (Single Responsibility) ====================
+
 export const register = async (data: CreateUserDto) => {
+  // Validações
+  Validator.required(data.name, 'Nome');
+  Validator.required(data.email, 'Email');
+  Validator.required(data.password, 'Senha');
+  Validator.email(data.email);
+  Validator.minLength(data.password, 6, 'Senha');
+
   // Verifica se o usuário já existe
   const existingUser = await prisma.user.findUnique({
     where: { email: data.email },
   });
 
   if (existingUser) {
-    throw new Error("Email já cadastrado");
+    throw new ConflictError("Email já cadastrado");
   }
 
   // Hash da senha
@@ -56,24 +68,29 @@ export const register = async (data: CreateUserDto) => {
 };
 
 export const login = async (data: LoginDto) => {
+  // Validações
+  Validator.required(data.email, 'Email');
+  Validator.required(data.password, 'Senha');
+  Validator.email(data.email);
+
   // Busca o usuário
   const user = await prisma.user.findUnique({
     where: { email: data.email },
   });
 
   if (!user) {
-    throw new Error("Email ou senha inválidos");
+    throw new UnauthorizedError("Credenciais inválidas");
   }
 
   if (!user.active) {
-    throw new Error("Usuário desativado");
+    throw new UnauthorizedError("Usuário desativado");
   }
 
   // Verifica a senha
   const isValidPassword = await comparePassword(data.password, user.password);
 
   if (!isValidPassword) {
-    throw new Error("Email ou senha inválidos");
+    throw new UnauthorizedError("Credenciais inválidas");
   }
 
   // Gera o token

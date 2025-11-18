@@ -5,6 +5,7 @@ import personRoutes from "./routes/person.routes";
 import leadRoutes from "./routes/lead.routes";
 import qrcodeRoutes from "./routes/qrcode.routes";
 import uploadRoutes from "./routes/upload.routes";
+import { errorHandler } from "./shared/errorHandler";
 
 const app = express();
 
@@ -37,13 +38,7 @@ app.use((req, res) => {
   });
 });
 
-// Error handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error("Erro:", err);
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || "Erro interno do servidor",
-  });
-});
+// ==================== GLOBAL ERROR HANDLER (must be last middleware) ====================
+app.use(errorHandler);
 
 export default app;

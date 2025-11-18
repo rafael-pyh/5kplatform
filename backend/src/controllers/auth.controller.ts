@@ -1,92 +1,59 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import * as authService from "../services/auth.service";
+import { ResponseBuilder } from "../shared/ResponseBuilder";
 
-export const register = async (req: Request, res: Response) => {
+// ==================== AUTH CONTROLLER (Single Responsibility: HTTP handling) ====================
+
+export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await authService.register(req.body);
-    res.status(201).json({
-      success: true,
-      data: result,
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.created(res, result);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await authService.login(req.body);
-    res.json({
-      success: true,
-      data: result,
-    });
-  } catch (error: any) {
-    res.status(401).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, result);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const getAllUsers = async (req: Request, res: Response) => {
+export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const users = await authService.getAllUsers();
-    res.json({
-      success: true,
-      data: users,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, users);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const getUserById = async (req: Request, res: Response) => {
+export const getUserById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await authService.getUserById(req.params.id);
-    res.json({
-      success: true,
-      data: user,
-    });
-  } catch (error: any) {
-    res.status(404).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, user);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const updateUser = async (req: Request, res: Response) => {
+export const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await authService.updateUser(req.params.id, req.body);
-    res.json({
-      success: true,
-      data: user,
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, user);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const deleteUser = async (req: Request, res: Response) => {
+export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = await authService.deleteUser(req.params.id);
-    res.json({
-      success: true,
-      data: user,
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    await authService.deleteUser(req.params.id);
+    return ResponseBuilder.noContent(res);
+  } catch (error) {
+    next(error);
   }
 };

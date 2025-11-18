@@ -1,25 +1,22 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import * as service from "../services/lead.service";
+import { ResponseBuilder } from "../shared/ResponseBuilder";
+
+// ==================== LEAD CONTROLLER (Single Responsibility: HTTP handling) ====================
 
 // Definir os tipos manualmente até o Prisma Client ser gerado
 type LeadStatus = "BOUGHT" | "CANCELLED" | "NEGOTIATION";
 
-export const createLead = async (req: Request, res: Response) => {
+export const createLead = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.createLead(req.body);
-    res.status(201).json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.created(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const getAllLeads = async (req: Request, res: Response) => {
+export const getAllLeads = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { status, ownerId } = req.query;
     
@@ -28,121 +25,73 @@ export const getAllLeads = async (req: Request, res: Response) => {
     if (ownerId) filters.ownerId = ownerId as string;
 
     const data = await service.getAllLeads(filters);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const getLeadsByOwner = async (req: Request, res: Response) => {
+export const getLeadsByOwner = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.getLeadsByOwner(req.params.ownerId);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const getLeadById = async (req: Request, res: Response) => {
+export const getLeadById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.getLeadById(req.params.id);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(404).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const updateLead = async (req: Request, res: Response) => {
+export const updateLead = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.updateLead(req.params.id, req.body);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const updateLeadStatus = async (req: Request, res: Response) => {
+export const updateLeadStatus = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { status } = req.body;
     const data = await service.updateLeadStatus(req.params.id, status);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const deleteLead = async (req: Request, res: Response) => {
+export const deleteLead = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.deleteLead(req.params.id);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const getLeadsStats = async (req: Request, res: Response) => {
+export const getLeadsStats = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.getLeadsStats();
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const getNewLeads = async (req: Request, res: Response) => {
+export const getNewLeads = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const days = req.query.days ? parseInt(req.query.days as string) : 7;
     const data = await service.getNewLeads(days);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };
