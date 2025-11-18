@@ -53,7 +53,11 @@ export default function DashboardPage() {
       setRecentLeads(newLeads.slice(0, 5));
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
-      toast.error('Erro ao carregar dados do dashboard');
+      
+      // Se não for erro 401, mostra o toast
+      if (error.response?.status !== 401) {
+        toast.error('Erro ao carregar dados do dashboard');
+      }
     } finally {
       setLoading(false);
     }

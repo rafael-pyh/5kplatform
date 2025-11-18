@@ -62,7 +62,7 @@ export const leadService = {
 
   // Obter novos leads (últimos 7 dias)
   async getNewLeads(): Promise<Lead[]> {
-    const response = await api.get<ApiResponse<Lead[]>>('/lead/stats/new');
+    const response = await api.get<ApiResponse<Lead[]>>('/lead/new');
     return response.data.data || [];
   },
 
