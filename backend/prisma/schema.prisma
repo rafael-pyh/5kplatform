@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo de Usuário Administrativo
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // Hash da senha
+  name      String
+  role      UserRole @default(ADMIN)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  ADMIN
+  SUPER_ADMIN
+}
+
+// Modelo de Vendedor (Pessoa que terá QR Code)
+model Person {
+  id           String        @id @default(cuid())
+  name         String
+  email        String?
+  phone        String?
+  pixKey       String?
+  photoUrl     String?       // URL da foto no MinIO
+  qrCode       String        @unique // Código único para o QR
+  qrCodeUrl    String?       // URL da imagem do QR Code no MinIO
+  active       Boolean       @default(true)
+  scanCount    Int           @default(0) // Contador de leituras do QR
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  leads        Lead[]
+  qrCodeScans  QRCodeScan[]
+}
+
+// Modelo de Lead (Cliente em potencial)
+model Lead {
+  id          String     @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  energyBill  String?    // URL do arquivo no MinIO
+  roofPhoto   String?    // URL do arquivo no MinIO
+  status      LeadStatus @default(NEGOTIATION)
+  ownerId     String
+  owner       Person     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  notes       String?    // Notas adicionais do administrador
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+// Modelo para rastrear cada scan do QR Code
+model QRCodeScan {
+  id         String   @id @default(cuid())
+  personId   String
+  person     Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  ipAddress  String?
+  userAgent  String?
+  scannedAt  DateTime @default(now())
+
+  @@index([personId])
+}
+
+enum LeadStatus {
+  BOUGHT       // Comprou
+  CANCELLED    // Não comprou
+  NEGOTIATION  // Negociando
+}
