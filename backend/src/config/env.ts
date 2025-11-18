@@ -10,5 +10,6 @@ export const env = {
   MINIO_ROOT_USER: process.env.MINIO_ROOT_USER || "minio",
   MINIO_ROOT_PASSWORD: process.env.MINIO_ROOT_PASSWORD || "minio123",
   MINIO_USE_SSL: process.env.MINIO_USE_SSL === "true",
+  MINIO_PUBLIC_URL: process.env.MINIO_PUBLIC_URL || "http://localhost:9000",
   FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
 };

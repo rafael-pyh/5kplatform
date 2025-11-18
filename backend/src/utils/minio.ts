@@ -54,5 +54,6 @@ export const uploadFile = async (
     }
   );
   
-  return `/uploads/${fileName}`;
+  // Retorna URL completa do MinIO
+  return `${env.MINIO_PUBLIC_URL}/uploads/${fileName}`;
 };

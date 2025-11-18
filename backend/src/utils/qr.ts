@@ -38,8 +38,8 @@ export const generateQRCodeImage = async (
       "Content-Type": "image/png",
     });
 
-    // Retorna a URL do arquivo
-    return `/uploads/${fileName}`;
+    // Retorna a URL completa do MinIO
+    return `${env.MINIO_PUBLIC_URL}/uploads/${fileName}`;
   } catch (error) {
     console.error("Erro ao gerar QR Code:", error);
     throw new Error("Falha ao gerar QR Code");
