@@ -6,26 +6,15 @@ services:
       dockerfile: Dockerfile
     container_name: 5kplatform_api
     restart: unless-stopped
+    env_file:
+      - ./backend/.env
     environment:
+      # Override específicos para Docker (apenas não-sensíveis)
       NODE_ENV: production
-      PORT: 4000
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/5kplatform?schema=public
-      JWT_SECRET: change-this-super-secret-key-in-production
-      JWT_EXPIRES_IN: 7d
       MINIO_ENDPOINT: minio
       MINIO_PORT: 9000
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: minio123
-      MINIO_USE_SSL: false
       MINIO_PUBLIC_URL: http://localhost:9000
-      FRONTEND_URL: http://localhost:3000
-      # Email Configuration (configure com suas credenciais)
-      GMAIL_USER: rafaelbrandao1992@gmail.com
-      EMAIL_USER: rafaelbrandao1992@gmail.com
-      EMAIL_HOST: smtp.gmail.com
-      EMAIL_PORT: 587
-      # Adicione esta variável com sua App Password do Gmail
-      EMAIL_PASS: apuj qnlg zuez pmf
     ports:
       - "4000:4000"
     depends_on:

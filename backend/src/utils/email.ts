@@ -24,11 +24,11 @@ const isOAuth2Configured = () => {
 };
 
 const createTransporter = async () => {
-  // Se OAuth2 estiver configurado, usa OAuth2
+  // Se OAuth2 estiver configurado, tenta usar OAuth2
   if (isOAuth2Configured()) {
     try {
       const { google } = await import('googleapis');
-      
+
       const oAuth2Client = new google.auth.OAuth2(
         CLIENT_ID,
         CLIENT_SECRET,
@@ -38,41 +38,64 @@ const createTransporter = async () => {
       oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
       const accessToken = await oAuth2Client.getAccessToken();
 
+      if (!accessToken.token) {
+        throw new Error('Failed to get access token');
+      }
+
+      console.log('✅ Usando OAuth2 para envio de emails');
+      
       return nodemailer.createTransport({
-        service: 'gmail',
+        host: EMAIL_HOST,
+        port: EMAIL_PORT,
+        secure: EMAIL_PORT === 465,
         auth: {
           type: 'OAuth2',
           user: EMAIL_USER,
           clientId: CLIENT_ID,
           clientSecret: CLIENT_SECRET,
           refreshToken: REFRESH_TOKEN,
-          accessToken: accessToken?.token as string,
+          accessToken: accessToken.token,
         },
-      } as any);
+      });
     } catch (error) {
-      console.error('Erro ao configurar OAuth2, usando fallback SMTP:', error);
+      console.warn('⚠️  Erro ao configurar OAuth2, usando fallback SMTP');
+      // Continua para o fallback SMTP
     }
   }
 
-  // Fallback: SMTP básico (para desenvolvimento)
-  console.warn('⚠️  OAuth2 não configurado. Usando SMTP básico.');
-  console.warn('⚠️  Configure GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET e GMAIL_REFRESH_TOKEN para produção.');
+  // Fallback: SMTP básico (App Password ou desenvolvimento)
+  if (EMAIL_PASS) {
+    console.log('📧 Usando SMTP com App Password');
+    console.log(`📧 Host: ${EMAIL_HOST}:${EMAIL_PORT}`);
+    console.log(`📧 User: ${EMAIL_USER}`);
+    console.log(`📧 Pass length: ${EMAIL_PASS.length} caracteres`);
+    
+    return nodemailer.createTransport({
+      host: EMAIL_HOST,
+      port: EMAIL_PORT,
+      secure: EMAIL_PORT === 465,
+      auth: {
+        user: EMAIL_USER,
+        pass: EMAIL_PASS,
+      },
+    });
+  }
+
+  // Nenhuma configuração disponível
+  console.warn('⚠️  Nenhuma configuração de email disponível.');
+  console.warn('⚠️  Configure EMAIL_PASS (App Password) ou OAuth2 para enviar emails.');
   
   return nodemailer.createTransport({
     host: EMAIL_HOST,
     port: EMAIL_PORT,
     secure: EMAIL_PORT === 465,
-    auth: EMAIL_PASS ? {
-      user: EMAIL_USER,
-      pass: EMAIL_PASS,
-    } : undefined,
   });
 };
 
 export const sendEmail = async (options: EmailOptions): Promise<void> => {
   // Verifica se há configuração de email
   const hasEmailConfig = isOAuth2Configured() || (EMAIL_USER && EMAIL_PASS);
-  
+
   // Modo desenvolvimento: apenas loga se não houver configuração
   if (!hasEmailConfig) {
     console.log('\n📧 ========================================');
@@ -86,11 +109,11 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
     console.log('📧 ========================================\n');
     return; // Não tenta enviar email
   }
-  
+
   // Tem configuração: envia o email
   try {
     const transporter = await createTransporter();
-    
+
     await transporter.sendMail({
       from: `5K Energia Solar <${EMAIL_USER}>`,
       to: options.to,
@@ -98,10 +121,18 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
       html: options.html,
       text: options.text,
     });
-    
+
     console.log(`✅ Email enviado com sucesso para ${options.to}`);
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Erro ao enviar email:', error);
+    
+    // Mensagem de erro mais específica
+    if (error.code === 'EAUTH') {
+      console.error('\n⚠️  ERRO DE AUTENTICAÇÃO:');
+      console.error('   Para usar Gmail, você precisa de um App Password.');
+      console.error('   Veja EMAIL_CONFIG.md para instruções.\n');
+    }
+    
     throw new Error('Falha ao enviar email');
   }
 };
