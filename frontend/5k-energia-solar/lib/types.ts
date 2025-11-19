@@ -4,6 +4,7 @@ export interface User {
   name: string;
   email: string;
   role: 'ADMIN' | 'SUPER_ADMIN';
+  active?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -16,6 +17,21 @@ export interface LoginCredentials {
 export interface AuthResponse {
   token: string;
   user: User;
+}
+
+export interface CreateAdminDto {
+  name: string;
+  email: string;
+  password: string;
+  role: 'ADMIN' | 'SUPER_ADMIN';
+}
+
+export interface UpdateAdminDto {
+  name?: string;
+  email?: string;
+  password?: string;
+  role?: 'ADMIN' | 'SUPER_ADMIN';
+  active?: boolean;
 }
 
 // ========== PERSON (VENDEDOR) ==========

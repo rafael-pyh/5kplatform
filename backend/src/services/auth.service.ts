@@ -185,3 +185,50 @@ export const deleteUser = async (id: string) => {
     },
   });
 };
+
+// Função para admins criarem outros usuários admin
+export const createAdminUser = async (data: CreateUserDto, creatorRole: string) => {
+  // Validações
+  Validator.required(data.name, 'Nome');
+  Validator.required(data.email, 'Email');
+  Validator.required(data.password, 'Senha');
+  Validator.email(data.email);
+  Validator.minLength(data.password, 6, 'Senha');
+
+  // Verifica se o criador é admin
+  if (creatorRole !== "ADMIN" && creatorRole !== "SUPER_ADMIN") {
+    throw new UnauthorizedError("Apenas administradores podem criar usuários admin");
+  }
+
+  // Verifica se o usuário já existe
+  const existingUser = await prisma.user.findUnique({
+    where: { email: data.email },
+  });
+
+  if (existingUser) {
+    throw new ConflictError("Email já cadastrado");
+  }
+
+  // Hash da senha
+  const hashedPassword = await hashPassword(data.password);
+
+  // Cria o usuário admin
+  const user = await prisma.user.create({
+    data: {
+      email: data.email,
+      password: hashedPassword,
+      name: data.name,
+      role: data.role || "ADMIN",
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      active: true,
+      createdAt: true,
+    },
+  });
+
+  return user;
+};

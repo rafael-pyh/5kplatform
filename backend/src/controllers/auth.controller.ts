@@ -57,3 +57,14 @@ export const deleteUser = async (req: Request, res: Response, next: NextFunction
     next(error);
   }
 };
+
+export const createAdminUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // O role do usuário que está fazendo a requisição vem do JWT no middleware authenticate
+    const creatorRole = req.user?.role || "";
+    const newUser = await authService.createAdminUser(req.body, creatorRole);
+    return ResponseBuilder.created(res, newUser);
+  } catch (error) {
+    next(error);
+  }
+};

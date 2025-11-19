@@ -67,3 +67,18 @@ export const requireSuperAdmin = (
   }
   next();
 };
+
+// Middleware para verificar se é ADMIN ou SUPER_ADMIN
+export const requireAdmin = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.user?.role || (req.user.role !== "ADMIN" && req.user.role !== "SUPER_ADMIN")) {
+    return res.status(403).json({
+      success: false,
+      message: "Acesso negado. Apenas administradores podem acessar este recurso.",
+    });
+  }
+  next();
+};

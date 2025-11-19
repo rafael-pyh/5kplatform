@@ -49,6 +49,46 @@ curl -X POST http://localhost:4000/api/auth/login \
 Authorization: Bearer SEU_TOKEN_AQUI
 ```
 
+### 3. Criar usuário admin (apenas para admins)
+
+**⚠️ Esta rota é protegida e requer que o usuário autenticado seja do tipo ADMIN ou SUPER_ADMIN.**
+
+```bash
+curl -X POST http://localhost:4000/api/auth/admin/users \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI" \
+  -d '{
+    "email": "novoadmin@5kplatform.com",
+    "password": "senha123",
+    "name": "Novo Administrador",
+    "role": "ADMIN"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "clx...",
+    "email": "novoadmin@5kplatform.com",
+    "name": "Novo Administrador",
+    "role": "ADMIN",
+    "active": true,
+    "createdAt": "2025-11-19T..."
+  }
+}
+```
+
+**Possíveis valores para `role`:**
+- `ADMIN` - Administrador padrão
+- `SUPER_ADMIN` - Super administrador (pode ter permissões adicionais)
+
+**Erros possíveis:**
+- `403` - Acesso negado (usuário não é admin)
+- `409` - Email já cadastrado
+- `401` - Token inválido ou não fornecido
+
 ---
 
 ## 👥 Vendedores
