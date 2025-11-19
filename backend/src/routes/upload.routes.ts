@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import * as controller from "../controllers/upload.controller";
-import { authenticate } from "../middlewares/auth.middleware";
+import { authenticate, requireAdmin } from "../middlewares/auth.middleware";
 
 const router = Router();
 
@@ -30,10 +30,11 @@ const upload = multer({
   },
 });
 
-// Rotas protegidas
+// Rotas protegidas (requerem autenticação de administrador)
 router.post(
   "/profile",
   authenticate,
+  requireAdmin,
   upload.single("file"),
   controller.uploadProfilePhoto
 );
