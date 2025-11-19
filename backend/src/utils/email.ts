@@ -70,10 +70,11 @@ const createTransporter = async () => {
 };
 
 export const sendEmail = async (options: EmailOptions): Promise<void> => {
-  // Se não há configuração de email, apenas loga
+  // Verifica se há configuração de email
   const hasEmailConfig = isOAuth2Configured() || (EMAIL_USER && EMAIL_PASS);
   
-  if (!hasEmailConfig || process.env.NODE_ENV === 'development') {
+  // Modo desenvolvimento: apenas loga se não houver configuração
+  if (!hasEmailConfig) {
     console.log('\n📧 ========================================');
     console.log('📧 EMAIL (Modo Desenvolvimento - Não Enviado)');
     console.log('📧 ========================================');
@@ -86,6 +87,7 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
     return; // Não tenta enviar email
   }
   
+  // Tem configuração: envia o email
   try {
     const transporter = await createTransporter();
     
@@ -97,7 +99,7 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
       text: options.text,
     });
     
-    console.log(`✅ Email enviado para ${options.to}`);
+    console.log(`✅ Email enviado com sucesso para ${options.to}`);
   } catch (error) {
     console.error('❌ Erro ao enviar email:', error);
     throw new Error('Falha ao enviar email');

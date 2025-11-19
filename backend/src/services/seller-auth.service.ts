@@ -37,8 +37,9 @@ export const sellerLogin = async (data: SellerLoginDto) => {
     throw new UnauthorizedError("Credenciais inválidas");
   }
 
+  // Verificação crítica: vendedor deve estar ativo
   if (!person.active) {
-    throw new UnauthorizedError("Conta desativada");
+    throw new UnauthorizedError("Conta desativada. Entre em contato com o administrador.");
   }
 
   if (!person.emailVerified) {

@@ -28,7 +28,7 @@ export const register = async (data: CreateUserDto) => {
   Validator.minLength(data.password, 6, 'Senha');
 
   // Verifica se o usuário já existe
-  const existingUser = await prisma.user.findUnique({
+  const existingUser = await prisma.person.findUnique({
     where: { email: data.email },
   });
 
@@ -39,13 +39,16 @@ export const register = async (data: CreateUserDto) => {
   // Hash da senha
   const hashedPassword = await hashPassword(data.password);
 
-  // Cria o usuário
-  const user = await prisma.user.create({
+  // Cria o usuário na tabela Person
+  const user = await prisma.person.create({
     data: {
       email: data.email,
       password: hashedPassword,
       name: data.name,
       role: data.role || "ADMIN",
+      qrCode: `ADMIN-${Date.now()}`,
+      emailVerified: true,
+      active: true,
     },
     select: {
       id: true,
@@ -60,8 +63,8 @@ export const register = async (data: CreateUserDto) => {
   // Gera o token
   const token = generateToken({
     userId: user.id,
-    email: user.email,
-    role: user.role,
+    email: user.email!,
+    role: user.role || 'ADMIN',
   });
 
   return { user, token };
@@ -73,8 +76,8 @@ export const login = async (data: LoginDto) => {
   Validator.required(data.password, 'Senha');
   Validator.email(data.email);
 
-  // Busca o usuário
-  const user = await prisma.user.findUnique({
+  // Busca o usuário na tabela Person (unificada)
+  const user = await prisma.person.findUnique({
     where: { email: data.email },
   });
 
@@ -82,8 +85,14 @@ export const login = async (data: LoginDto) => {
     throw new UnauthorizedError("Credenciais inválidas");
   }
 
+  // Verificação crítica: usuário deve estar ativo
   if (!user.active) {
-    throw new UnauthorizedError("Usuário desativado");
+    throw new UnauthorizedError("Conta desativada. Entre em contato com o administrador.");
+  }
+
+  // Verifica se tem senha definida
+  if (!user.password) {
+    throw new UnauthorizedError("Senha não definida. Verifique seu email para concluir o cadastro.");
   }
 
   // Verifica a senha
@@ -93,26 +102,37 @@ export const login = async (data: LoginDto) => {
     throw new UnauthorizedError("Credenciais inválidas");
   }
 
+  // Validações adicionais
+  if (!user.email) {
+    throw new UnauthorizedError("Email não encontrado");
+  }
+
+  // Define o role (se não tiver, assume SELLER)
+  const userRole = user.role || 'SELLER';
+
   // Gera o token
   const token = generateToken({
     userId: user.id,
     email: user.email,
-    role: user.role,
+    role: userRole,
   });
 
   return {
     user: {
       id: user.id,
       email: user.email,
-      name: user.name,
-      role: user.role,
+      name: user.name || 'Usuário',
+      role: user.role || 'SELLER',
     },
     token,
   };
 };
 
 export const getAllUsers = async () => {
-  return prisma.user.findMany({
+  return prisma.person.findMany({
+    where: {
+      role: { in: ['ADMIN', 'SUPER_ADMIN'] }
+    },
     select: {
       id: true,
       email: true,
@@ -126,7 +146,7 @@ export const getAllUsers = async () => {
 };
 
 export const getUserById = async (id: string) => {
-  const user = await prisma.user.findUnique({
+  const user = await prisma.person.findUnique({
     where: { id },
     select: {
       id: true,
@@ -161,7 +181,7 @@ export const updateUser = async (
     updateData.password = await hashPassword(data.password);
   }
 
-  return prisma.user.update({
+  return prisma.person.update({
     where: { id },
     data: updateData,
     select: {
@@ -176,7 +196,7 @@ export const updateUser = async (
 };
 
 export const deleteUser = async (id: string) => {
-  return prisma.user.delete({
+  return prisma.person.delete({
     where: { id },
     select: {
       id: true,
@@ -201,7 +221,7 @@ export const createAdminUser = async (data: CreateUserDto, creatorRole: string) 
   }
 
   // Verifica se o usuário já existe
-  const existingUser = await prisma.user.findUnique({
+  const existingUser = await prisma.person.findUnique({
     where: { email: data.email },
   });
 
@@ -212,13 +232,16 @@ export const createAdminUser = async (data: CreateUserDto, creatorRole: string) 
   // Hash da senha
   const hashedPassword = await hashPassword(data.password);
 
-  // Cria o usuário admin
-  const user = await prisma.user.create({
+  // Cria o usuário admin na tabela Person
+  const user = await prisma.person.create({
     data: {
       email: data.email,
       password: hashedPassword,
       name: data.name,
       role: data.role || "ADMIN",
+      qrCode: `ADMIN-${Date.now()}`,
+      emailVerified: true,
+      active: true,
     },
     select: {
       id: true,

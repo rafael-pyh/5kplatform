@@ -7,21 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Modelo de Usuário Administrativo
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String   // Hash da senha
-  name      String
-  role      UserRole @default(ADMIN)
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-enum UserRole {
-  ADMIN
-  SUPER_ADMIN
+enum PersonRole {
+  SELLER       // Vendedor
+  ADMIN        // Administrador
+  SUPER_ADMIN  // Super Administrador
 }
 
 // Modelo de Vendedor (Pessoa que terá QR Code)
@@ -37,6 +26,7 @@ model Person {
   active             Boolean       @default(true)
   scanCount          Int           @default(0) // Contador de leituras do QR
   // Campos de autenticação
+  role               PersonRole    @default(SELLER) // Papel do usuário
   password           String?       // Hash da senha (null até definir)
   emailVerified      Boolean       @default(false)
   verificationToken  String?       @unique // Token para verificação de email

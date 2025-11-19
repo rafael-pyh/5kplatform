@@ -45,11 +45,12 @@ export const createPerson = async (data: CreatePersonDto) => {
     tokenExpiry.setHours(tokenExpiry.getHours() + 24); // 24 horas
   }
 
-  // Cria a pessoa no banco
+  // Cria a pessoa no banco (sempre como SELLER)
   const person = await prisma.person.create({
     data: {
       ...data,
       qrCode,
+      role: 'SELLER', // Define explicitamente como vendedor
       verificationToken,
       tokenExpiry,
     },
@@ -93,7 +94,10 @@ export const createPerson = async (data: CreatePersonDto) => {
 
 export const getAll = async (activeOnly: boolean = false) => {
   return prisma.person.findMany({
-    where: activeOnly ? { active: true } : undefined,
+    where: {
+      ...(activeOnly ? { active: true } : {}),
+      role: 'SELLER', // Apenas vendedores
+    },
     include: {
       _count: {
         select: {

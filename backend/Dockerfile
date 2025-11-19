@@ -11,13 +11,17 @@ COPY prisma ./prisma/
 RUN npm install
 
 # Copiar código fonte
+COPY .env .env
 COPY . .
 
 # Gerar Prisma Client
 RUN npx prisma generate
 
-# Compilar TypeScript
+# Compilar TypeScript (src)
 RUN npm run build
+
+# Compilar seed.ts separadamente
+RUN npx tsc prisma/seed.ts --outDir dist/prisma --esModuleInterop --skipLibCheck --resolveJsonModule
 
 # Production stage
 FROM node:20-alpine
@@ -54,5 +58,5 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Comando para iniciar
-CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
+# Comando para iniciar (com migrations e seed)
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/prisma/seed.js && npm start"]

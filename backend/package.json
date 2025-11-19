@@ -4,7 +4,8 @@
   "description": "Backend da plataforma 5K - Sistema de gestão de vendedores e leads",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "ts-node src/server.ts",
+    "dev": "tsx watch src/server.ts",
+    "dev:nodemon": "nodemon",
     "build": "tsc",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
@@ -17,6 +18,11 @@
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
+  },
+  "ts-node": {
+    "esm": false,
+    "transpileOnly": true,
+    "files": true
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
@@ -44,9 +50,11 @@
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.50.0",
     "eslint-config-prettier": "^9.0.0",
+    "nodemon": "^3.0.1",
     "prettier": "^3.0.3",
     "prisma": "^6.19.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   }
 }
