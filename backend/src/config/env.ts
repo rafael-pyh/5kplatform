@@ -12,4 +12,14 @@ export const env = {
   MINIO_USE_SSL: process.env.MINIO_USE_SSL === "true",
   MINIO_PUBLIC_URL: process.env.MINIO_PUBLIC_URL || "http://localhost:9000",
   FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
+  // Email configuration (OAuth2 Gmail ou SMTP fallback)
+  GMAIL_CLIENT_ID: process.env.GMAIL_CLIENT_ID || "",
+  GMAIL_CLIENT_SECRET: process.env.GMAIL_CLIENT_SECRET || "",
+  GMAIL_REFRESH_TOKEN: process.env.GMAIL_REFRESH_TOKEN || "",
+  GMAIL_USER: process.env.GMAIL_USER || process.env.EMAIL_USER || "",
+  // Fallback SMTP (para desenvolvimento)
+  EMAIL_HOST: process.env.EMAIL_HOST || "smtp.gmail.com",
+  EMAIL_PORT: parseInt(process.env.EMAIL_PORT || "587"),
+  EMAIL_USER: process.env.EMAIL_USER || "",
+  EMAIL_PASS: process.env.EMAIL_PASS || "",
 };

@@ -82,3 +82,33 @@ export const requireAdmin = (
   }
   next();
 };
+
+// Middleware para verificar se é SELLER (vendedor)
+export const requireSeller = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (req.user?.role !== "SELLER") {
+    return res.status(403).json({
+      success: false,
+      message: "Acesso negado. Apenas vendedores podem acessar este recurso.",
+    });
+  }
+  next();
+};
+
+// Middleware para verificar se é ADMIN ou SELLER
+export const requireAdminOrSeller = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.user?.role || (req.user.role !== "ADMIN" && req.user.role !== "SUPER_ADMIN" && req.user.role !== "SELLER")) {
+    return res.status(403).json({
+      success: false,
+      message: "Acesso negado.",
+    });
+  }
+  next();
+};

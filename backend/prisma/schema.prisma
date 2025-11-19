@@ -26,20 +26,25 @@ enum UserRole {
 
 // Modelo de Vendedor (Pessoa que terá QR Code)
 model Person {
-  id           String        @id @default(cuid())
-  name         String
-  email        String?
-  phone        String?
-  pixKey       String?
-  photoUrl     String?       // URL da foto no MinIO
-  qrCode       String        @unique // Código único para o QR
-  qrCodeUrl    String?       // URL da imagem do QR Code no MinIO
-  active       Boolean       @default(true)
-  scanCount    Int           @default(0) // Contador de leituras do QR
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  leads        Lead[]
-  qrCodeScans  QRCodeScan[]
+  id                 String        @id @default(cuid())
+  name               String
+  email              String?       @unique
+  phone              String?
+  pixKey             String?
+  photoUrl           String?       // URL da foto no MinIO
+  qrCode             String        @unique // Código único para o QR
+  qrCodeUrl          String?       // URL da imagem do QR Code no MinIO
+  active             Boolean       @default(true)
+  scanCount          Int           @default(0) // Contador de leituras do QR
+  // Campos de autenticação
+  password           String?       // Hash da senha (null até definir)
+  emailVerified      Boolean       @default(false)
+  verificationToken  String?       @unique // Token para verificação de email
+  tokenExpiry        DateTime?     // Expiração do token
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  leads              Lead[]
+  qrCodeScans        QRCodeScan[]
 }
 
 // Modelo de Lead (Cliente em potencial)

@@ -1,5 +1,7 @@
 import prisma from "../database/prisma";
 import { generateQRCode, generateQRCodeImage } from "../utils/qr";
+import { sendVerificationEmail } from "../utils/email";
+import crypto from "crypto";
 
 export interface CreatePersonDto {
   name: string;
@@ -19,16 +21,50 @@ export interface UpdatePersonDto {
 }
 
 export const createPerson = async (data: CreatePersonDto) => {
+  // Verifica se email já existe
+  if (data.email) {
+    const existingPerson = await prisma.person.findUnique({
+      where: { email: data.email },
+    });
+
+    if (existingPerson) {
+      throw new Error(`Email ${data.email} já está cadastrado no sistema`);
+    }
+  }
+
   // Gera o código único do QR
   const qrCode = generateQRCode();
+
+  // Se email foi fornecido, gera token de verificação
+  let verificationToken = null;
+  let tokenExpiry = null;
+
+  if (data.email) {
+    verificationToken = crypto.randomBytes(32).toString('hex');
+    tokenExpiry = new Date();
+    tokenExpiry.setHours(tokenExpiry.getHours() + 24); // 24 horas
+  }
 
   // Cria a pessoa no banco
   const person = await prisma.person.create({
     data: {
       ...data,
       qrCode,
+      verificationToken,
+      tokenExpiry,
     },
   });
+
+  // Envia email de verificação se email foi fornecido
+  if (data.email && verificationToken) {
+    try {
+      await sendVerificationEmail(data.email, data.name, verificationToken);
+      console.log(`Email de verificação enviado para ${data.email}`);
+    } catch (error) {
+      console.error("Erro ao enviar email de verificação:", error);
+      // Não falha a criação se o email não for enviado
+    }
+  }
 
   // Gera a imagem do QR Code e faz upload
   try {

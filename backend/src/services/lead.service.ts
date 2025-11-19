@@ -169,3 +169,66 @@ export const getNewLeads = async (days: number = 7) => {
     orderBy: { createdAt: "desc" },
   });
 };
+
+// Buscar leads de um vendedor com detalhes completos (para área do vendedor)
+export const getSellerLeads = async (sellerId: string, filters?: { status?: LeadStatus }) => {
+  return prisma.lead.findMany({
+    where: {
+      ownerId: sellerId,
+      status: filters?.status,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+// Buscar lead específico de um vendedor
+export const getSellerLeadById = async (sellerId: string, leadId: string) => {
+  const lead = await prisma.lead.findFirst({
+    where: {
+      id: leadId,
+      ownerId: sellerId,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  if (!lead) {
+    throw new Error("Lead não encontrado");
+  }
+
+  return lead;
+};
+
+// Estatísticas de leads de um vendedor
+export const getSellerLeadsStats = async (sellerId: string) => {
+  const [total, bought, negotiation, cancelled] = await Promise.all([
+    prisma.lead.count({ where: { ownerId: sellerId } }),
+    prisma.lead.count({ where: { ownerId: sellerId, status: "BOUGHT" } }),
+    prisma.lead.count({ where: { ownerId: sellerId, status: "NEGOTIATION" } }),
+    prisma.lead.count({ where: { ownerId: sellerId, status: "CANCELLED" } }),
+  ]);
+
+  return {
+    total,
+    bought,
+    negotiation,
+    cancelled,
+    conversionRate: total > 0 ? ((bought / total) * 100).toFixed(2) + "%" : "0%",
+  };
+};
