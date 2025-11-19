@@ -133,6 +133,19 @@ export default function LoginPage() {
               {isLoading ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
+
+          {/* Link para vendedores */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              É vendedor?{' '}
+              <a
+                href="/seller/login"
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Acesse aqui
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </div>
