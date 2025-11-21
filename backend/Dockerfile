@@ -6,7 +6,7 @@ WORKDIR /app
 # Copiar arquivos de dependências
 # Use explicit backend path so Docker builds correctly when context is repo root
 COPY ./backend/package*.json ./
-# COPY prisma ./prisma/
+COPY ./backend/prisma ./prisma/
 
 # Instalar dependências
 RUN npm install
@@ -31,7 +31,7 @@ WORKDIR /app
 
 # Copiar arquivos de dependências para stage de produção
 COPY ./backend/package*.json ./
-# COPY prisma ./prisma/
+COPY ./backend/prisma ./prisma/
 
 # Instalar apenas dependências de produção
 RUN npm install --omit=dev
