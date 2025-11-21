@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import api from '@/lib/api';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import SellerQRCodeModal from '@/components/seller/SellerQRCodeModal';
 
 interface Lead {
   id: string;
@@ -23,12 +24,25 @@ interface Stats {
   conversionRate: string;
 }
 
+interface Seller {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  qrCode: string;
+  qrCodeUrl: string;
+  photoUrl?: string;
+  scanCount?: number;
+  active: boolean;
+}
+
 export default function SellerDashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [seller, setSeller] = useState<any>(null);
+  const [seller, setSeller] = useState<Seller | null>(null);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -115,12 +129,31 @@ export default function SellerDashboardPage() {
                 <p className="text-sm text-gray-600">{seller?.name}</p>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            >
-              Sair
-            </button>
+            <div className="flex items-center gap-2">
+              {seller?.qrCodeUrl && (
+                <button
+                  onClick={() => setIsQRModalOpen(true)}
+                  className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md"
+                  title="Ver meu QR Code"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline font-medium">Meu QR Code</span>
+                </button>
+              )}
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                Sair
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -129,18 +162,18 @@ export default function SellerDashboardPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm font-medium text-gray-600">Total de Leads</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.total || 0}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm font-medium text-gray-600">Negociando</p>
-            <p className="text-3xl font-bold text-yellow-600 mt-2">{stats?.negotiation || 0}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm font-medium text-gray-600">Compraram</p>
-            <p className="text-3xl font-bold text-green-600 mt-2">{stats?.bought || 0}</p>
-          </div>
+              <div className="bg-white rounded-lg shadow p-6">
+                <p className="text-sm font-medium text-gray-600">Total de Leads</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.total || 0}</p>
+              </div>
+              <div className="bg-white rounded-lg shadow p-6">
+                <p className="text-sm font-medium text-gray-600">Negociando</p>
+                <p className="text-3xl font-bold text-yellow-600 mt-2">{stats?.negotiation || 0}</p>
+              </div>
+              <div className="bg-white rounded-lg shadow p-6">
+                <p className="text-sm font-medium text-gray-600">Compraram</p>
+                <p className="text-3xl font-bold text-green-600 mt-2">{stats?.bought || 0}</p>
+              </div>
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-sm font-medium text-gray-600">Taxa de Conversão</p>
             <p className="text-3xl font-bold text-blue-600 mt-2">{stats?.conversionRate || '0%'}</p>
@@ -190,6 +223,17 @@ export default function SellerDashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* QR Code Modal */}
+      {seller?.qrCodeUrl && (
+        <SellerQRCodeModal
+          isOpen={isQRModalOpen}
+          onClose={() => setIsQRModalOpen(false)}
+          qrCodeUrl={seller.qrCodeUrl}
+          sellerName={seller.name}
+          qrCode={seller.qrCode}
+        />
+      )}
     </div>
   );
 }
