@@ -6,27 +6,46 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Iniciando seed do banco de dados...");
 
-  // Criar usuário admin padrão
-  const adminEmail = "admin@5kplatform.com";
-  const existingAdmin = await prisma.user.findUnique({
+  // Criar SUPER_ADMIN na tabela Person
+  const adminEmail = "admin@5kenergia.com";
+  const existingAdmin = await prisma.person.findUnique({
     where: { email: adminEmail },
   });
 
   if (!existingAdmin) {
     const hashedPassword = await bcrypt.hash("admin123", 10);
     
-    const admin = await prisma.user.create({
+    const admin = await prisma.person.create({
       data: {
         email: adminEmail,
         password: hashedPassword,
-        name: "Administrador",
+        name: "Super Admin",
         role: "SUPER_ADMIN",
+        qrCode: `ADMIN-${Date.now()}`,
+        emailVerified: true,
+        active: true,
       },
     });
 
-    console.log("✅ Usuário admin criado:", admin.email);
+    console.log("✅ Super Admin criado:", admin.email);
+    console.log("📧 Email:", adminEmail);
+    console.log("🔑 Senha: admin123");
   } else {
-    console.log("ℹ️  Usuário admin já existe:", adminEmail);
+    // Atualizar admin existente para garantir que tem senha e role
+    const hashedPassword = await bcrypt.hash("admin123", 10);
+    await prisma.person.update({
+      where: { email: adminEmail },
+      data: {
+        password: hashedPassword,
+        role: "SUPER_ADMIN",
+        emailVerified: true,
+        active: true,
+      },
+    });
+    
+    console.log("ℹ️  Super Admin atualizado:", adminEmail);
+    console.log("📧 Email:", adminEmail);
+    console.log("🔑 Senha: admin123");
   }
 
   // Criar alguns vendedores de exemplo (opcional)

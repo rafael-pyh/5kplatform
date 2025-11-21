@@ -128,45 +128,23 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-500 to-green-500 text-white py-3 rounded-lg font-medium hover:from-blue-600 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="w-full bg-linear-to-r from-blue-500 to-green-500 text-white py-3 rounded-lg font-medium hover:from-blue-600 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               {isLoading ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
 
-          {/* Footer */}
-          <div className="mt-6 text-center text-sm text-gray-600">
-            <p>Credenciais padrão:</p>
-            <p className="mt-1">
-              Email: <span className="font-mono text-blue-600">admin@5kplatform.com</span>
+          {/* Link para vendedores */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              É vendedor?{' '}
+              <a
+                href="/seller/login"
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Acesse aqui
+              </a>
             </p>
-            <p>
-              Senha: <span className="font-mono text-blue-600">admin123</span>
-            </p>
-          </div>
-        </div>
-
-        {/* Info Card */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-          <div className="flex items-start">
-            <svg
-              className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <div>
-              <p className="font-medium">Primeiro acesso?</p>
-              <p className="mt-1">
-                Use as credenciais padrão acima. Certifique-se de que o backend está rodando em{' '}
-                <span className="font-mono">http://localhost:4000</span>
-              </p>
-            </div>
           </div>
         </div>
       </div>

@@ -1,7 +1,10 @@
 import prisma from "../database/prisma";
 import { hashPassword, comparePassword } from "../utils/bcrypt";
 import { generateToken } from "../utils/jwt";
+import { Validator } from "../shared/Validator";
+import { UnauthorizedError, ConflictError } from "../shared/errors";
 
+// ==================== DTOs ====================
 export interface CreateUserDto {
   email: string;
   password: string;
@@ -14,26 +17,38 @@ export interface LoginDto {
   password: string;
 }
 
+// ==================== AUTH SERVICE (Single Responsibility) ====================
+
 export const register = async (data: CreateUserDto) => {
+  // Validações
+  Validator.required(data.name, 'Nome');
+  Validator.required(data.email, 'Email');
+  Validator.required(data.password, 'Senha');
+  Validator.email(data.email);
+  Validator.minLength(data.password, 6, 'Senha');
+
   // Verifica se o usuário já existe
-  const existingUser = await prisma.user.findUnique({
+  const existingUser = await prisma.person.findUnique({
     where: { email: data.email },
   });
 
   if (existingUser) {
-    throw new Error("Email já cadastrado");
+    throw new ConflictError("Email já cadastrado");
   }
 
   // Hash da senha
   const hashedPassword = await hashPassword(data.password);
 
-  // Cria o usuário
-  const user = await prisma.user.create({
+  // Cria o usuário na tabela Person
+  const user = await prisma.person.create({
     data: {
       email: data.email,
       password: hashedPassword,
       name: data.name,
       role: data.role || "ADMIN",
+      qrCode: `ADMIN-${Date.now()}`,
+      emailVerified: true,
+      active: true,
     },
     select: {
       id: true,
@@ -48,54 +63,76 @@ export const register = async (data: CreateUserDto) => {
   // Gera o token
   const token = generateToken({
     userId: user.id,
-    email: user.email,
-    role: user.role,
+    email: user.email!,
+    role: user.role || 'ADMIN',
   });
 
   return { user, token };
 };
 
 export const login = async (data: LoginDto) => {
-  // Busca o usuário
-  const user = await prisma.user.findUnique({
+  // Validações
+  Validator.required(data.email, 'Email');
+  Validator.required(data.password, 'Senha');
+  Validator.email(data.email);
+
+  // Busca o usuário na tabela Person (unificada)
+  const user = await prisma.person.findUnique({
     where: { email: data.email },
   });
 
   if (!user) {
-    throw new Error("Email ou senha inválidos");
+    throw new UnauthorizedError("Credenciais inválidas");
   }
 
+  // Verificação crítica: usuário deve estar ativo
   if (!user.active) {
-    throw new Error("Usuário desativado");
+    throw new UnauthorizedError("Conta desativada. Entre em contato com o administrador.");
+  }
+
+  // Verifica se tem senha definida
+  if (!user.password) {
+    throw new UnauthorizedError("Senha não definida. Verifique seu email para concluir o cadastro.");
   }
 
   // Verifica a senha
   const isValidPassword = await comparePassword(data.password, user.password);
 
   if (!isValidPassword) {
-    throw new Error("Email ou senha inválidos");
+    throw new UnauthorizedError("Credenciais inválidas");
   }
+
+  // Validações adicionais
+  if (!user.email) {
+    throw new UnauthorizedError("Email não encontrado");
+  }
+
+  // Define o role (se não tiver, assume SELLER)
+  const userRole = user.role || 'SELLER';
 
   // Gera o token
   const token = generateToken({
     userId: user.id,
     email: user.email,
-    role: user.role,
+    role: userRole,
   });
 
   return {
     user: {
       id: user.id,
       email: user.email,
-      name: user.name,
-      role: user.role,
+      name: user.name || 'Usuário',
+      role: user.role || 'SELLER',
     },
     token,
   };
 };
 
 export const getAllUsers = async () => {
-  return prisma.user.findMany({
+  return prisma.person.findMany({
+    where: {
+      role: { in: ['ADMIN', 'SUPER_ADMIN'] }
+    },
     select: {
       id: true,
       email: true,
@@ -109,7 +146,7 @@ export const getAllUsers = async () => {
 };
 
 export const getUserById = async (id: string) => {
-  const user = await prisma.user.findUnique({
+  const user = await prisma.person.findUnique({
     where: { id },
     select: {
       id: true,
@@ -144,7 +181,7 @@ export const updateUser = async (
     updateData.password = await hashPassword(data.password);
   }
 
-  return prisma.user.update({
+  return prisma.person.update({
     where: { id },
     data: updateData,
     select: {
@@ -159,7 +196,7 @@ export const updateUser = async (
 };
 
 export const deleteUser = async (id: string) => {
-  return prisma.user.delete({
+  return prisma.person.delete({
     where: { id },
     select: {
       id: true,
@@ -167,4 +204,54 @@ export const deleteUser = async (id: string) => {
       name: true,
     },
   });
+};
+
+// Função para admins criarem outros usuários admin
+export const createAdminUser = async (data: CreateUserDto, creatorRole: string) => {
+  // Validações
+  Validator.required(data.name, 'Nome');
+  Validator.required(data.email, 'Email');
+  Validator.required(data.password, 'Senha');
+  Validator.email(data.email);
+  Validator.minLength(data.password, 6, 'Senha');
+
+  // Verifica se o criador é admin
+  if (creatorRole !== "ADMIN" && creatorRole !== "SUPER_ADMIN") {
+    throw new UnauthorizedError("Apenas administradores podem criar usuários admin");
+  }
+
+  // Verifica se o usuário já existe
+  const existingUser = await prisma.person.findUnique({
+    where: { email: data.email },
+  });
+
+  if (existingUser) {
+    throw new ConflictError("Email já cadastrado");
+  }
+
+  // Hash da senha
+  const hashedPassword = await hashPassword(data.password);
+
+  // Cria o usuário admin na tabela Person
+  const user = await prisma.person.create({
+    data: {
+      email: data.email,
+      password: hashedPassword,
+      name: data.name,
+      role: data.role || "ADMIN",
+      qrCode: `ADMIN-${Date.now()}`,
+      emailVerified: true,
+      active: true,
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      active: true,
+      createdAt: true,
+    },
+  });
+
+  return user;
 };

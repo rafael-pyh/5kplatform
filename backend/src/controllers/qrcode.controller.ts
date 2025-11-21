@@ -1,10 +1,13 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import * as qrcodeService from "../services/qrcode.service";
 import * as personService from "../services/person.service";
 import * as leadService from "../services/lead.service";
+import { ResponseBuilder } from "../shared/ResponseBuilder";
+
+// ==================== QRCODE CONTROLLER (Single Responsibility: HTTP handling) ====================
 
 // Endpoint público para registrar scan do QR Code
-export const scanQRCode = async (req: Request, res: Response) => {
+export const scanQRCode = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { qrCode } = req.params;
 
@@ -23,24 +26,18 @@ export const scanQRCode = async (req: Request, res: Response) => {
       userAgent,
     });
 
-    res.json({
-      success: true,
-      data: {
-        personId: person.id,
-        personName: person.name,
-        message: "QR Code escaneado com sucesso",
-      },
+    return ResponseBuilder.success(res, {
+      personId: person.id,
+      personName: person.name,
+      message: "QR Code escaneado com sucesso",
     });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+  } catch (error) {
+    next(error);
   }
 };
 
 // Endpoint público para criar lead (formulário)
-export const createLeadFromQR = async (req: Request, res: Response) => {
+export const createLeadFromQR = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { qrCode } = req.params;
 
@@ -55,48 +52,29 @@ export const createLeadFromQR = async (req: Request, res: Response) => {
 
     const lead = await leadService.createLead(leadData);
 
-    res.status(201).json({
-      success: true,
-      data: lead,
-      message: "Cadastro realizado com sucesso!",
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.created(res, lead, "Cadastro realizado com sucesso!");
+  } catch (error) {
+    next(error);
   }
 };
 
 // Buscar scans de um vendedor (protegido)
-export const getScansByPerson = async (req: Request, res: Response) => {
+export const getScansByPerson = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await qrcodeService.getScansByPerson(req.params.personId);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };
 
 // Estatísticas de scans (protegido)
-export const getScansStats = async (req: Request, res: Response) => {
+export const getScansStats = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const personId = req.query.personId as string | undefined;
     const data = await qrcodeService.getScansStats(personId);
-    res.json({
-      success: true,
-      data,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
   }
 };

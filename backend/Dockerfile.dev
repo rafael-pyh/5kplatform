@@ -1,0 +1,20 @@
+# Dockerfile para desenvolvimento com hot reload
+FROM node:20-alpine AS development
+
+WORKDIR /app
+
+# Copiar arquivos de dependências
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Instalar TODAS as dependências (incluindo dev)
+RUN npm install
+
+# Gerar Prisma Client
+RUN npx prisma generate
+
+# Expor porta
+EXPOSE 4000
+
+# Comando padrão: npm run dev (com ts-node e watch)
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed ; npm run dev"]

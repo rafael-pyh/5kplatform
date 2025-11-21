@@ -2,6 +2,23 @@
 
 Este arquivo contém exemplos práticos de como usar cada endpoint da API.
 
+## ⚠️ IMPORTANTE: Controle de Acesso
+
+**Todas as rotas de gerenciamento (exceto públicas) requerem autenticação de administrador.**
+
+Rotas protegidas que exigem ser ADMIN ou SUPER_ADMIN:
+- 👥 **Vendedores** (Person): CRUD completo
+- 📋 **Leads**: CRUD completo e estatísticas
+- 👤 **Administradores** (Users): CRUD completo
+- 📊 **QR Code**: Estatísticas e scans
+- 📤 **Upload**: Upload de fotos de perfil
+
+Rotas públicas (não requerem autenticação):
+- 🔐 Login e registro inicial
+- 📱 Scan de QR Code
+- 📝 Criação de lead via QR Code
+- 📤 Upload de documentos do lead (conta de luz, foto do telhado)
+
 ## 🔐 Autenticação
 
 ### 1. Criar primeiro usuário admin
@@ -49,11 +66,75 @@ curl -X POST http://localhost:4000/api/auth/login \
 Authorization: Bearer SEU_TOKEN_AQUI
 ```
 
+### 3. Criar usuário admin (apenas para admins)
+
+**⚠️ Esta rota é protegida e requer que o usuário autenticado seja do tipo ADMIN ou SUPER_ADMIN.**
+
+```bash
+curl -X POST http://localhost:4000/api/auth/admin/users \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI" \
+  -d '{
+    "email": "novoadmin@5kplatform.com",
+    "password": "senha123",
+    "name": "Novo Administrador",
+    "role": "ADMIN"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "clx...",
+    "email": "novoadmin@5kplatform.com",
+    "name": "Novo Administrador",
+    "role": "ADMIN",
+    "active": true,
+    "createdAt": "2025-11-19T..."
+  }
+}
+```
+
+**Possíveis valores para `role`:**
+- `ADMIN` - Administrador padrão
+- `SUPER_ADMIN` - Super administrador (pode ter permissões adicionais)
+
+**Erros possíveis:**
+- `403` - Acesso negado (usuário não é admin)
+- `409` - Email já cadastrado
+- `401` - Token inválido ou não fornecido
+
 ---
 
-## 👥 Vendedores
+## � Erros Comuns de Autenticação e Autorização
 
-### 3. Criar um vendedor
+### Erro 401 - Não autenticado
+```json
+{
+  "success": false,
+  "message": "Token não fornecido"
+}
+```
+**Solução**: Adicione o header `Authorization: Bearer SEU_TOKEN` na requisição.
+
+### Erro 403 - Sem permissão
+```json
+{
+  "success": false,
+  "message": "Acesso negado. Apenas administradores podem acessar este recurso."
+}
+```
+**Solução**: Esta rota requer que você seja ADMIN ou SUPER_ADMIN. Faça login com uma conta de administrador.
+
+---
+
+## �👥 Vendedores
+
+**⚠️ Todas as rotas de vendedores requerem autenticação de administrador (ADMIN ou SUPER_ADMIN).**
+
+### 4. Criar um vendedor
 
 ```bash
 curl -X POST http://localhost:4000/api/person \

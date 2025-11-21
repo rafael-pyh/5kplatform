@@ -1,0 +1,89 @@
+services:
+  # Backend API - Modo Desenvolvimento (Hot Reload)
+  api:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: 5kplatform_api_dev
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      # Override específicos para Docker (apenas não-sensíveis)
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/5kplatform?schema=public
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_PUBLIC_URL: http://localhost:9000
+    ports:
+      - "4000:4000"
+    volumes:
+      # Mapear código fonte para hot reload
+      - ./backend/src:/app/src:ro
+      - ./backend/prisma:/app/prisma:ro
+      # Evitar mapear node_modules (usar do container)
+      - /app/node_modules
+      - /app/dist
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    networks:
+      - 5kplatform_network
+    command: npm run dev
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: 5kplatform_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: 5kplatform
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - 5kplatform_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO (S3 Compatible Storage)
+  minio:
+    image: minio/minio:latest
+    container_name: 5kplatform_minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - 5kplatform_network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+networks:
+  5kplatform_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  minio_data:
+    driver: local
