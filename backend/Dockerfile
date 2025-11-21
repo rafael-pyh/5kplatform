@@ -11,7 +11,6 @@ COPY prisma ./prisma/
 RUN npm install
 
 # Copiar código fonte
-COPY .env .env
 COPY . .
 
 # Gerar Prisma Client
