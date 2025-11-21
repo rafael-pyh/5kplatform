@@ -19,7 +19,6 @@ COPY backend/prisma ./prisma
 COPY backend/prisma/seed.ts prisma/seed.ts
 COPY backend/.env .env
 COPY backend/tsconfig.* ./
-COPY backend/scripts ./scripts
 
 # Gerar Prisma Client
 RUN npx prisma generate
