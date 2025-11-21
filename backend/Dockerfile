@@ -5,13 +5,13 @@ WORKDIR /app
 
 # Copiar arquivos de dependências
 COPY package*.json ./
-COPY prisma ./prisma/
+COPY backend/prisma ./prisma/
 
 # Instalar dependências
 RUN npm install
 
 # Copiar código fonte
-COPY .env .env
+# COPY .env .env
 COPY . .
 
 # Gerar Prisma Client
@@ -30,8 +30,8 @@ WORKDIR /app
 
 # Copiar arquivos de dependências
 COPY package*.json ./
-COPY prisma ./prisma/
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY backend/prisma ./prisma/
+COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Instalar apenas dependências de produção
