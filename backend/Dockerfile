@@ -36,8 +36,8 @@ COPY ./backend/prisma ./prisma/
 # Instalar apenas dependências de produção
 RUN npm install --omit=dev
 
-# Gerar Prisma Client
-RUN npx prisma generate
+# # Gerar Prisma Client
+# RUN npx prisma generate
 
 # Copiar build da stage anterior
 COPY --from=builder /app/dist ./dist
