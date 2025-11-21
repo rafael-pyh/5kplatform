@@ -31,12 +31,13 @@ WORKDIR /app
 # Copiar arquivos de dependências
 COPY package*.json ./
 COPY prisma ./prisma/
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Instalar apenas dependências de produção
 RUN npm install --omit=dev
 
-# Gerar Prisma Client
-RUN npx prisma generate
+# Gerar Prisma Client will be done at startup via entrypoint
 
 # Copiar build da stage anterior
 COPY --from=builder /app/dist ./dist
@@ -58,5 +59,5 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Comando para iniciar (com migrations e seed)
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/prisma/seed.js && npm start"]
+# Use entrypoint to allow optional auto-migration and seeding
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
