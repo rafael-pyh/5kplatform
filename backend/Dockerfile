@@ -4,15 +4,16 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copiar arquivos de dependências
-COPY package*.json ./
+# Use explicit backend path so Docker builds correctly when context is repo root
+COPY ./backend/package*.json ./
 # COPY prisma ./prisma/
 
 # Instalar dependências
 RUN npm install
 
-# Copiar código fonte
+# Copiar código fonte (diretório backend quando o contexto de build é o repo root)
 # COPY .env .env
-COPY . .
+COPY ./backend .
 
 # Gerar Prisma Client
 RUN npx prisma generate
@@ -28,8 +29,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copiar arquivos de dependências
-COPY package*.json ./
+# Copiar arquivos de dependências para stage de produção
+COPY ./backend/package*.json ./
 # COPY prisma ./prisma/
 
 # Instalar apenas dependências de produção
