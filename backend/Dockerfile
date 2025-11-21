@@ -11,8 +11,15 @@ COPY backend/prisma ./prisma/
 RUN npm install
 
 # Copiar código fonte
-# COPY .env .env
-COPY . .
+# Copiar arquivos do backend (evita copiar o repo root e garante tsconfig correto)
+# Copia tsconfig, src e arquivos necessários para build
+COPY backend/tsconfig.json ./tsconfig.json
+COPY backend/src ./src
+COPY backend/prisma ./prisma
+COPY backend/prisma/seed.ts prisma/seed.ts
+COPY backend/.env .env
+COPY backend/tsconfig.* ./
+COPY backend/scripts ./scripts
 
 # Gerar Prisma Client
 RUN npx prisma generate
