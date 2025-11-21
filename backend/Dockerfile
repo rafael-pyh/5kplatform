@@ -30,7 +30,7 @@ WORKDIR /app
 
 # Copiar arquivos de dependências
 COPY package*.json ./
-COPY prisma ./prisma/
+# COPY prisma ./prisma/
 
 # Instalar apenas dependências de produção
 RUN npm install --omit=dev
