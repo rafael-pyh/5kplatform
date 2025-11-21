@@ -5,12 +5,13 @@ WORKDIR /app
 
 # Copiar arquivos de dependências
 COPY package*.json ./
-COPY prisma ./prisma/
+# COPY prisma ./prisma/
 
 # Instalar dependências
 RUN npm install
 
 # Copiar código fonte
+# COPY .env .env
 COPY . .
 
 # Gerar Prisma Client
