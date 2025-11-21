@@ -4,15 +4,21 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copiar arquivos de dependências
-COPY package*.json ./
-COPY prisma ./prisma/
+COPY backend/package*.json ./
+COPY backend/prisma ./prisma/
 
 # Instalar dependências
 RUN npm install
 
 # Copiar código fonte
-COPY .env .env
-COPY . .
+# Copiar arquivos do backend (evita copiar o repo root e garante tsconfig correto)
+# Copia tsconfig, src e arquivos necessários para build
+COPY backend/tsconfig.json ./tsconfig.json
+COPY backend/src ./src
+COPY backend/prisma ./prisma
+COPY backend/prisma/seed.ts prisma/seed.ts
+# COPY backend/.env .env
+COPY backend/tsconfig.* ./
 
 # Gerar Prisma Client
 RUN npx prisma generate
@@ -29,14 +35,15 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Copiar arquivos de dependências
-COPY package*.json ./
-COPY prisma ./prisma/
+COPY backend/package*.json ./
+COPY backend/prisma ./prisma/
+COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Instalar apenas dependências de produção
 RUN npm install --omit=dev
 
-# Gerar Prisma Client
-RUN npx prisma generate
+# Gerar Prisma Client will be done at startup via entrypoint
 
 # Copiar build da stage anterior
 COPY --from=builder /app/dist ./dist
@@ -58,5 +65,5 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Comando para iniciar (com migrations e seed)
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/prisma/seed.js && npm start"]
+# Use entrypoint to allow optional auto-migration and seeding
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
