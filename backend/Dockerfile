@@ -4,7 +4,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copiar arquivos de dependências
-COPY package*.json ./
+COPY backend/package*.json ./
 COPY backend/prisma ./prisma/
 
 # Instalar dependências
@@ -29,7 +29,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Copiar arquivos de dependências
-COPY package*.json ./
+COPY backend/package*.json ./
 COPY backend/prisma ./prisma/
 COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
