@@ -12,7 +12,7 @@ export const minioClient = new Client({
 export const ensureBucket = async () => {
   const bucket = "uploads";
   try {
-    const exists = await minioClient.bucketExists(bucket);
+    const exists = await minioClient.bucketExists(bucket).catch(() => false);
     if (!exists) {
       await minioClient.makeBucket(bucket, "us-east-1");
       

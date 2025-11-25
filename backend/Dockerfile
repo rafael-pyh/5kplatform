@@ -56,7 +56,7 @@ RUN groupadd -g 1001 nodejs && \
 RUN chown -R nodejs:nodejs /app
 
 # Usar usuário não-root
-USER nodejs
+# USER nodejs
 
 # Expor porta
 EXPOSE 4000
