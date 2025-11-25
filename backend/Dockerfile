@@ -50,7 +50,7 @@ COPY --from=builder /app/dist ./dist
 
 # Criar usuário não-root para segurança
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+    useradd -u 1001 -g nodejs --no-create-home nodejs
 
 # Mudar propriedade dos arquivos
 RUN chown -R nodejs:nodejs /app
