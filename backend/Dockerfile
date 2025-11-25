@@ -49,8 +49,8 @@ RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
 
 # Criar usuário não-root para segurança
-RUN addgroup -g 1001 -S nodejs && \
-    useradd -u 1001 -g nodejs --no-create-home nodejs
+RUN groupadd -g 1001 nodejs && \
+    useradd -u 1001 -g nodejs --shell /bin/bash --create-home nodejs
 
 # Mudar propriedade dos arquivos
 RUN chown -R nodejs:nodejs /app
