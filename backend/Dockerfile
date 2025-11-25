@@ -30,7 +30,7 @@ RUN npm run build
 RUN npx tsc prisma/seed.ts --outDir dist/prisma --esModuleInterop --skipLibCheck --resolveJsonModule
 
 # Production stage
-FROM node:20-alpine
+FROM --platform=linux/amd64 node:20-slim AS runtime
 
 WORKDIR /app
 
