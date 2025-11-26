@@ -21,10 +21,22 @@ npx prisma generate || echo "⚠️ prisma generate falhou — continuando..."
 
 # Aplicar migrations
 echo "📦 Executando: prisma migrate deploy..."
-npx prisma migrate deploy || {
-  echo "❌ Erro ao rodar migrations!"
-  exit 1
-}
+if ! npx prisma migrate deploy 2>&1 | tee /tmp/migrate.log; then
+  if grep -q "P3005" /tmp/migrate.log; then
+    echo "⚠️ Database não vazio. Tentando baseline..."
+    # Se não há migrations aplicadas e o banco não está vazio, fazer baseline
+    echo "📌 Marcando estado atual como baseline..."
+    npx prisma migrate resolve --applied "$(ls -1 prisma/migrations | head -1)" 2>/dev/null || true
+    echo "🔄 Tentando deploy novamente..."
+    npx prisma migrate deploy || {
+      echo "❌ Erro ao rodar migrations após baseline!"
+      exit 1
+    }
+  else
+    echo "❌ Erro ao rodar migrations!"
+    exit 1
+  fi
+fi
 
 echo "✅ Migrations aplicadas com sucesso!"
 
