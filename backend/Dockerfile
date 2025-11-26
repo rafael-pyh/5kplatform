@@ -36,6 +36,8 @@ FROM --platform=linux/amd64 node:20-slim AS runtime
 
 WORKDIR /app
 
+RUN npx tsc prisma/seed.ts --outDir dist/prisma
+
 # Copiar arquivos de dependências
 COPY backend/package*.json ./
 COPY --from=builder /app/prisma ./prisma
