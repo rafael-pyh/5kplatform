@@ -16,9 +16,6 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
-  },
   "ts-node": {
     "esm": false,
     "transpileOnly": true,
