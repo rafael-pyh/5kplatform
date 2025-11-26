@@ -1,5 +1,4 @@
 #!/bin/sh
-set -e
 
 echo "📌 Entrypoint iniciado..."
 
@@ -19,9 +18,14 @@ fi
 echo "🔄 Executando: prisma generate..."
 npx prisma generate || echo "⚠️ prisma generate falhou — continuando..."
 
-# Aplicar migrations
+# Aplicar migrations (desabilitar exit on error temporariamente)
+set +e
 echo "📦 Executando: prisma migrate deploy..."
-if ! npx prisma migrate deploy 2>&1 | tee /tmp/migrate.log; then
+npx prisma migrate deploy 2>&1 | tee /tmp/migrate.log
+MIGRATE_EXIT_CODE=$?
+set -e
+
+if [ $MIGRATE_EXIT_CODE -ne 0 ]; then
   if grep -q "P3005" /tmp/migrate.log; then
     echo "⚠️ Database não vazio detectado (P3005)."
     
