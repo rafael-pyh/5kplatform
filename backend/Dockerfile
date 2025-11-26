@@ -29,14 +29,14 @@ RUN npx prisma generate
 RUN npm run build
 
 # Compilar seed.ts separadamente
-RUN npx tsc prisma/seed.ts --outDir dist/prisma --esModuleInterop --skipLibCheck --resolveJsonModule
+# RUN npx tsc prisma/seed.ts --outDir dist/prisma --esModuleInterop --skipLibCheck --resolveJsonModule
 
 # ------------ PRODUCTION STAGE ------------
 FROM --platform=linux/amd64 node:20-slim AS runtime
 
 WORKDIR /app
 
-RUN npx tsc prisma/seed.ts --outDir dist/prisma
+# RUN npx tsc prisma/seed.ts --outDir dist/prisma
 
 # Copiar arquivos de dependências
 COPY backend/package*.json ./
