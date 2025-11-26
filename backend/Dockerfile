@@ -7,7 +7,7 @@ RUN apt-get update -y && apt-get install -y openssl libssl-dev
 
 # Copiar arquivos de dependências
 COPY backend/package*.json ./
-COPY backend/prisma ./prisma/
+COPY --from=builder /app/prisma ./prisma
 
 # Instalar dependências
 RUN npm install
@@ -38,7 +38,7 @@ WORKDIR /app
 
 # Copiar arquivos de dependências
 COPY backend/package*.json ./
-COPY backend/prisma ./prisma/
+COPY --from=builder /app/prisma ./prisma
 COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
