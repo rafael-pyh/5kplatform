@@ -23,22 +23,33 @@ npx prisma generate || echo "⚠️ prisma generate falhou — continuando..."
 echo "📦 Executando: prisma migrate deploy..."
 if ! npx prisma migrate deploy 2>&1 | tee /tmp/migrate.log; then
   if grep -q "P3005" /tmp/migrate.log; then
-    echo "⚠️ Database não vazio. Tentando baseline..."
-    # Se não há migrations aplicadas e o banco não está vazio, fazer baseline
-    echo "📌 Marcando estado atual como baseline..."
-    npx prisma migrate resolve --applied "$(ls -1 prisma/migrations | head -1)" 2>/dev/null || true
-    echo "🔄 Tentando deploy novamente..."
-    npx prisma migrate deploy || {
-      echo "❌ Erro ao rodar migrations após baseline!"
-      exit 1
-    }
+    echo "⚠️ Database não vazio detectado (P3005)."
+    
+    # Verificar se há migrations no diretório
+    if [ -d "prisma/migrations" ] && [ "$(ls -A prisma/migrations 2>/dev/null)" ]; then
+      echo "📌 Tentando baseline com primeira migration..."
+      FIRST_MIGRATION=$(ls -1 prisma/migrations | head -1)
+      npx prisma migrate resolve --applied "$FIRST_MIGRATION" 2>/dev/null || true
+      echo "🔄 Tentando deploy novamente..."
+      npx prisma migrate deploy || {
+        echo "❌ Erro ao rodar migrations após baseline!"
+        exit 1
+      }
+    else
+      echo "⚠️ Nenhuma migration encontrada em prisma/migrations"
+      echo "🔧 Sincronizando schema com db push..."
+      npx prisma db push --skip-generate || {
+        echo "❌ Erro ao sincronizar schema!"
+        exit 1
+      }
+    fi
   else
     echo "❌ Erro ao rodar migrations!"
     exit 1
   fi
 fi
 
-echo "✅ Migrations aplicadas com sucesso!"
+echo "✅ Migrations/Schema aplicado com sucesso!"
 
 # Iniciar servidor
 echo "🚀 Iniciando aplicação..."
