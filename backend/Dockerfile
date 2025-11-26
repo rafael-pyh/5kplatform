@@ -29,19 +29,16 @@ RUN npx prisma generate
 RUN npm run build
 
 # Compilar seed.ts separadamente
-# RUN npx tsc prisma/seed.ts --outDir dist/prisma --esModuleInterop --skipLibCheck --resolveJsonModule
+RUN npx tsc prisma/seed.ts --outDir dist/prisma --esModuleInterop --skipLibCheck --resolveJsonModule
 
-# ------------ PRODUCTION STAGE ------------
+# Production stage
 FROM --platform=linux/amd64 node:20-slim AS runtime
 
 WORKDIR /app
 
-# Install OpenSSL and netcat for health checks
-RUN apt-get update -y && apt-get install -y openssl libssl-dev netcat-openbsd && rm -rf /var/lib/apt/lists/*
-
 # Copiar arquivos de dependências
 COPY backend/package*.json ./
-COPY --from=builder /app/prisma ./prisma
+COPY backend/prisma ./prisma/
 COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
