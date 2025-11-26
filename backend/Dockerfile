@@ -63,6 +63,9 @@ RUN chown -R nodejs:nodejs /app
 # Expor porta
 EXPOSE 4000
 
+# Rodar migrations automaticamente ao iniciar
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"

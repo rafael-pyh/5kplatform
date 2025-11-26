@@ -3,18 +3,22 @@ FROM node:20-alpine AS development
 
 WORKDIR /app
 
-# Copiar arquivos de dependências
+# Copiar arquivos básicos
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Instalar TODAS as dependências (incluindo dev)
+# Instalar TODAS dependências (dev incluídas)
 RUN npm install
 
-# Gerar Prisma Client
+# Gerar o Prisma Client
 RUN npx prisma generate
+
+# Copiar o restante do código
+COPY . .
 
 # Expor porta
 EXPOSE 4000
 
-# Comando padrão: npm run dev (com ts-node e watch)
-CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed ; npm run dev"]
+# Rodar migrations AUTOMÁTICAS no dev
+# > migrate dev cria o shadow DB e aplica mudanças
+CMD ["sh", "-c", "npx prisma migrate dev --name \"auto-dev\" && npm run dev"]
