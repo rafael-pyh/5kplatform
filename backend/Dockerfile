@@ -7,7 +7,7 @@ RUN apt-get update -y && apt-get install -y openssl libssl-dev
 
 # Copiar arquivos de dependências
 COPY backend/package*.json ./
-COPY --from=builder /app/prisma ./prisma
+COPY backend/prisma ./prisma/
 
 # Instalar dependências
 RUN npm install
@@ -31,7 +31,7 @@ RUN npm run build
 # Compilar seed.ts separadamente
 RUN npx tsc prisma/seed.ts --outDir dist/prisma --esModuleInterop --skipLibCheck --resolveJsonModule
 
-# Production stage
+# ------------ PRODUCTION STAGE ------------
 FROM --platform=linux/amd64 node:20-slim AS runtime
 
 WORKDIR /app
