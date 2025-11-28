@@ -27,43 +27,28 @@ if [ -n "$DATABASE_URL" ]; then
   echo "✅ Banco de dados disponível!"
 fi
 
-# Gerar Prisma Client
+# Gerar Prisma Client (primeira vez)
 echo "🔄 Gerando Prisma Client..."
 npx prisma generate || {
   echo "⚠️ Erro ao gerar Prisma Client"
   exit 1
 }
 
-# Verificar se as tabelas já existem
-echo "🔍 Verificando estado do banco de dados..."
-TABLE_CHECK=$(npx prisma db execute --stdin <<EOF
-SELECT COUNT(*) as count FROM information_schema.tables 
-WHERE table_schema = 'public' AND table_name = 'Person';
-EOF
-)
-echo "   Resultado: $TABLE_CHECK"
-
 # Sincronizar schema com banco de dados
 echo "🔧 Sincronizando schema com banco de dados (db push)..."
-set +e
-npx prisma db push --skip-generate --accept-data-loss 2>&1 | tee /tmp/db-push.log
-DB_PUSH_EXIT=$?
-set -e
-
-if [ $DB_PUSH_EXIT -ne 0 ]; then
-  echo "⚠️ DB push falhou. Analisando logs..."
-  cat /tmp/db-push.log
-  echo "❌ Erro ao sincronizar schema!"
+echo "   DATABASE_URL: $(echo $DATABASE_URL | sed 's/:[^:]*@/:***@/')"
+npx prisma db push --skip-generate --accept-data-loss 2>&1 || {
+  echo "❌ Erro ao sincronizar schema! Verifique se DATABASE_URL está correta."
   exit 1
-fi
-
+}
 echo "✅ Schema sincronizado com sucesso!"
 
-# Verificar se a tabela Person foi criada
-echo "🔍 Verificando criação da tabela Person..."
-npx prisma db execute --stdin <<EOF || echo "⚠️ Não foi possível verificar tabela Person"
-SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename = 'Person';
-EOF
+# Regenerar Prisma Client após db push (importante!)
+echo "🔄 Regenerando Prisma Client após sincronização..."
+npx prisma generate || {
+  echo "⚠️ Erro ao regenerar Prisma Client"
+  exit 1
+}
 
 # Executar seed para criar super admin
 echo "🌱 Executando seed..."
