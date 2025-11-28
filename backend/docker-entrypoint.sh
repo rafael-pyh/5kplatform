@@ -34,16 +34,36 @@ npx prisma generate || {
   exit 1
 }
 
+# Verificar se as tabelas já existem
+echo "🔍 Verificando estado do banco de dados..."
+TABLE_CHECK=$(npx prisma db execute --stdin <<EOF
+SELECT COUNT(*) as count FROM information_schema.tables 
+WHERE table_schema = 'public' AND table_name = 'Person';
+EOF
+)
+echo "   Resultado: $TABLE_CHECK"
+
 # Sincronizar schema com banco de dados
 echo "🔧 Sincronizando schema com banco de dados (db push)..."
-npx prisma db push --skip-generate --accept-data-loss --force-reset || {
-  echo "⚠️ Primeira tentativa falhou. Tentando novamente sem force-reset..."
-  npx prisma db push --skip-generate --accept-data-loss || {
-    echo "❌ Erro ao sincronizar schema!"
-    exit 1
-  }
-}
+set +e
+npx prisma db push --skip-generate --accept-data-loss 2>&1 | tee /tmp/db-push.log
+DB_PUSH_EXIT=$?
+set -e
+
+if [ $DB_PUSH_EXIT -ne 0 ]; then
+  echo "⚠️ DB push falhou. Analisando logs..."
+  cat /tmp/db-push.log
+  echo "❌ Erro ao sincronizar schema!"
+  exit 1
+fi
+
 echo "✅ Schema sincronizado com sucesso!"
+
+# Verificar se a tabela Person foi criada
+echo "🔍 Verificando criação da tabela Person..."
+npx prisma db execute --stdin <<EOF || echo "⚠️ Não foi possível verificar tabela Person"
+SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename = 'Person';
+EOF
 
 # Executar seed para criar super admin
 echo "🌱 Executando seed..."
