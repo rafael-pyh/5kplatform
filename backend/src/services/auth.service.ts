@@ -81,24 +81,33 @@ export const login = async (data: LoginDto) => {
     where: { email: data.email },
   });
 
+  console.log('🔍 Login attempt:', { email: data.email, userFound: !!user });
+
   if (!user) {
+    console.log('❌ User not found for email:', data.email);
     throw new UnauthorizedError("Credenciais inválidas");
   }
 
   // Verificação crítica: usuário deve estar ativo
+  console.log('✅ User found:', { id: user.id, email: user.email, active: user.active, hasPassword: !!user.password, role: user.role });
+  
   if (!user.active) {
+    console.log('❌ User account is not active');
     throw new UnauthorizedError("Conta desativada. Entre em contato com o administrador.");
   }
 
   // Verifica se tem senha definida
   if (!user.password) {
+    console.log('❌ User has no password set');
     throw new UnauthorizedError("Senha não definida. Verifique seu email para concluir o cadastro.");
   }
 
   // Verifica a senha
   const isValidPassword = await comparePassword(data.password, user.password);
+  console.log('🔐 Password check:', { isValid: isValidPassword });
 
   if (!isValidPassword) {
+    console.log('❌ Invalid password');
     throw new UnauthorizedError("Credenciais inválidas");
   }
 
