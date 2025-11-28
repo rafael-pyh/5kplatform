@@ -36,20 +36,23 @@ npx prisma generate || {
 
 # Sincronizar schema com banco de dados
 echo "🔧 Sincronizando schema com banco de dados (db push)..."
-npx prisma db push --skip-generate --accept-data-loss || {
-  echo "❌ Erro ao sincronizar schema!"
-  exit 1
+npx prisma db push --skip-generate --accept-data-loss --force-reset || {
+  echo "⚠️ Primeira tentativa falhou. Tentando novamente sem force-reset..."
+  npx prisma db push --skip-generate --accept-data-loss || {
+    echo "❌ Erro ao sincronizar schema!"
+    exit 1
+  }
 }
 echo "✅ Schema sincronizado com sucesso!"
 
 # Executar seed para criar super admin
 echo "🌱 Executando seed..."
-if [ -f "prisma/seed.js" ]; then
-  node prisma/seed.js || echo "⚠️ Seed falhou, mas continuando..."
-elif [ -f "dist/prisma/seed.js" ]; then
+if [ -f "dist/prisma/seed.js" ]; then
   node dist/prisma/seed.js || echo "⚠️ Seed falhou, mas continuando..."
+elif [ -f "prisma/seed.js" ]; then
+  node prisma/seed.js || echo "⚠️ Seed falhou, mas continuando..."
 else
-  echo "⚠️ Arquivo seed.js não encontrado"
+  echo "⚠️ Arquivo seed.js não encontrado - pulando seed"
 fi
 
 # Iniciar aplicação
