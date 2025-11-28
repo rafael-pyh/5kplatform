@@ -6,9 +6,7 @@ buildContext = "backend"
 [deploy]
 restartPolicyType = "ALWAYS"
 restartPolicyMaxRetries = 10
-# Desabilitar auto-migrations do Railway (gerenciado pelo entrypoint)
 numReplicas = 1
-startCommand = "/usr/local/bin/docker-entrypoint.sh"
 
 [env]
 NODE_ENV = "production"

@@ -1,12 +1,57 @@
 #!/bin/sh
 set -e
 
-echo "Starting entrypoint script..."
+echo "📌 Entrypoint iniciado..."
 
-# Generate Prisma Client (safe to run on container start)
-echo "Generating Prisma Client..."
-npx prisma generate || echo "prisma generate failed — continuing"
+# Aguardar banco ficar acessível (com timeout)
+if [ -n "$DATABASE_URL" ]; then
+  echo "⏳ Aguardando banco de dados..."
+  max_attempts=30
+  attempt=0
+  
+  # Extrair host e porta do DATABASE_URL
+  DB_HOST=$(echo $DATABASE_URL | sed -E 's/.*@([^:]+):.*/\1/')
+  DB_PORT=$(echo $DATABASE_URL | sed -E 's/.*:([0-9]+)\/.*/\1/')
+  
+  until nc -z -w3 "$DB_HOST" "$DB_PORT" 2>/dev/null || [ $attempt -eq $max_attempts ]; do
+    attempt=$((attempt + 1))
+    echo "   Tentativa $attempt/$max_attempts - Aguardando 2s..."
+    sleep 2
+  done
+  
+  if [ $attempt -eq $max_attempts ]; then
+    echo "❌ Timeout: Banco não respondeu após $max_attempts tentativas"
+    exit 1
+  fi
+  
+  echo "✅ Banco de dados disponível!"
+fi
 
-# Start the application
-echo "Starting application (npm start)"
+# Gerar Prisma Client
+echo "🔄 Gerando Prisma Client..."
+npx prisma generate || {
+  echo "⚠️ Erro ao gerar Prisma Client"
+  exit 1
+}
+
+# Sincronizar schema com banco de dados
+echo "🔧 Sincronizando schema com banco de dados (db push)..."
+npx prisma db push --skip-generate --accept-data-loss || {
+  echo "❌ Erro ao sincronizar schema!"
+  exit 1
+}
+echo "✅ Schema sincronizado com sucesso!"
+
+# Executar seed para criar super admin
+echo "🌱 Executando seed..."
+if [ -f "prisma/seed.js" ]; then
+  node prisma/seed.js || echo "⚠️ Seed falhou, mas continuando..."
+elif [ -f "dist/prisma/seed.js" ]; then
+  node dist/prisma/seed.js || echo "⚠️ Seed falhou, mas continuando..."
+else
+  echo "⚠️ Arquivo seed.js não encontrado"
+fi
+
+# Iniciar aplicação
+echo "🚀 Iniciando aplicação..."
 exec npm start

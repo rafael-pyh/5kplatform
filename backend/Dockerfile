@@ -36,6 +36,11 @@ FROM --platform=linux/amd64 node:20-slim AS runtime
 
 WORKDIR /app
 
+# Instalar OpenSSL e netcat (necessários para Prisma e health checks)
+RUN apt-get update -y && \
+    apt-get install -y openssl libssl-dev netcat-openbsd && \
+    rm -rf /var/lib/apt/lists/*
+
 # Copiar arquivos de dependências
 COPY backend/package*.json ./
 COPY backend/prisma ./prisma/
