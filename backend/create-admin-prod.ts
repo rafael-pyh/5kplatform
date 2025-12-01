@@ -1,7 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: {
+    type: 'postgresql',
+  },
+  datasourceUrl: process.env.DATABASE_URL,
+});
 
 async function createAdmin() {
   console.log("🔧 Criando Super Admin no banco de produção...");
