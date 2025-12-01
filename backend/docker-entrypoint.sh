@@ -32,6 +32,16 @@ npx prisma generate || {
   echo "❌ Erro ao gerar Prisma Client!"
   exit 1
 }
+echo "✅ Prisma Client gerado!"
+
+# Verificar se o Prisma Client foi gerado corretamente
+if [ ! -d "node_modules/.prisma/client" ]; then
+  echo "❌ Prisma Client não foi gerado corretamente!"
+  echo "Listando node_modules/.prisma:"
+  ls -la node_modules/.prisma/ || echo "Diretório .prisma não existe"
+  exit 1
+fi
+echo "✅ Prisma Client verificado em node_modules/.prisma/client"
 
 # Sincronizar schema com banco (db push para desenvolvimento)
 echo "📦 Sincronizando schema com banco de dados..."
