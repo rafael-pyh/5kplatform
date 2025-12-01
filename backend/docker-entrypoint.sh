@@ -26,22 +26,39 @@ if [ -n "$DATABASE_URL" ]; then
   echo "✅ Banco de dados disponível!"
 fi
 
+# Verificar arquivos do Prisma antes de gerar
+echo "🔍 Verificando arquivos do Prisma..."
+echo "Schema existe?"
+ls -la prisma/schema.prisma || echo "❌ Schema não encontrado!"
+echo "Config existe?"
+ls -la prisma.config.ts || echo "⚠️ Config não encontrado"
+
 # Gerar Prisma Client
 echo "🔄 Gerando Prisma Client..."
-npx prisma generate || {
+npx prisma generate --schema=./prisma/schema.prisma 2>&1 | tee /tmp/prisma-generate.log || {
   echo "❌ Erro ao gerar Prisma Client!"
+  cat /tmp/prisma-generate.log
   exit 1
 }
 echo "✅ Prisma Client gerado!"
 
 # Verificar se o Prisma Client foi gerado corretamente
-if [ ! -d "node_modules/.prisma/client" ]; then
-  echo "❌ Prisma Client não foi gerado corretamente!"
-  echo "Listando node_modules/.prisma:"
-  ls -la node_modules/.prisma/ || echo "Diretório .prisma não existe"
+echo "🔍 Verificando Prisma Client gerado..."
+if [ -d "node_modules/.prisma" ]; then
+  echo "Conteúdo de node_modules/.prisma:"
+  ls -la node_modules/.prisma/
+  if [ -d "node_modules/.prisma/client" ]; then
+    echo "Conteúdo de node_modules/.prisma/client:"
+    ls -la node_modules/.prisma/client/ | head -20
+    echo "✅ Prisma Client verificado!"
+  else
+    echo "❌ Diretório client não existe!"
+    exit 1
+  fi
+else
+  echo "❌ Diretório .prisma não existe!"
   exit 1
 fi
-echo "✅ Prisma Client verificado em node_modules/.prisma/client"
 
 # Sincronizar schema com banco (db push para desenvolvimento)
 echo "📦 Sincronizando schema com banco de dados..."
