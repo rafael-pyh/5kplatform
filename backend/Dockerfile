@@ -24,6 +24,9 @@ COPY backend/prisma.config.ts .
 # COPY backend/.env .env
 COPY backend/tsconfig.* ./
 
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+
 # Gerar Prisma Client
 RUN npx prisma generate
 
