@@ -62,7 +62,7 @@ fi
 
 # Sincronizar schema com banco (db push para desenvolvimento)
 echo "📦 Sincronizando schema com banco de dados..."
-npx prisma db push --skip-generate --accept-data-loss || {
+npx prisma db push --accept-data-loss || {
   echo "❌ Erro ao sincronizar schema!"
   exit 1
 }
