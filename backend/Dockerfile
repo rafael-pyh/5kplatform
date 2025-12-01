@@ -20,7 +20,8 @@ COPY backend/tsconfig.json ./tsconfig.json
 COPY backend/src ./src
 COPY backend/prisma ./prisma
 COPY backend/prisma/seed.ts prisma/seed.ts
-# COPY backend/.env .env
+COPY backend/prisma.config.ts .
+COPY backend/.env .env
 COPY backend/tsconfig.* ./
 
 # Gerar Prisma Client
