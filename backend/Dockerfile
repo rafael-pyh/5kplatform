@@ -52,6 +52,8 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 RUN npm install --omit=dev
 
 # Gerar Prisma Client will be done at startup via entrypoint
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 # Copiar build da stage anterior
 COPY --from=builder /app/dist ./dist
