@@ -8,7 +8,7 @@ RUN apt-get update -y && apt-get install -y openssl libssl-dev
 # Copiar arquivos de dependências
 COPY backend/package*.json ./
 COPY backend/prisma ./prisma/
-COPY prisma.config.ts .
+COPY backend/prisma.config.ts .
 
 # Instalar dependências
 RUN npm install
