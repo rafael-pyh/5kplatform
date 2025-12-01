@@ -28,15 +28,18 @@ fi
 
 # Gerar Prisma Client
 echo "🔄 Gerando Prisma Client..."
-npx prisma generate
-
-# Aplicar migrations REAL
-echo "📦 Executando migrations..."
-npx prisma migrate deploy || {
-  echo "❌ Erro ao rodar migrations!"
+npx prisma generate || {
+  echo "❌ Erro ao gerar Prisma Client!"
   exit 1
 }
-echo "✅ Migrations aplicadas com sucesso!"
+
+# Sincronizar schema com banco (db push para desenvolvimento)
+echo "📦 Sincronizando schema com banco de dados..."
+npx prisma db push --skip-generate --accept-data-loss || {
+  echo "❌ Erro ao sincronizar schema!"
+  exit 1
+}
+echo "✅ Schema sincronizado com sucesso!"
 
 # Seed
 echo "🌱 Executando seed..."

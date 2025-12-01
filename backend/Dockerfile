@@ -49,15 +49,14 @@ RUN apt-get update -y && \
 # Copiar arquivos de dependências
 COPY backend/package*.json ./
 COPY backend/prisma ./prisma/
+COPY backend/prisma.config.ts ./
 COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Instalar apenas dependências de produção
 RUN npm install --omit=dev
 
-# Gerar Prisma Client will be done at startup via entrypoint
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+# Prisma Client será gerado no entrypoint (não copiar do builder)
 
 # Copiar build da stage anterior
 COPY --from=builder /app/dist ./dist
