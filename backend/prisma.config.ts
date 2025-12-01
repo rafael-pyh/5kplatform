@@ -1,9 +1,9 @@
-export default {
+const config = {
   schema: './prisma/schema.prisma',
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
+  migrate: {
+    datasourceUrl: process.env.DATABASE_URL || '',
   },
 };
+
+export default config;
 
