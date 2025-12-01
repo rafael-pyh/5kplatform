@@ -7,7 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "dev:nodemon": "nodemon",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "/usr/local/bin/docker-entrypoint.sh",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
