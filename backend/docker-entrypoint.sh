@@ -57,10 +57,10 @@ fi
 
 # Executar migrations
 echo "🔄 Executando migrations..."
-npx prisma migrate deploy --schema=./prisma/schema.prisma || {
+DATABASE_URL="$DATABASE_URL" npx prisma migrate deploy --schema=./prisma/schema.prisma || {
   echo "❌ Erro ao executar migrations!"
   echo "Tentando criar o banco de dados..."
-  npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss || {
+  DATABASE_URL="$DATABASE_URL" npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss || {
     echo "❌ Erro ao criar estrutura do banco!"
     exit 1
   }
