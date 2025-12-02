@@ -11,10 +11,10 @@ COPY backend/package*.json ./
 # Instalar dependências
 RUN npm install
 
-# Copiar Prisma schema
+# Copiar Prisma schema e migrations
 COPY backend/prisma ./prisma/
 
-# Gerar Prisma Client
+# Gerar Prisma Client (não precisa de DATABASE_URL para generate)
 RUN npx prisma generate
 
 # Copiar código fonte
