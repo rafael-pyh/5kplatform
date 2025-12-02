@@ -7,7 +7,6 @@ RUN apt-get update -y && apt-get install -y openssl libssl-dev
 
 # Copiar arquivos de dependências
 COPY backend/package*.json ./
-COPY backend/prisma.config.js ./
 
 # Instalar dependências
 RUN npm install
@@ -16,7 +15,7 @@ RUN npm install
 COPY backend/prisma ./prisma/
 
 # Gerar Prisma Client (não precisa de DATABASE_URL para generate)
-RUN npx prisma generate
+RUN npx prisma generate --schema=./prisma/schema.prisma
 
 # Copiar código fonte
 COPY backend/tsconfig.json ./tsconfig.json
