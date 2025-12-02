@@ -1,8 +1,4 @@
-module.exports = {
+// Prisma 7 configuration
+export default {
   schema: './prisma/schema.prisma',
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db',
-    },
-  },
 };
