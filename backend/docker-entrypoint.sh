@@ -3,7 +3,7 @@ set -e
 
 echo "📌 Entrypoint iniciado..."
 
-# Aguardar banco ficar acessível (com timeout)
+# Aguardar banco ficar acessível
 if [ -n "$DATABASE_URL" ]; then
   echo "⏳ Aguardando banco de dados..."
   max_attempts=30
@@ -26,54 +26,34 @@ if [ -n "$DATABASE_URL" ]; then
   echo "✅ Banco de dados disponível!"
 fi
 
-# Verificar arquivos do Prisma antes de gerar
-echo "🔍 Verificando arquivos do Prisma..."
-echo "Schema existe?"
-ls -la prisma/schema.prisma || echo "❌ Schema não encontrado!"
-echo "Config existe?"
-ls -la prisma.config.ts || echo "⚠️ Config não encontrado"
-
-# Gerar Prisma Client
-echo "🔄 Gerando Prisma Client..."
-npx prisma generate --schema=./prisma/schema.prisma 2>&1 | tee /tmp/prisma-generate.log || {
-  echo "❌ Erro ao gerar Prisma Client!"
-  cat /tmp/prisma-generate.log
-  exit 1
-}
-echo "✅ Prisma Client gerado!"
-
-# Verificar se o Prisma Client foi gerado corretamente
-echo "🔍 Verificando Prisma Client gerado..."
-if [ -d "node_modules/.prisma" ]; then
-  echo "Conteúdo de node_modules/.prisma:"
-  ls -la node_modules/.prisma/
-  if [ -d "node_modules/.prisma/client" ]; then
-    echo "Conteúdo de node_modules/.prisma/client:"
-    ls -la node_modules/.prisma/client/ | head -20
-    echo "✅ Prisma Client verificado!"
-  else
-    echo "❌ Diretório client não existe!"
-    exit 1
-  fi
+# Verificar se Prisma Client já existe (foi copiado do builder)
+echo "🔍 Verificando Prisma Client..."
+if [ -d "node_modules/.prisma/client" ]; then
+  echo "✅ Prisma Client encontrado (copiado do builder)!"
 else
-  echo "❌ Diretório .prisma não existe!"
-  exit 1
+  echo "⚠️ Prisma Client não encontrado, gerando..."
+  npx prisma generate || {
+    echo "❌ Erro ao gerar Prisma Client!"
+    exit 1
+  }
 fi
 
-# Sincronizar schema com banco (db push para desenvolvimento)
-echo "📦 Sincronizando schema com banco de dados..."
-npx prisma db push --accept-data-loss || {
-  echo "❌ Erro ao sincronizar schema!"
+# Executar migrations (use deploy para produção)
+echo "🔄 Executando migrations..."
+npx prisma migrate deploy || {
+  echo "❌ Erro ao executar migrations!"
   exit 1
 }
-echo "✅ Schema sincronizado com sucesso!"
+echo "✅ Migrations aplicadas!"
 
-# Seed
+# Executar seed (opcional, pode falhar sem problemas)
 echo "🌱 Executando seed..."
 if [ -f "dist/prisma/seed.js" ]; then
   node dist/prisma/seed.js || echo "⚠️ Seed falhou, continuando..."
+elif [ -f "prisma/seed.js" ]; then
+  node prisma/seed.js || echo "⚠️ Seed falhou, continuando..."
 else
-  echo "⚠️ Seed não encontrado"
+  echo "⚠️ Arquivo de seed não encontrado, pulando..."
 fi
 
 echo "🚀 Iniciando aplicação..."
