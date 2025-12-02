@@ -1,11 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import * as service from "../services/lead.service";
 import { ResponseBuilder } from "../shared/ResponseBuilder";
+import { LeadStatus } from "../models/Lead";
 
 // ==================== LEAD CONTROLLER (Single Responsibility: HTTP handling) ====================
-
-// Definir os tipos manualmente até o Prisma Client ser gerado
-type LeadStatus = "BOUGHT" | "CANCELLED" | "NEGOTIATION";
 
 export const createLead = async (req: Request, res: Response, next: NextFunction) => {
   try {

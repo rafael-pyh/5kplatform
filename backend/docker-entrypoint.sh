@@ -35,47 +35,25 @@ fi
 
 echo "✅ Banco de dados disponível!"
 
-# Verificar se schema existe
-if [ ! -f "prisma/schema.prisma" ]; then
-  echo "❌ Schema Prisma não encontrado em prisma/schema.prisma"
+# Verificar se arquivo de config existe
+if [ ! -f "config/database.js" ]; then
+  echo "❌ Configuração do Sequelize não encontrada em config/database.js"
   exit 1
 fi
 
-echo "✅ Schema encontrado"
+echo "✅ Configuração do Sequelize encontrada"
 
-# Verificar se Prisma Client já existe
-echo "🔍 Verificando Prisma Client..."
-if [ -d "node_modules/.prisma/client" ]; then
-  echo "✅ Prisma Client encontrado!"
-else
-  echo "⚠️ Prisma Client não encontrado, gerando..."
-  npx prisma generate || {
-    echo "❌ Erro ao gerar Prisma Client!"
-    exit 1
-  }
-fi
-
-# Executar migrations
-echo "🔄 Executando migrations..."
-DATABASE_URL="$DATABASE_URL" npx prisma migrate deploy --schema=./prisma/schema.prisma || {
+# Executar migrations do Sequelize
+echo "🔄 Executando migrations do Sequelize..."
+npx sequelize-cli db:migrate || {
   echo "❌ Erro ao executar migrations!"
-  echo "Tentando criar o banco de dados..."
-  DATABASE_URL="$DATABASE_URL" npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss || {
-    echo "❌ Erro ao criar estrutura do banco!"
-    exit 1
-  }
+  exit 1
 }
 echo "✅ Migrations aplicadas!"
 
-# Executar seed (opcional, pode falhar sem problemas)
-echo "🌱 Executando seed..."
-if [ -f "dist/prisma/seed.js" ]; then
-  node dist/prisma/seed.js || echo "⚠️ Seed falhou, continuando..."
-elif [ -f "prisma/seed.js" ]; then
-  node prisma/seed.js || echo "⚠️ Seed falhou, continuando..."
-else
-  echo "⚠️ Arquivo de seed não encontrado, pulando..."
-fi
+# Executar seeds (opcional, pode falhar sem problemas)
+echo "🌱 Executando seeds..."
+npx sequelize-cli db:seed:all || echo "⚠️ Seeds falharam ou não existem, continuando..."
 
 echo "🚀 Iniciando aplicação..."
 exec npm start

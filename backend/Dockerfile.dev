@@ -3,15 +3,20 @@ FROM node:20-alpine AS development
 
 WORKDIR /app
 
+# Instalar PostgreSQL client para migrations
+RUN apk add --no-cache postgresql-client
+
 # Copiar arquivos básicos
 COPY package*.json ./
-COPY prisma ./prisma/
 
 # Instalar TODAS dependências (dev incluídas)
 RUN npm install
 
-# Gerar o Prisma Client
-RUN npx prisma generate
+# Copiar Sequelize config
+COPY .sequelizerc ./
+COPY config ./config
+COPY src/migrations ./src/migrations
+COPY src/seeders ./src/seeders
 
 # Copiar o restante do código
 COPY . .
@@ -19,6 +24,5 @@ COPY . .
 # Expor porta
 EXPOSE 4000
 
-# Rodar migrations AUTOMÁTICAS no dev
-# > migrate dev cria o shadow DB e aplica mudanças
-CMD ["sh", "-c", "npx prisma migrate dev --name \"auto-dev\" && npm run dev"]
+# Rodar migrations AUTOMÁTICAS no dev e iniciar
+CMD ["sh", "-c", "npx sequelize-cli db:migrate && npm run dev"]

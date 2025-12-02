@@ -1,12 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import 'reflect-metadata';
+import sequelize from "./src/database/sequelize";
+import { Person, PersonRole } from "./src/models/Person";
 import bcrypt from "bcryptjs";
-
-const prisma = new PrismaClient({
-  adapter: {
-    type: 'postgresql',
-  },
-  datasourceUrl: process.env.DATABASE_URL,
-});
 
 async function createAdmin() {
   console.log("🔧 Criando Super Admin no banco de produção...");
@@ -15,8 +10,12 @@ async function createAdmin() {
   const adminPassword = "admin123";
 
   try {
+    // Conectar ao banco
+    await sequelize.authenticate();
+    console.log("✅ Conectado ao banco de dados");
+
     // Verifica se já existe
-    const existing = await prisma.person.findUnique({
+    const existing = await Person.findOne({
       where: { email: adminEmail },
     });
 
@@ -25,38 +24,33 @@ async function createAdmin() {
     if (existing) {
       console.log("ℹ️  Admin encontrado. Atualizando...");
       
-      const updated = await prisma.person.update({
-        where: { email: adminEmail },
-        data: {
-          password: hashedPassword,
-          role: "SUPER_ADMIN",
-          emailVerified: true,
-          active: true,
-        },
+      await existing.update({
+        password: hashedPassword,
+        role: PersonRole.SUPER_ADMIN,
+        emailVerified: true,
+        active: true,
       });
 
       console.log("✅ Super Admin atualizado!");
       console.log("📧 Email:", adminEmail);
       console.log("🔑 Senha:", adminPassword);
-      console.log("👤 ID:", updated.id);
-      console.log("🏷️  Role:", updated.role);
-      console.log("✔️  Active:", updated.active);
-      console.log("✔️  EmailVerified:", updated.emailVerified);
+      console.log("👤 ID:", existing.id);
+      console.log("🏷️  Role:", existing.role);
+      console.log("✔️  Active:", existing.active);
+      console.log("✔️  EmailVerified:", existing.emailVerified);
     } else {
       console.log("❌ Admin não encontrado no banco!");
       console.log("💡 Criando novo admin...");
 
-      const admin = await prisma.person.create({
-        data: {
-          email: adminEmail,
-          password: hashedPassword,
-          name: "Super Admin",
-          role: "SUPER_ADMIN",
-          qrCode: `ADMIN-${Date.now()}`,
-          emailVerified: true,
-          active: true,
-        },
-      });
+      const admin = await Person.create({
+        email: adminEmail,
+        password: hashedPassword,
+        name: "Super Admin",
+        role: PersonRole.SUPER_ADMIN,
+        qrCode: `ADMIN-${Date.now()}`,
+        emailVerified: true,
+        active: true,
+      } as any);
 
       console.log("✅ Super Admin criado!");
       console.log("📧 Email:", adminEmail);
@@ -67,7 +61,7 @@ async function createAdmin() {
     console.error("❌ Erro:", error);
     process.exit(1);
   } finally {
-    await prisma.$disconnect();
+    await sequelize.close();
   }
 }
 
