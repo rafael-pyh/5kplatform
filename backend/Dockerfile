@@ -7,6 +7,7 @@ RUN apt-get update -y && apt-get install -y openssl libssl-dev
 
 # Copiar arquivos de dependências
 COPY backend/package*.json ./
+COPY backend/prisma.config.ts ./
 
 # Instalar dependências
 RUN npm install
@@ -39,8 +40,9 @@ RUN apt-get update -y && \
     apt-get install -y openssl libssl-dev netcat-openbsd && \
     rm -rf /var/lib/apt/lists/*
 
-# Copiar package.json
+# Copiar package.json e Prisma config
 COPY backend/package*.json ./
+COPY backend/prisma.config.ts ./
 
 # Instalar apenas dependências de produção
 RUN npm install --omit=dev
