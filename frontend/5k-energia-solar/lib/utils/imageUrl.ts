@@ -11,7 +11,7 @@ export function normalizeImageUrl(url: string | null | undefined): string | null
   }
 
   // Se é um caminho relativo, adiciona o domínio do MinIO
-  const MINIO_URL = process.env.NEXT_PUBLIC_MINIO_URL || 'http://localhost:9000';
+  const MINIO_URL = process.env.NEXT_PUBLIC_MINIO_URL;
   
   // Remove barra inicial se existir para evitar dupla barra
   const cleanPath = url.startsWith('/') ? url.substring(1) : url;

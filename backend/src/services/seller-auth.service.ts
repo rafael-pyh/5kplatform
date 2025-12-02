@@ -6,6 +6,7 @@ import { Validator } from "../shared/Validator";
 import { UnauthorizedError, NotFoundError, BadRequestError } from "../shared/errors";
 import crypto from "crypto";
 import { Op } from "sequelize";
+import { sendPasswordResetEmail } from "../utils/email";
 
 // ==================== DTOs ====================
 export interface SellerLoginDto {
@@ -175,7 +176,7 @@ export const requestPasswordReset = async (email: string) => {
   });
 
   // TODO: Enviar email de reset (implementar depois)
-  // await sendPasswordResetEmail(person.email, person.name, token);
+  await sendPasswordResetEmail(person.email, person.name, token);
 
   return { message: "Se o email existir, um link de redefinição será enviado." };
 };
