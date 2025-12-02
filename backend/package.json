@@ -7,8 +7,6 @@
     "dev": "tsx watch src/server.ts",
     "dev:nodemon": "nodemon",
     "build": "tsc",
-    "start": "/usr/local/bin/docker-entrypoint.sh",
-    "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
@@ -16,7 +14,13 @@
     "create:admin": "ts-node create-admin-prod.ts",
     "generate:hash": "ts-node generate-admin-hash.ts",
     "lint": "eslint src --ext .ts",
-    "format": "prettier --write \"src/**/*.ts\""
+    "format": "prettier --write \"src/**/*.ts\"",
+    "start": "node dist/index.js",
+    "start:migrate": "prisma migrate deploy && prisma db seed && npm start",
+    "prisma:generate": "prisma generate"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   },
   "ts-node": {
     "esm": false,
