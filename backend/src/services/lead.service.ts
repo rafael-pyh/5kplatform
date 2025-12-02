@@ -1,7 +1,7 @@
-import prisma from "../database/prisma";
-
-// Definir os tipos manualmente até o Prisma Client ser gerado
-type LeadStatus = "BOUGHT" | "CANCELLED" | "NEGOTIATION";
+import sequelize from "../database/sequelize";
+import { Lead, LeadStatus } from "../models/Lead";
+import { Person } from "../models/Person";
+import { Op } from "sequelize";
 
 export interface CreateLeadDto {
   name: string;
@@ -24,19 +24,15 @@ export interface UpdateLeadDto {
 
 // Criar um novo lead (usado pelo formulário público)
 export const createLead = async (data: CreateLeadDto) => {
-  return prisma.lead.create({
-    data,
-    include: {
-      owner: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-        },
-      },
-    },
+  const lead = await Lead.create(data as any);
+  await lead.reload({
+    include: [{
+      model: Person,
+      as: 'owner',
+      attributes: ['id', 'name', 'email', 'phone'],
+    }],
   });
+  return lead;
 };
 
 // Buscar todos os leads (admin)
@@ -44,51 +40,38 @@ export const getAllLeads = async (filters?: {
   status?: LeadStatus;
   ownerId?: string;
 }) => {
-  return prisma.lead.findMany({
-    where: {
-      status: filters?.status,
-      ownerId: filters?.ownerId,
-    },
-    include: {
-      owner: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
-    orderBy: { createdAt: "desc" },
+  const where: any = {};
+  if (filters?.status) where.status = filters.status;
+  if (filters?.ownerId) where.ownerId = filters.ownerId;
+
+  return Lead.findAll({
+    where,
+    include: [{
+      model: Person,
+      as: 'owner',
+      attributes: ['id', 'name'],
+    }],
+    order: [['createdAt', 'DESC']],
   });
 };
 
 // Buscar leads de um vendedor específico (para o vendedor ver)
 export const getLeadsByOwner = async (ownerId: string) => {
-  return prisma.lead.findMany({
+  return Lead.findAll({
     where: { ownerId },
-    select: {
-      id: true,
-      name: true,
-      status: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: "desc" },
+    attributes: ['id', 'name', 'status', 'createdAt'],
+    order: [['createdAt', 'DESC']],
   });
 };
 
 // Buscar um lead específico
 export const getLeadById = async (id: string) => {
-  const lead = await prisma.lead.findUnique({
-    where: { id },
-    include: {
-      owner: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-        },
-      },
-    },
+  const lead = await Lead.findByPk(id, {
+    include: [{
+      model: Person,
+      as: 'owner',
+      attributes: ['id', 'name', 'email', 'phone'],
+    }],
   });
 
   if (!lead) {
@@ -100,42 +83,46 @@ export const getLeadById = async (id: string) => {
 
 // Atualizar um lead
 export const updateLead = async (id: string, data: UpdateLeadDto) => {
-  return prisma.lead.update({
-    where: { id },
-    data,
-    include: {
-      owner: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
+  const lead = await Lead.findByPk(id);
+  if (!lead) throw new Error("Lead não encontrado");
+  
+  await lead.update(data);
+  await lead.reload({
+    include: [{
+      model: Person,
+      as: 'owner',
+      attributes: ['id', 'name'],
+    }],
   });
+  
+  return lead;
 };
 
 // Atualizar apenas o status do lead
 export const updateLeadStatus = async (id: string, status: LeadStatus) => {
-  return prisma.lead.update({
-    where: { id },
-    data: { status },
-  });
+  const lead = await Lead.findByPk(id);
+  if (!lead) throw new Error("Lead não encontrado");
+  
+  await lead.update({ status });
+  return lead;
 };
 
 // Deletar um lead
 export const deleteLead = async (id: string) => {
-  return prisma.lead.delete({
-    where: { id },
-  });
+  const lead = await Lead.findByPk(id);
+  if (!lead) throw new Error("Lead não encontrado");
+  
+  await lead.destroy();
+  return lead;
 };
 
 // Estatísticas gerais de leads
 export const getLeadsStats = async () => {
   const [total, bought, negotiation, cancelled] = await Promise.all([
-    prisma.lead.count(),
-    prisma.lead.count({ where: { status: "BOUGHT" } }),
-    prisma.lead.count({ where: { status: "NEGOTIATION" } }),
-    prisma.lead.count({ where: { status: "CANCELLED" } }),
+    Lead.count(),
+    Lead.count({ where: { status: LeadStatus.BOUGHT } }),
+    Lead.count({ where: { status: LeadStatus.NEGOTIATION } }),
+    Lead.count({ where: { status: LeadStatus.CANCELLED } }),
   ]);
 
   return {
@@ -152,60 +139,41 @@ export const getNewLeads = async (days: number = 7) => {
   const date = new Date();
   date.setDate(date.getDate() - days);
 
-  return prisma.lead.findMany({
+  return Lead.findAll({
     where: {
       createdAt: {
-        gte: date,
+        [Op.gte]: date,
       },
     },
-    include: {
-      owner: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
-    orderBy: { createdAt: "desc" },
+    include: [{
+      model: Person,
+      as: 'owner',
+      attributes: ['id', 'name'],
+    }],
+    order: [['createdAt', 'DESC']],
   });
 };
 
 // Buscar leads de um vendedor com detalhes completos (para área do vendedor)
 export const getSellerLeads = async (sellerId: string, filters?: { status?: LeadStatus }) => {
-  return prisma.lead.findMany({
-    where: {
-      ownerId: sellerId,
-      status: filters?.status,
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      status: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-    orderBy: { createdAt: "desc" },
+  const where: any = { ownerId: sellerId };
+  if (filters?.status) where.status = filters.status;
+
+  return Lead.findAll({
+    where,
+    attributes: ['id', 'name', 'email', 'phone', 'status', 'createdAt', 'updatedAt'],
+    order: [['createdAt', 'DESC']],
   });
 };
 
 // Buscar lead específico de um vendedor
 export const getSellerLeadById = async (sellerId: string, leadId: string) => {
-  const lead = await prisma.lead.findFirst({
+  const lead = await Lead.findOne({
     where: {
       id: leadId,
       ownerId: sellerId,
     },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      status: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+    attributes: ['id', 'name', 'email', 'phone', 'status', 'createdAt', 'updatedAt'],
   });
 
   if (!lead) {
@@ -218,10 +186,10 @@ export const getSellerLeadById = async (sellerId: string, leadId: string) => {
 // Estatísticas de leads de um vendedor
 export const getSellerLeadsStats = async (sellerId: string) => {
   const [total, bought, negotiation, cancelled] = await Promise.all([
-    prisma.lead.count({ where: { ownerId: sellerId } }),
-    prisma.lead.count({ where: { ownerId: sellerId, status: "BOUGHT" } }),
-    prisma.lead.count({ where: { ownerId: sellerId, status: "NEGOTIATION" } }),
-    prisma.lead.count({ where: { ownerId: sellerId, status: "CANCELLED" } }),
+    Lead.count({ where: { ownerId: sellerId } }),
+    Lead.count({ where: { ownerId: sellerId, status: LeadStatus.BOUGHT } }),
+    Lead.count({ where: { ownerId: sellerId, status: LeadStatus.NEGOTIATION } }),
+    Lead.count({ where: { ownerId: sellerId, status: LeadStatus.CANCELLED } }),
   ]);
 
   return {

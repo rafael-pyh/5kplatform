@@ -1,9 +1,11 @@
-import prisma from "../database/prisma";
+import sequelize from "../database/sequelize";
+import { Person, PersonRole } from "../models/Person";
 import { hashPassword, comparePassword } from "../utils/bcrypt";
 import { generateToken } from "../utils/jwt";
 import { Validator } from "../shared/Validator";
 import { UnauthorizedError, NotFoundError, BadRequestError } from "../shared/errors";
 import crypto from "crypto";
+import { Op } from "sequelize";
 
 // ==================== DTOs ====================
 export interface SellerLoginDto {
@@ -29,7 +31,7 @@ export const sellerLogin = async (data: SellerLoginDto) => {
   Validator.email(data.email);
 
   // Busca o vendedor
-  const person = await prisma.person.findUnique({
+  const person = await Person.findOne({
     where: { email: data.email },
   });
 
@@ -61,7 +63,7 @@ export const sellerLogin = async (data: SellerLoginDto) => {
   const token = generateToken({
     userId: person.id,
     email: person.email,
-    role: "SELLER",
+    role: PersonRole.SELLER,
   });
 
   return {
@@ -80,11 +82,11 @@ export const sellerLogin = async (data: SellerLoginDto) => {
 export const verifyEmailToken = async (token: string) => {
   Validator.required(token, 'Token');
 
-  const person = await prisma.person.findFirst({
+  const person = await Person.findOne({
     where: {
       verificationToken: token,
       tokenExpiry: {
-        gte: new Date(), // Token ainda não expirou
+        [Op.gte]: new Date(), // Token ainda não expirou
       },
     },
   });
@@ -107,11 +109,11 @@ export const setPassword = async (data: SetPasswordDto) => {
   Validator.minLength(data.password, 6, 'Senha');
 
   // Busca pessoa pelo token
-  const person = await prisma.person.findFirst({
+  const person = await Person.findOne({
     where: {
       verificationToken: data.token,
       tokenExpiry: {
-        gte: new Date(),
+        [Op.gte]: new Date(),
       },
     },
   });
@@ -124,31 +126,27 @@ export const setPassword = async (data: SetPasswordDto) => {
   const hashedPassword = await hashPassword(data.password);
 
   // Atualiza pessoa: define senha, verifica email, remove token
-  const updatedPerson = await prisma.person.update({
-    where: { id: person.id },
-    data: {
-      password: hashedPassword,
-      emailVerified: true,
-      verificationToken: null,
-      tokenExpiry: null,
-    },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      emailVerified: true,
-    },
+  await person.update({
+    password: hashedPassword,
+    emailVerified: true,
+    verificationToken: null,
+    tokenExpiry: null,
   });
 
   // Gera token JWT
   const token = generateToken({
-    userId: updatedPerson.id,
-    email: updatedPerson.email!,
-    role: "SELLER",
+    userId: person.id,
+    email: person.email!,
+    role: PersonRole.SELLER,
   });
 
   return {
-    person: updatedPerson,
+    person: {
+      id: person.id,
+      email: person.email,
+      name: person.name,
+      emailVerified: person.emailVerified,
+    },
     token,
   };
 };
@@ -157,7 +155,7 @@ export const requestPasswordReset = async (email: string) => {
   Validator.required(email, 'Email');
   Validator.email(email);
 
-  const person = await prisma.person.findUnique({
+  const person = await Person.findOne({
     where: { email },
   });
 
@@ -171,12 +169,9 @@ export const requestPasswordReset = async (email: string) => {
   const expiry = new Date();
   expiry.setHours(expiry.getHours() + 1); // 1 hora
 
-  await prisma.person.update({
-    where: { id: person.id },
-    data: {
-      verificationToken: token,
-      tokenExpiry: expiry,
-    },
+  await person.update({
+    verificationToken: token,
+    tokenExpiry: expiry,
   });
 
   // TODO: Enviar email de reset (implementar depois)
@@ -190,11 +185,11 @@ export const resetPassword = async (token: string, newPassword: string) => {
   Validator.required(newPassword, 'Nova senha');
   Validator.minLength(newPassword, 6, 'Nova senha');
 
-  const person = await prisma.person.findFirst({
+  const person = await Person.findOne({
     where: {
       verificationToken: token,
       tokenExpiry: {
-        gte: new Date(),
+        [Op.gte]: new Date(),
       },
     },
   });
@@ -205,34 +200,30 @@ export const resetPassword = async (token: string, newPassword: string) => {
 
   const hashedPassword = await hashPassword(newPassword);
 
-  await prisma.person.update({
-    where: { id: person.id },
-    data: {
-      password: hashedPassword,
-      verificationToken: null,
-      tokenExpiry: null,
-    },
+  await person.update({
+    password: hashedPassword,
+    verificationToken: null,
+    tokenExpiry: null,
   });
 
   return { message: "Senha redefinida com sucesso" };
 };
 
 export const getSellerProfile = async (sellerId: string) => {
-  const person = await prisma.person.findUnique({
-    where: { id: sellerId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      photoUrl: true,
-      qrCode: true,
-      qrCodeUrl: true,
-      scanCount: true,
-      active: true,
-      emailVerified: true,
-      createdAt: true,
-    },
+  const person = await Person.findByPk(sellerId, {
+    attributes: [
+      'id',
+      'name',
+      'email',
+      'phone',
+      'photoUrl',
+      'qrCode',
+      'qrCodeUrl',
+      'scanCount',
+      'active',
+      'emailVerified',
+      'createdAt',
+    ],
   });
 
   if (!person) {

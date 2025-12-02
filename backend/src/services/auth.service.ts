@@ -1,4 +1,7 @@
-import prisma from "../database/prisma";
+import sequelize from "../database/sequelize";
+import { Person, PersonRole } from "../models/Person";
+import { Lead } from "../models/Lead";
+import { QRCodeScan } from "../models/QRCodeScan";
 import { hashPassword, comparePassword } from "../utils/bcrypt";
 import { generateToken } from "../utils/jwt";
 import { Validator } from "../shared/Validator";
@@ -28,7 +31,7 @@ export const register = async (data: CreateUserDto) => {
   Validator.minLength(data.password, 6, 'Senha');
 
   // Verifica se o usuário já existe
-  const existingUser = await prisma.person.findUnique({
+  const existingUser = await Person.findOne({
     where: { email: data.email },
   });
 
@@ -40,34 +43,34 @@ export const register = async (data: CreateUserDto) => {
   const hashedPassword = await hashPassword(data.password);
 
   // Cria o usuário na tabela Person
-  const user = await prisma.person.create({
-    data: {
-      email: data.email,
-      password: hashedPassword,
-      name: data.name,
-      role: data.role || "ADMIN",
-      qrCode: `ADMIN-${Date.now()}`,
-      emailVerified: true,
-      active: true,
-    },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      active: true,
-      createdAt: true,
-    },
+  const user = await Person.create({
+    email: data.email,
+    password: hashedPassword,
+    name: data.name,
+    role: (data.role || "ADMIN") as PersonRole,
+    qrCode: `ADMIN-${Date.now()}`,
+    emailVerified: true,
+    active: true,
   });
 
   // Gera o token
   const token = generateToken({
     userId: user.id,
     email: user.email!,
-    role: user.role || 'ADMIN',
+    role: user.role || PersonRole.ADMIN,
   });
 
-  return { user, token };
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      active: user.active,
+      createdAt: user.createdAt,
+    },
+    token,
+  };
 };
 
 export const login = async (data: LoginDto) => {
@@ -77,7 +80,7 @@ export const login = async (data: LoginDto) => {
   Validator.email(data.email);
 
   // Busca o usuário na tabela Person (unificada)
-  const user = await prisma.person.findUnique({
+  const user = await Person.findOne({
     where: { email: data.email },
   });
 
@@ -117,7 +120,7 @@ export const login = async (data: LoginDto) => {
   }
 
   // Define o role (se não tiver, assume SELLER)
-  const userRole = user.role || 'SELLER';
+  const userRole = user.role || PersonRole.SELLER;
 
   // Gera o token
   const token = generateToken({
@@ -131,40 +134,25 @@ export const login = async (data: LoginDto) => {
       id: user.id,
       email: user.email,
       name: user.name || 'Usuário',
-      role: user.role || 'SELLER',
+      role: user.role || PersonRole.SELLER,
     },
     token,
   };
 };
 
 export const getAllUsers = async () => {
-  return prisma.person.findMany({
+  return Person.findAll({
     where: {
-      role: { in: ['ADMIN', 'SUPER_ADMIN'] }
+      role: [PersonRole.ADMIN, PersonRole.SUPER_ADMIN],
     },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      active: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: "desc" },
+    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt'],
+    order: [['createdAt', 'DESC']],
   });
 };
 
 export const getUserById = async (id: string) => {
-  const user = await prisma.person.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      active: true,
-      createdAt: true,
-    },
+  const user = await Person.findByPk(id, {
+    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt'],
   });
 
   if (!user) {
@@ -178,6 +166,9 @@ export const updateUser = async (
   id: string,
   data: Partial<CreateUserDto> & { active?: boolean }
 ) => {
+  const user = await Person.findByPk(id);
+  if (!user) throw new Error("Usuário não encontrado");
+
   const updateData: any = {
     email: data.email,
     name: data.name,
@@ -190,29 +181,29 @@ export const updateUser = async (
     updateData.password = await hashPassword(data.password);
   }
 
-  return prisma.person.update({
-    where: { id },
-    data: updateData,
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      active: true,
-      createdAt: true,
-    },
-  });
+  await user.update(updateData);
+  
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    active: user.active,
+    createdAt: user.createdAt,
+  };
 };
 
 export const deleteUser = async (id: string) => {
-  return prisma.person.delete({
-    where: { id },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-    },
-  });
+  const user = await Person.findByPk(id);
+  if (!user) throw new Error("Usuário não encontrado");
+
+  await user.destroy();
+  
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+  };
 };
 
 // Função para admins criarem outros usuários admin
@@ -230,7 +221,7 @@ export const createAdminUser = async (data: CreateUserDto, creatorRole: string) 
   }
 
   // Verifica se o usuário já existe
-  const existingUser = await prisma.person.findUnique({
+  const existingUser = await Person.findOne({
     where: { email: data.email },
   });
 
@@ -242,25 +233,22 @@ export const createAdminUser = async (data: CreateUserDto, creatorRole: string) 
   const hashedPassword = await hashPassword(data.password);
 
   // Cria o usuário admin na tabela Person
-  const user = await prisma.person.create({
-    data: {
-      email: data.email,
-      password: hashedPassword,
-      name: data.name,
-      role: data.role || "ADMIN",
-      qrCode: `ADMIN-${Date.now()}`,
-      emailVerified: true,
-      active: true,
-    },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      active: true,
-      createdAt: true,
-    },
+  const user = await Person.create({
+    email: data.email,
+    password: hashedPassword,
+    name: data.name,
+    role: (data.role || "ADMIN") as PersonRole,
+    qrCode: `ADMIN-${Date.now()}`,
+    emailVerified: true,
+    active: true,
   });
 
-  return user;
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    active: user.active,
+    createdAt: user.createdAt,
+  };
 };
