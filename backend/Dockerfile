@@ -43,8 +43,9 @@ COPY src/seeders ./src/seeders
 # Copiar build da stage anterior
 COPY --from=builder /app/dist ./dist
 
-# Copiar entrypoint (do contexto de build)
-COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+# Copiar entrypoint
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Criar usuário não-root
 RUN groupadd -g 1001 nodejs && \
