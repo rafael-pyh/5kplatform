@@ -31,9 +31,9 @@ export const ensureBucket = async () => {
       
       await minioClient.setBucketPolicy(bucket, JSON.stringify(policy));
     }
-    console.log("✅ Bucket MinIO pronto:", bucket);
-  } catch (error) {
-    console.error("❌ Erro ao configurar bucket MinIO:", error);
+  } catch (error: any) {
+    console.error("❌ Erro ao configurar bucket MinIO:", error.message);
+    throw error;
   }
 };
 

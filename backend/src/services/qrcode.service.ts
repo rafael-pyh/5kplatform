@@ -2,7 +2,6 @@ import sequelize from "../database/sequelize";
 import { QRCodeScan } from "../models/QRCodeScan";
 import { Person } from "../models/Person";
 import { Op } from "sequelize";
-import { minioClient } from "../utils/minio"; // Certifique-se de que o utilitário MinIO está configurado
 
 export interface QRCodeScanData {
   personId: string;
@@ -73,15 +72,6 @@ export const getScansStats = async (personId?: string) => {
     thisWeek,
     thisMonth,
   };
-};
-
-// Função para obter o stream do QR Code no bucket
-export const getQRCodeStream = async (qrCodePath: string) => {
-  // qrCodePath já é o caminho direto no bucket (ex: "qrcodes/uuid-QR-123.png")
-  const bucketName = "uploads";
-  
-  // Retorna o stream do objeto
-  return minioClient.getObject(bucketName, qrCodePath);
 };
 
 // Função para gerar QR Code como base64

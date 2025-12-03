@@ -1,6 +1,5 @@
 import app from "./app";
 import "dotenv/config";
-import { ensureBucket } from "./utils/minio";
 import sequelize from "./database/sequelize";
 
 // Função para inicializar o servidor
@@ -16,15 +15,12 @@ async function startServer() {
       console.log('✅ Database models synchronized');
     }
 
-    // Inicializa bucket do MinIO
-    await ensureBucket();
-    console.log('✅ MinIO bucket ready');
-
     // Inicia o servidor
     const PORT = process.env.PORT || 4000;
     app.listen(PORT, () => {
       console.log(`🚀 API rodando na porta ${PORT}`);
       console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🌐 URL: http://localhost:${PORT}`);
     });
 
   } catch (error) {
