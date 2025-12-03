@@ -3,6 +3,7 @@ import * as qrcodeService from "../services/qrcode.service";
 import * as personService from "../services/person.service";
 import * as leadService from "../services/lead.service";
 import { ResponseBuilder } from "../shared/ResponseBuilder";
+import { NotFoundError } from "../shared/errors";
 
 // ==================== QRCODE CONTROLLER (Single Responsibility: HTTP handling) ====================
 
@@ -87,7 +88,7 @@ export const serveQRCode = async (req: Request, res: Response, next: NextFunctio
     // Busca o vendedor pelo ID
     const person = await personService.getById(personId);
     if (!person || !person.qrCodeUrl) {
-      return ResponseBuilder.notFound(res, "QR Code não encontrado para este vendedor.");
+      throw new NotFoundError("QR Code");
     }
 
     // Busca o QR Code no bucket
