@@ -37,7 +37,7 @@ export class QRCodeScan extends Model {
   @Column(DataType.STRING)
   userAgent?: string;
 
-  @CreatedAt
+  @Default(DataType.NOW)
   @Column({ field: 'scannedAt', type: DataType.DATE })
   scannedAt!: Date;
 }

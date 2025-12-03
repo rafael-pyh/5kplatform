@@ -12,8 +12,11 @@ export interface QRCodeScanData {
 
 // Registrar uma visualização do QR Code
 export const registerScan = async (data: QRCodeScanData) => {
-  // Registra o scan
-  const scan = await QRCodeScan.create(data as any);
+  // Registra o scan com scannedAt explícito
+  const scan = await QRCodeScan.create({
+    ...data,
+    scannedAt: new Date(),
+  } as any);
 
   // Incrementa o contador de scans da pessoa
   await Person.increment('scanCount', {
