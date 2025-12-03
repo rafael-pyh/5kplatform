@@ -41,11 +41,11 @@ export class Lead extends Model {
   phone?: string;
 
   @AllowNull(true)
-  @Column(DataType.STRING)
+  @Column(DataType.TEXT)
   energyBill?: string;
 
   @AllowNull(true)
-  @Column(DataType.STRING)
+  @Column(DataType.TEXT)
   roofPhoto?: string;
 
   @Default(LeadStatus.NEGOTIATION)
