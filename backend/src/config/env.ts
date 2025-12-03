@@ -2,6 +2,7 @@ import "dotenv/config";
 
 export const env = {
   PORT: process.env.PORT || 4000,
+  API_URL: process.env.API_URL || "",
   DATABASE_URL: process.env.DATABASE_URL || "",
   JWT_SECRET: process.env.JWT_SECRET || "your-secret-key-change-in-production",
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "7d",
@@ -10,8 +11,8 @@ export const env = {
   MINIO_ROOT_USER: process.env.MINIO_ROOT_USER || "minio",
   MINIO_ROOT_PASSWORD: process.env.MINIO_ROOT_PASSWORD || "minio123",
   MINIO_USE_SSL: process.env.MINIO_USE_SSL === "true",
-  MINIO_PUBLIC_URL: process.env.MINIO_PUBLIC_URL || "http://localhost:9000",
-  FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
+  MINIO_PUBLIC_URL: process.env.MINIO_PUBLIC_URL,
+  FRONTEND_URL: process.env.FRONTEND_URL,
   // Email configuration (OAuth2 Gmail ou SMTP fallback)
   GMAIL_CLIENT_ID: process.env.GMAIL_CLIENT_ID || "",
   GMAIL_CLIENT_SECRET: process.env.GMAIL_CLIENT_SECRET || "",

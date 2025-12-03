@@ -73,11 +73,10 @@ export const getScansStats = async (personId?: string) => {
 };
 
 // Função para obter o stream do QR Code no bucket
-export const getQRCodeStream = async (qrCodeUrl: string) => {
-  // Extrai o bucket e o caminho do QR Code da URL
-  const bucketName = "uploads"; // Substitua pelo nome correto do bucket
-  const objectName = qrCodeUrl.replace(`${process.env.MINIO_URL}/`, "");
-
+export const getQRCodeStream = async (qrCodePath: string) => {
+  // qrCodePath já é o caminho direto no bucket (ex: "qrcodes/uuid-QR-123.png")
+  const bucketName = "uploads";
+  
   // Retorna o stream do objeto
-  return minioClient.getObject(bucketName, objectName);
+  return minioClient.getObject(bucketName, qrCodePath);
 };

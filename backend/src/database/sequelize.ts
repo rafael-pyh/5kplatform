@@ -21,11 +21,13 @@ if (databaseUrl) {
       acquire: 30000,
       idle: 10000,
     },
-    dialectOptions: {
-      ssl: process.env.NODE_ENV === 'production' ? {
+    dialectOptions: databaseUrl.includes('localhost') || databaseUrl.includes('postgres:5432') ? {
+      ssl: false,
+    } : {
+      ssl: {
         require: true,
         rejectUnauthorized: false,
-      } : false,
+      },
     },
   });
 } else {

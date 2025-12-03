@@ -80,7 +80,7 @@ export const getScansStats = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-// Novo endpoint para servir QR Code
+// Endpoint para servir QR Code via proxy do MinIO
 export const serveQRCode = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { personId } = req.params;
@@ -96,6 +96,7 @@ export const serveQRCode = async (req: Request, res: Response, next: NextFunctio
 
     // Define o cabeçalho e envia o QR Code como resposta
     res.setHeader("Content-Type", "image/png");
+    res.setHeader("Cache-Control", "public, max-age=31536000");
     qrCodeStream.pipe(res);
   } catch (error) {
     next(error);

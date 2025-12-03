@@ -7,6 +7,7 @@ import qrcodeRoutes from "./routes/qrcode.routes";
 import uploadRoutes from "./routes/upload.routes";
 import sellerAuthRoutes from "./routes/seller-auth.routes";
 import sellerLeadsRoutes from "./routes/seller-leads.routes";
+import fileRoutes from "./routes/file.routes";
 import { errorHandler } from "./shared/errorHandler";
 
 const app = express();
@@ -33,6 +34,7 @@ app.use("/api/qrcode", qrcodeRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/seller", sellerAuthRoutes);
 app.use("/api/seller", sellerLeadsRoutes);
+app.use("/api/files", fileRoutes); // Proxy para arquivos do MinIO
 
 // Rota 404
 app.use((req, res) => {

@@ -35,6 +35,9 @@ MINIO_ROOT_USER=minio
 MINIO_ROOT_PASSWORD=minio123
 MINIO_USE_SSL=false
 
+# API (para gerar URLs públicas dos arquivos)
+API_URL=http://localhost:4000  # Em produção: https://your-api.com
+
 # Frontend
 FRONTEND_URL=http://localhost:3000
 ```

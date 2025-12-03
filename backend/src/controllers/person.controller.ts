@@ -1,13 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import * as service from "../services/person.service";
 import { ResponseBuilder } from "../shared/ResponseBuilder";
+import { transformPersonUrls, transformPersonsUrls } from "../utils/url-transformer";
 
 // ==================== PERSON CONTROLLER (Single Responsibility: HTTP handling) ====================
 
 export const createPerson = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.createPerson(req.body);
-    return ResponseBuilder.created(res, data);
+    return ResponseBuilder.created(res, transformPersonUrls(data));
   } catch (error) {
     next(error);
   }
@@ -17,7 +18,7 @@ export const getAll = async (req: Request, res: Response, next: NextFunction) =>
   try {
     const activeOnly = req.query.active === "true";
     const data = await service.getAll(activeOnly);
-    return ResponseBuilder.success(res, data);
+    return ResponseBuilder.success(res, transformPersonsUrls(data));
   } catch (error) {
     next(error);
   }
@@ -26,7 +27,7 @@ export const getAll = async (req: Request, res: Response, next: NextFunction) =>
 export const getById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.getById(req.params.id);
-    return ResponseBuilder.success(res, data);
+    return ResponseBuilder.success(res, transformPersonUrls(data));
   } catch (error) {
     next(error);
   }
@@ -35,7 +36,7 @@ export const getById = async (req: Request, res: Response, next: NextFunction) =
 export const getByQRCode = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.getByQRCode(req.params.qrCode);
-    return ResponseBuilder.success(res, data);
+    return ResponseBuilder.success(res, transformPersonUrls(data));
   } catch (error) {
     next(error);
   }
@@ -44,7 +45,7 @@ export const getByQRCode = async (req: Request, res: Response, next: NextFunctio
 export const updateById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.updateById(req.params.id, req.body);
-    return ResponseBuilder.success(res, data);
+    return ResponseBuilder.success(res, transformPersonUrls(data));
   } catch (error) {
     next(error);
   }

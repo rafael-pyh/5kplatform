@@ -1,33 +1,20 @@
 /**
- * Normaliza URLs de imagens do MinIO
- * Converte caminhos relativos em URLs absolutas
+ * Normaliza URLs de imagens
+ * O backend agora retorna URLs completas via proxy, não é mais necessário processamento
  */
 export function normalizeImageUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-
-  // Se já é uma URL completa, retorna como está
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-
-  // Se é um caminho relativo, adiciona o domínio do MinIO
-  const MINIO_URL = process.env.NEXT_PUBLIC_MINIO_URL;
-  
-  // Remove barra inicial se existir para evitar dupla barra
-  const cleanPath = url.startsWith('/') ? url.substring(1) : url;
-  
-  return `${MINIO_URL}/${cleanPath}`;
+  // Backend já retorna URLs completas no formato:
+  // https://api.exemplo.com/api/files/qrcodes/xxx.png
+  return url || null;
 }
 
 /**
- * Normaliza uma pessoa com URLs de imagens corretas
+ * Normaliza uma pessoa com URLs de imagens
+ * Mantido para compatibilidade, mas não faz mais transformações
  */
 export function normalizePersonUrls<T extends { photoUrl?: string | null; qrCodeUrl?: string | null }>(
   person: T
 ): T {
-  return {
-    ...person,
-    photoUrl: normalizeImageUrl(person.photoUrl),
-    qrCodeUrl: normalizeImageUrl(person.qrCodeUrl),
-  };
+  // Backend já retorna URLs prontas para uso
+  return person;
 }

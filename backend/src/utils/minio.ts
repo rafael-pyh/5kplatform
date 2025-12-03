@@ -54,6 +54,29 @@ export const uploadFile = async (
     }
   );
   
-  // Retorna URL completa do MinIO
-  return `${env.MINIO_PUBLIC_URL}/uploads/${fileName}`;
+  // Retorna caminho relativo que será servido pelo backend
+  return fileName;
+};
+
+// Extrai o caminho do arquivo de uma URL
+export const extractFilePathFromUrl = (url: string): string => {
+  // Remove a URL base e mantém apenas o caminho do arquivo
+  const urlObj = new URL(url);
+  return urlObj.pathname.replace(/^\/uploads\//, '');
+};
+
+// Busca um arquivo do MinIO e retorna o stream
+export const getFileStream = async (filePath: string) => {
+  return await minioClient.getObject("uploads", filePath);
+};
+
+// Gera URL pública para acessar arquivo via backend (proxy)
+export const getPublicUrl = (filePath: string): string => {
+  // Remove possíveis barras iniciais
+  const cleanPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
+  
+  // Se API_URL não estiver definido, usa localhost para desenvolvimento
+  const apiUrl = env.API_URL || `http://localhost:${env.PORT}`;
+  
+  return `${apiUrl}/api/files/${cleanPath}`;
 };
