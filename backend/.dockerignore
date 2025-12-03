@@ -23,9 +23,8 @@ build/
 .git/
 .gitignore
 
-# Documentation
-*.md
-!README.md
+# Documentation (keep essential files)
+# *.md (commented out - some may be needed)
 
 # Tests
 coverage/
@@ -45,7 +44,6 @@ Thumbs.db
 tmp/
 temp/
 
-# Docker
-Dockerfile
-.dockerignore
+# Docker (keep docker-entrypoint.sh)
+Dockerfile.dev
 docker-compose*.yml

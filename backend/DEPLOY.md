@@ -27,11 +27,15 @@ DATABASE_URL=postgresql://user:password@host:5432/database
 NODE_ENV=production
 PORT=4000
 JWT_SECRET=seu-jwt-secret-aqui
+API_URL=https://your-api.railway.app
 FRONTEND_URL=https://seu-frontend.com
 MINIO_ENDPOINT=seu-minio-endpoint
-MINIO_ACCESS_KEY=sua-access-key
-MINIO_SECRET_KEY=sua-secret-key
+MINIO_ROOT_USER=minio
+MINIO_ROOT_PASSWORD=minio123
+MINIO_USE_SSL=true
 ```
+
+⚠️ **IMPORTANTE:** Configure `API_URL` com a URL do seu serviço no Railway para que os arquivos sejam servidos corretamente via proxy.
 
 ---
 
