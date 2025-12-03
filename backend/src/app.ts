@@ -36,6 +36,10 @@ app.use("/api/seller", sellerAuthRoutes);
 app.use("/api/seller", sellerLeadsRoutes);
 app.use("/api/files", fileRoutes); // Proxy para arquivos do MinIO
 
+// Rota de fallback para URLs antigas que usavam /uploads/
+// Redireciona para a nova rota /api/files/
+app.use("/uploads", fileRoutes);
+
 // Rota 404
 app.use((req, res) => {
   res.status(404).json({
