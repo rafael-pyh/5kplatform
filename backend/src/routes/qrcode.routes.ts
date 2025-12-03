@@ -11,5 +11,7 @@ router.post("/lead/:qrCode", controller.createLeadFromQR);
 // Rotas protegidas (requerem autenticação de administrador)
 router.get("/scans/:personId", authenticate, requireAdmin, controller.getScansByPerson);
 router.get("/stats", authenticate, requireAdmin, controller.getScansStats);
+// Nova rota para servir QR Code
+router.get("/serve/:personId", authenticate, requireAdmin, controller.serveQRCode);
 
 export default router;

@@ -78,3 +78,25 @@ export const getScansStats = async (req: Request, res: Response, next: NextFunct
     next(error);
   }
 };
+
+// Novo endpoint para servir QR Code
+export const serveQRCode = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { personId } = req.params;
+
+    // Busca o vendedor pelo ID
+    const person = await personService.getById(personId);
+    if (!person || !person.qrCodeUrl) {
+      return ResponseBuilder.notFound(res, "QR Code não encontrado para este vendedor.");
+    }
+
+    // Busca o QR Code no bucket
+    const qrCodeStream = await qrcodeService.getQRCodeStream(person.qrCodeUrl);
+
+    // Define o cabeçalho e envia o QR Code como resposta
+    res.setHeader("Content-Type", "image/png");
+    qrCodeStream.pipe(res);
+  } catch (error) {
+    next(error);
+  }
+};
