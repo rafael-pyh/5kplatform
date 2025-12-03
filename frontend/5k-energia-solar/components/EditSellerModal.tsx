@@ -21,7 +21,7 @@ export default function EditSellerModal({
   person,
 }: EditSellerModalProps) {
   const [loading, setLoading] = useState(false);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(person.photoUrl || null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(person.photoBase64 || null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   const {

@@ -9,7 +9,7 @@ export const createPerson = async (req: Request, res: Response, next: NextFuncti
   try {
     const data = await service.createPerson(req.body);
     const jsonData = data.toJSON ? data.toJSON() : data;
-    const transformed = await transformPersonUrls(jsonData);
+    const transformed = transformPersonUrls(jsonData);
     return ResponseBuilder.created(res, transformed);
   } catch (error) {
     next(error);
@@ -21,7 +21,7 @@ export const getAll = async (req: Request, res: Response, next: NextFunction) =>
     const activeOnly = req.query.active === "true";
     const data = await service.getAll(activeOnly);
     const jsonData = data.map((item: any) => item.toJSON ? item.toJSON() : item);
-    const transformed = await transformPersonsUrls(jsonData);
+    const transformed = transformPersonsUrls(jsonData);
     return ResponseBuilder.success(res, transformed);
   } catch (error) {
     next(error);
@@ -32,7 +32,7 @@ export const getById = async (req: Request, res: Response, next: NextFunction) =
   try {
     const data = await service.getById(req.params.id);
     const jsonData = data.toJSON ? data.toJSON() : data;
-    const transformed = await transformPersonUrls(jsonData);
+    const transformed = transformPersonUrls(jsonData);
     return ResponseBuilder.success(res, transformed);
   } catch (error) {
     next(error);
@@ -43,7 +43,7 @@ export const getByQRCode = async (req: Request, res: Response, next: NextFunctio
   try {
     const data = await service.getByQRCode(req.params.qrCode);
     const jsonData = data.toJSON ? data.toJSON() : data;
-    const transformed = await transformPersonUrls(jsonData);
+    const transformed = transformPersonUrls(jsonData);
     return ResponseBuilder.success(res, transformed);
   } catch (error) {
     next(error);
@@ -54,7 +54,7 @@ export const updateById = async (req: Request, res: Response, next: NextFunction
   try {
     const data = await service.updateById(req.params.id, req.body);
     const jsonData = data.toJSON ? data.toJSON() : data;
-    const transformed = await transformPersonUrls(jsonData);
+    const transformed = transformPersonUrls(jsonData);
     return ResponseBuilder.success(res, transformed);
   } catch (error) {
     next(error);

@@ -1,49 +1,17 @@
-import { getPublicUrl } from "../utils/minio";
-import { getQRCodeBase64ByCode } from "../utils/qr";
-
 /**
- * Transforma URLs de arquivos do MinIO para URLs do backend (proxy)
- * E gera QR code como base64
+ * Transformações de Person não são mais necessárias
+ * Todas as imagens agora são base64 direto do banco
  */
-export const transformPersonUrls = async <T extends { 
-  photoUrl?: string | null; 
-  qrCodeUrl?: string | null;
-  qrCode?: string;
-  id?: string;
-}>(
-  person: T
-): Promise<T & { qrCodeBase64?: string }> => {
-  const result: any = {
-    ...person,
-    photoUrl: person.photoUrl ? getPublicUrl(person.photoUrl) : null,
-  };
-
-  // Gera QR code como base64 se tiver o código
-  if (person.qrCode) {
-    try {
-      result.qrCodeBase64 = await getQRCodeBase64ByCode(person.qrCode);
-    } catch (error) {
-      console.error("Erro ao gerar QR Code base64:", error);
-      result.qrCodeBase64 = null;
-    }
-  }
-
-  // Remove qrCodeUrl pois não é mais necessário
-  delete result.qrCodeUrl;
-
-  return result;
+export const transformPersonUrls = <T extends any>(person: T): T => {
+  // Apenas retorna o objeto sem transformações
+  // Base64 já vem do banco de dados
+  return person;
 };
 
 /**
- * Transforma URLs de uma lista de pessoas
+ * Transformações de lista de pessoas
  */
-export const transformPersonsUrls = async <T extends { 
-  photoUrl?: string | null; 
-  qrCodeUrl?: string | null;
-  qrCode?: string;
-  id?: string;
-}>(
-  persons: T[]
-): Promise<Array<T & { qrCodeBase64?: string }>> => {
-  return Promise.all(persons.map(person => transformPersonUrls(person)));
+export const transformPersonsUrls = <T extends any>(persons: T[]): T[] => {
+  // Apenas retorna o array sem transformações
+  return persons;
 };

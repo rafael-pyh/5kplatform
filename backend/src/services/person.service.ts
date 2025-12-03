@@ -2,7 +2,7 @@ import sequelize from "../database/sequelize";
 import { Person, PersonRole } from "../models/Person";
 import { Lead } from "../models/Lead";
 import { QRCodeScan } from "../models/QRCodeScan";
-import { generateQRCode, generateQRCodeImage } from "../utils/qr";
+import { generateQRCode, generateQRCodeBase64 } from "../utils/qr";
 import { sendVerificationEmail } from "../utils/email";
 import crypto from "crypto";
 
@@ -11,7 +11,7 @@ export interface CreatePersonDto {
   email?: string;
   phone?: string;
   pixKey?: string;
-  photoUrl?: string;
+  photoBase64?: string;
 }
 
 export interface UpdatePersonDto {
@@ -19,7 +19,7 @@ export interface UpdatePersonDto {
   email?: string;
   phone?: string;
   pixKey?: string;
-  photoUrl?: string;
+  photoBase64?: string;
   active?: boolean;
 }
 
@@ -38,6 +38,9 @@ export const createPerson = async (data: CreatePersonDto) => {
   // Gera o código único do QR
   const qrCode = generateQRCode();
 
+  // Gera o QR code como base64
+  const qrCodeBase64 = await generateQRCodeBase64(qrCode);
+
   // Se email foi fornecido, gera token de verificação
   let verificationToken: string | undefined = undefined;
   let tokenExpiry: Date | undefined = undefined;
@@ -52,6 +55,7 @@ export const createPerson = async (data: CreatePersonDto) => {
   const person = await Person.create({
     ...data,
     qrCode,
+    qrCodeBase64, // Salva o base64 no banco
     role: PersonRole.SELLER,
     verificationToken,
     tokenExpiry,
@@ -68,8 +72,6 @@ export const createPerson = async (data: CreatePersonDto) => {
     }
   }
 
-  // QR Code será gerado on-demand como base64
-  // Não precisa mais fazer upload para MinIO
   await person.reload({
     include: [
       {

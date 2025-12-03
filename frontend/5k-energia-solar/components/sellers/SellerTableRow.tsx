@@ -18,10 +18,10 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate }: SellerTa
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center">
           <div className="h-10 w-10 shrink-0">
-            {person.photoUrl ? (
+            {person.photoBase64 ? (
               <img
                 className="h-10 w-10 rounded-full object-cover"
-                src={person.photoUrl}
+                src={person.photoBase64}
                 alt={person.name}
               />
             ) : (

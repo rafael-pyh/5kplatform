@@ -47,16 +47,16 @@ export class Person extends Model {
   pixKey?: string;
 
   @AllowNull(true)
-  @Column(DataType.STRING)
-  photoUrl?: string;
+  @Column(DataType.TEXT)
+  photoBase64?: string; // Base64 data URL da foto de perfil
 
   @Unique
   @Column(DataType.STRING)
   qrCode!: string;
 
   @AllowNull(true)
-  @Column(DataType.STRING)
-  qrCodeUrl?: string;
+  @Column(DataType.TEXT)
+  qrCodeBase64?: string; // Base64 data URL do QR code
 
   @Default(true)
   @Column(DataType.BOOLEAN)

@@ -41,9 +41,8 @@ export interface Person {
   email: string;
   phone: string;
   pixKey: string;
-  photoUrl?: string;
+  photoBase64?: string; // Base64 data URL da foto de perfil
   qrCode: string;
-  qrCodeUrl?: string; // Deprecated: use qrCodeBase64
   qrCodeBase64?: string; // Base64 data URL do QR code
   scanCount: number;
   active: boolean;
@@ -56,7 +55,7 @@ export interface CreatePersonDto {
   email: string;
   phone: string;
   pixKey: string;
-  photoUrl?: string;
+  photoBase64?: string;
 }
 
 export interface UpdatePersonDto {
@@ -64,7 +63,7 @@ export interface UpdatePersonDto {
   email?: string;
   phone?: string;
   pixKey?: string;
-  photoUrl?: string;
+  photoBase64?: string;
   active?: boolean;
 }
 

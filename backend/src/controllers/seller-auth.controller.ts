@@ -10,7 +10,7 @@ export const sellerLogin = async (req: Request, res: Response, next: NextFunctio
     const result = await sellerAuthService.sellerLogin(req.body);
     // Transforma URLs do person
     if (result.person) {
-      result.person = await transformPersonUrls(result.person);
+      result.person = transformPersonUrls(result.person);
     }
     return ResponseBuilder.success(res, result);
   } catch (error) {
@@ -64,7 +64,7 @@ export const getSellerProfile = async (req: Request, res: Response, next: NextFu
       return res.status(401).json({ success: false, message: "Não autenticado" });
     }
     const result = await sellerAuthService.getSellerProfile(sellerId);
-    const transformed = await transformPersonUrls(result);
+    const transformed = transformPersonUrls(result);
     return ResponseBuilder.success(res, transformed);
   } catch (error) {
     next(error);

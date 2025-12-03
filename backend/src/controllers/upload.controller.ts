@@ -1,7 +1,15 @@
 import { Request, Response } from "express";
-import { uploadFile } from "../utils/minio";
 
-// Upload de foto de perfil
+/**
+ * Converte um arquivo para base64
+ */
+const fileToBase64 = (file: Express.Multer.File): string => {
+  const base64Data = file.buffer.toString('base64');
+  const mimeType = file.mimetype;
+  return `data:${mimeType};base64,${base64Data}`;
+};
+
+// Upload de foto de perfil - retorna base64
 export const uploadProfilePhoto = async (req: Request, res: Response) => {
   try {
     if (!req.file) {
@@ -11,11 +19,11 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
       });
     }
 
-    const url = await uploadFile(req.file, "profiles");
+    const base64 = fileToBase64(req.file);
 
     res.json({
       success: true,
-      data: { url },
+      data: { base64 },
     });
   } catch (error: any) {
     res.status(500).json({
@@ -25,7 +33,7 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
   }
 };
 
-// Upload de conta de energia
+// Upload de conta de energia - retorna base64
 export const uploadEnergyBill = async (req: Request, res: Response) => {
   try {
     if (!req.file) {
@@ -35,11 +43,11 @@ export const uploadEnergyBill = async (req: Request, res: Response) => {
       });
     }
 
-    const url = await uploadFile(req.file, "energy-bills");
+    const base64 = fileToBase64(req.file);
 
     res.json({
       success: true,
-      data: { url },
+      data: { base64 },
     });
   } catch (error: any) {
     res.status(500).json({
@@ -49,7 +57,7 @@ export const uploadEnergyBill = async (req: Request, res: Response) => {
   }
 };
 
-// Upload de foto do telhado
+// Upload de foto do telhado - retorna base64
 export const uploadRoofPhoto = async (req: Request, res: Response) => {
   try {
     if (!req.file) {
@@ -59,11 +67,11 @@ export const uploadRoofPhoto = async (req: Request, res: Response) => {
       });
     }
 
-    const url = await uploadFile(req.file, "roof-photos");
+    const base64 = fileToBase64(req.file);
 
     res.json({
       success: true,
-      data: { url },
+      data: { base64 },
     });
   } catch (error: any) {
     res.status(500).json({

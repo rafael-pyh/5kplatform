@@ -35,15 +35,15 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
   const onSubmit = async (data: CreatePersonDto) => {
     setLoading(true);
     try {
-      let photoUrl = undefined;
+      let photoBase64 = undefined;
 
       if (photoFile) {
-        photoUrl = await uploadService.uploadProfilePhoto(photoFile);
+        photoBase64 = await uploadService.uploadProfilePhoto(photoFile);
       }
 
       await personService.create({
         ...data,
-        photoUrl,
+        photoBase64,
       });
 
       toast.success('Vendedor criado com sucesso!');
