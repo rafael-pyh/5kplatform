@@ -24,7 +24,6 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const response = await loginAction(data);
-      console.log('Login response:', response);
 
       if (!response.success) {
         toast.error(response.error || 'Erro ao fazer login');
