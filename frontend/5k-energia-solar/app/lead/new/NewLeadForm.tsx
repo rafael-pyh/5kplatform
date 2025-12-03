@@ -68,6 +68,17 @@ export default function NewLeadForm() {
       return;
     }
 
+    // Validar tamanho das imagens base64 (máximo ~2MB por imagem em base64)
+    const maxBase64Size = 2 * 1024 * 1024; // 2MB
+    if (energyBill && energyBill.length > maxBase64Size) {
+      toast.error('Foto da conta de energia muito grande. Por favor, selecione uma imagem menor.');
+      return;
+    }
+    if (roofPhoto && roofPhoto.length > maxBase64Size) {
+      toast.error('Foto do telhado muito grande. Por favor, selecione uma imagem menor.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -208,14 +219,14 @@ export default function NewLeadForm() {
 
             {/* Conta de energia */}
             <ImageUpload
-              label="Foto da conta de energia (opcional)"
+              label="Foto da conta de energia"
               value={energyBill}
               onChange={setEnergyBill}
             />
 
             {/* Foto do telhado */}
             <ImageUpload
-              label="Foto do telhado (opcional)"
+              label="Foto do telhado"
               value={roofPhoto}
               onChange={setRoofPhoto}
             />
