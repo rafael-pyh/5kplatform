@@ -43,7 +43,8 @@ export interface Person {
   pixKey: string;
   photoUrl?: string;
   qrCode: string;
-  qrCodeUrl?: string;
+  qrCodeUrl?: string; // Deprecated: use qrCodeBase64
+  qrCodeBase64?: string; // Base64 data URL do QR code
   scanCount: number;
   active: boolean;
   createdAt: string;

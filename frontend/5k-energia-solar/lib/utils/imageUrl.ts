@@ -1,20 +1,27 @@
 /**
  * Normaliza URLs de imagens
- * O backend agora retorna URLs completas via proxy, não é mais necessário processamento
+ * QR codes agora são base64, fotos continuam com URLs do backend
  */
 export function normalizeImageUrl(url: string | null | undefined): string | null {
-  // Backend já retorna URLs completas no formato:
-  // https://api.exemplo.com/api/files/qrcodes/xxx.png
+  // Backend retorna URLs completas para fotos:
+  // https://api.exemplo.com/api/files/photos/xxx.png
+  // QR codes vêm como base64: data:image/png;base64,...
   return url || null;
 }
 
 /**
  * Normaliza uma pessoa com URLs de imagens
- * Mantido para compatibilidade, mas não faz mais transformações
+ * QR codes agora vêm como qrCodeBase64, não mais qrCodeUrl
  */
-export function normalizePersonUrls<T extends { photoUrl?: string | null; qrCodeUrl?: string | null }>(
+export function normalizePersonUrls<T extends { 
+  photoUrl?: string | null; 
+  qrCodeUrl?: string | null;
+  qrCodeBase64?: string | null;
+}>(
   person: T
 ): T {
-  // Backend já retorna URLs prontas para uso
+  // Backend já retorna dados prontos para uso:
+  // - photoUrl: URL completa para foto de perfil
+  // - qrCodeBase64: data URL base64 do QR code
   return person;
 }

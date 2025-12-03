@@ -86,7 +86,7 @@ export default function VerifyEmailClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-green-500">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-500 to-green-500">
         <LoadingSpinner size="lg" text="Verificando..." />
       </div>
     );
@@ -97,7 +97,7 @@ export default function VerifyEmailClient() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-green-500 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-500 to-green-500 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-8">
         {/* Header */}
         <div className="text-center mb-6">

@@ -68,29 +68,20 @@ export const createPerson = async (data: CreatePersonDto) => {
     }
   }
 
-  // Gera a imagem do QR Code e faz upload
-  try {
-    const qrCodeUrl = await generateQRCodeImage(qrCode, person.id);
-    
-    // Atualiza com a URL do QR Code
-    await person.update({ qrCodeUrl });
-    await person.reload({
-      include: [
-        {
-          model: Lead,
-          as: 'leads',
-          limit: 5,
-          order: [['createdAt', 'DESC']],
-        },
-      ],
-    });
-    
-    return person;
-  } catch (error) {
-    // Se falhar ao gerar o QR, retorna a pessoa mesmo assim
-    console.error("Erro ao gerar QR Code:", error);
-    return person;
-  }
+  // QR Code será gerado on-demand como base64
+  // Não precisa mais fazer upload para MinIO
+  await person.reload({
+    include: [
+      {
+        model: Lead,
+        as: 'leads',
+        limit: 5,
+        order: [['createdAt', 'DESC']],
+      },
+    ],
+  });
+  
+  return person;
 };
 
 export const getAll = async (activeOnly: boolean = false) => {

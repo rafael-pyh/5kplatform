@@ -30,7 +30,8 @@ interface Seller {
   email: string;
   phone?: string;
   qrCode: string;
-  qrCodeUrl: string;
+  qrCodeUrl?: string; // Deprecated
+  qrCodeBase64?: string;
   photoUrl?: string;
   scanCount?: number;
   active: boolean;
@@ -130,7 +131,7 @@ export default function SellerDashboardPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {seller?.qrCodeUrl && (
+              {seller?.qrCodeBase64 && (
                 <button
                   onClick={() => setIsQRModalOpen(true)}
                   className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md"
@@ -225,11 +226,11 @@ export default function SellerDashboardPage() {
       </main>
 
       {/* QR Code Modal */}
-      {seller?.qrCodeUrl && (
+      {seller?.qrCodeBase64 && (
         <SellerQRCodeModal
           isOpen={isQRModalOpen}
           onClose={() => setIsQRModalOpen(false)}
-          qrCodeUrl={seller.qrCodeUrl}
+          qrCodeBase64={seller.qrCodeBase64}
           sellerName={seller.name}
           qrCode={seller.qrCode}
         />

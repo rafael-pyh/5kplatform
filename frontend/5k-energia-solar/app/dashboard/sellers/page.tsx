@@ -46,7 +46,7 @@ export default function VendedoresPage() {
 
   // Memoized handlers
   const handleOpenQRModal = useCallback((person: Person) => {
-    if (!person.qrCodeUrl) {
+    if (!person.qrCodeBase64) {
       toast.error('QR Code não disponível');
       return;
     }
@@ -151,7 +151,7 @@ export default function VendedoresPage() {
           <QRCodeModal
             isOpen={qrModalOpen}
             onClose={handleCloseQRModal}
-            qrCodeUrl={selectedPerson.qrCodeUrl || ''}
+            qrCodeBase64={selectedPerson.qrCodeBase64 || ''}
             personName={selectedPerson.name}
           />
         </Suspense>

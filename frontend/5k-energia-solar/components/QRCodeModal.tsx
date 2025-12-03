@@ -6,11 +6,11 @@ import Image from 'next/image';
 interface QRCodeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  qrCodeUrl: string;
+  qrCodeBase64: string; // Base64 data URL
   personName: string;
 }
 
-export default function QRCodeModal({ isOpen, onClose, qrCodeUrl, personName }: QRCodeModalProps) {
+export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName }: QRCodeModalProps) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -31,22 +31,16 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeUrl, personName }: 
 
   if (!isOpen) return null;
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     try {
-      const response = await fetch(qrCodeUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
+      link.href = qrCodeBase64;
       link.download = `qrcode-${personName.replace(/\s+/g, '-').toLowerCase()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Erro ao baixar QR Code:', error);
-      // Fallback: abrir em nova aba
-      window.open(qrCodeUrl, '_blank');
     }
   };
 
@@ -87,7 +81,7 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeUrl, personName }: 
           <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
             <div className="relative w-64 h-64">
               <Image
-                src={qrCodeUrl}
+                src={qrCodeBase64}
                 alt={`QR Code de ${personName}`}
                 fill
                 className="object-contain"

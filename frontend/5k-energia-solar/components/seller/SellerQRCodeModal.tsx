@@ -7,7 +7,7 @@ import { toast } from 'react-hot-toast';
 interface SellerQRCodeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  qrCodeUrl: string;
+  qrCodeBase64: string; // Base64 data URL
   sellerName: string;
   qrCode: string;
 }
@@ -27,7 +27,7 @@ const resolutions: Resolution[] = [
 export default function SellerQRCodeModal({
   isOpen,
   onClose,
-  qrCodeUrl,
+  qrCodeBase64,
   sellerName,
   qrCode,
 }: SellerQRCodeModalProps) {
@@ -60,27 +60,20 @@ export default function SellerQRCodeModal({
       try {
         setIsDownloading(true);
 
-        // Se for resolução original, faz download direto
+        // Se for resolução original, faz download direto do base64
         if (resolution.size === 0) {
-          const response = await fetch(qrCodeUrl);
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
-          link.href = url;
+          link.href = qrCodeBase64;
           link.download = `qrcode-${sellerName.replace(/\s+/g, '-').toLowerCase()}-original.png`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
           toast.success(`QR Code baixado (Original)`);
           return;
         }
 
         // Para resoluções específicas, redimensiona a imagem
-        const response = await fetch(qrCodeUrl);
-        const blob = await response.blob();
         const img = new window.Image();
-        const url = window.URL.createObjectURL(blob);
 
         img.onload = () => {
           const canvas = document.createElement('canvas');
@@ -106,16 +99,13 @@ export default function SellerQRCodeModal({
               }
             }, 'image/png');
           }
-
-          window.URL.revokeObjectURL(url);
         };
 
         img.onerror = () => {
-          window.URL.revokeObjectURL(url);
           toast.error('Erro ao processar a imagem');
         };
 
-        img.src = url;
+        img.src = qrCodeBase64;
       } catch (error) {
         console.error('Erro ao baixar QR Code:', error);
         toast.error('Erro ao baixar QR Code');
@@ -124,7 +114,7 @@ export default function SellerQRCodeModal({
         setShowResolutions(false);
       }
     },
-    [qrCodeUrl, sellerName]
+    [qrCodeBase64, sellerName]
   );
 
   const copyQRCodeLink = useCallback(() => {
@@ -178,7 +168,7 @@ export default function SellerQRCodeModal({
           <div className="bg-white p-6 rounded-lg border-2 border-gray-200">
             <div className="relative w-64 h-64">
               <Image
-                src={qrCodeUrl}
+                src={qrCodeBase64}
                 alt={`QR Code de ${sellerName}`}
                 fill
                 className="object-contain"

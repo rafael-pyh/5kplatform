@@ -80,3 +80,9 @@ export const getQRCodeStream = async (qrCodePath: string) => {
   // Retorna o stream do objeto
   return minioClient.getObject(bucketName, qrCodePath);
 };
+
+// Função para gerar QR Code como base64
+export const getQRCodeBase64 = async (qrCode: string): Promise<string> => {
+  const { getQRCodeBase64ByCode } = await import("../utils/qr");
+  return getQRCodeBase64ByCode(qrCode);
+};
