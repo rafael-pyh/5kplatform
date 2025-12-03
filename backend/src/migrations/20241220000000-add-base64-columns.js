@@ -17,7 +17,7 @@ module.exports = {
     try {
       // Adiciona coluna photoBase64
       await queryInterface.addColumn(
-        'persons',
+        'Person',
         'photoBase64',
         {
           type: Sequelize.TEXT,
@@ -28,7 +28,7 @@ module.exports = {
 
       // Adiciona coluna qrCodeBase64
       await queryInterface.addColumn(
-        'persons',
+        'Person',
         'qrCodeBase64',
         {
           type: Sequelize.TEXT,
@@ -51,10 +51,10 @@ module.exports = {
     
     try {
       // Remove coluna photoBase64
-      await queryInterface.removeColumn('persons', 'photoBase64', { transaction });
+      await queryInterface.removeColumn('Person', 'photoBase64', { transaction });
 
       // Remove coluna qrCodeBase64
-      await queryInterface.removeColumn('persons', 'qrCodeBase64', { transaction });
+      await queryInterface.removeColumn('Person', 'qrCodeBase64', { transaction });
 
       await transaction.commit();
       console.log('✅ Colunas base64 removidas com sucesso');
