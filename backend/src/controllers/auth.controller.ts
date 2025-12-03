@@ -25,7 +25,8 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const users = await authService.getAllUsers();
-    return ResponseBuilder.success(res, users);
+    const jsonData = Array.isArray(users) ? users.map((item: any) => item.toJSON ? item.toJSON() : item) : users;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -34,7 +35,8 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
 export const getUserById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await authService.getUserById(req.params.id);
-    return ResponseBuilder.success(res, user);
+    const jsonData = user.toJSON ? user.toJSON() : user;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -43,7 +45,8 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
 export const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await authService.updateUser(req.params.id, req.body);
-    return ResponseBuilder.success(res, user);
+    const jsonData = (user as any).toJSON ? (user as any).toJSON() : user;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -63,7 +66,8 @@ export const createAdminUser = async (req: Request, res: Response, next: NextFun
     // O role do usuário que está fazendo a requisição vem do JWT no middleware authenticate
     const creatorRole = req.user?.role || "";
     const newUser = await authService.createAdminUser(req.body, creatorRole);
-    return ResponseBuilder.created(res, newUser);
+    const jsonData = (newUser as any).toJSON ? (newUser as any).toJSON() : newUser;
+    return ResponseBuilder.created(res, jsonData);
   } catch (error) {
     next(error);
   }

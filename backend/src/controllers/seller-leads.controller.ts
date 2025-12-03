@@ -15,7 +15,8 @@ export const getMyLeads = async (req: Request, res: Response, next: NextFunction
     const leads = await leadService.getSellerLeads(sellerId, {
       status: status as any,
     });
-    return ResponseBuilder.success(res, leads);
+    const jsonData = Array.isArray(leads) ? leads.map((item: any) => item.toJSON ? item.toJSON() : item) : leads;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -30,7 +31,8 @@ export const getMyLeadById = async (req: Request, res: Response, next: NextFunct
 
     const { id } = req.params;
     const lead = await leadService.getSellerLeadById(sellerId, id);
-    return ResponseBuilder.success(res, lead);
+    const jsonData = (lead as any).toJSON ? (lead as any).toJSON() : lead;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }

@@ -52,8 +52,9 @@ export const createLeadFromQR = async (req: Request, res: Response, next: NextFu
     };
 
     const lead = await leadService.createLead(leadData);
+    const jsonData = (lead as any).toJSON ? (lead as any).toJSON() : lead;
 
-    return ResponseBuilder.created(res, lead, "Cadastro realizado com sucesso!");
+    return ResponseBuilder.created(res, jsonData, "Cadastro realizado com sucesso!");
   } catch (error) {
     next(error);
   }
@@ -63,7 +64,8 @@ export const createLeadFromQR = async (req: Request, res: Response, next: NextFu
 export const getScansByPerson = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await qrcodeService.getScansByPerson(req.params.personId);
-    return ResponseBuilder.success(res, data);
+    const jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }

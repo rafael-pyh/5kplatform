@@ -8,7 +8,8 @@ import { LeadStatus } from "../models/Lead";
 export const createLead = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.createLead(req.body);
-    return ResponseBuilder.created(res, data);
+    const jsonData = data.toJSON ? data.toJSON() : data;
+    return ResponseBuilder.created(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -23,7 +24,8 @@ export const getAllLeads = async (req: Request, res: Response, next: NextFunctio
     if (ownerId) filters.ownerId = ownerId as string;
 
     const data = await service.getAllLeads(filters);
-    return ResponseBuilder.success(res, data);
+    const jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -32,7 +34,8 @@ export const getAllLeads = async (req: Request, res: Response, next: NextFunctio
 export const getLeadsByOwner = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.getLeadsByOwner(req.params.ownerId);
-    return ResponseBuilder.success(res, data);
+    const jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -41,7 +44,8 @@ export const getLeadsByOwner = async (req: Request, res: Response, next: NextFun
 export const getLeadById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.getLeadById(req.params.id);
-    return ResponseBuilder.success(res, data);
+    const jsonData = data.toJSON ? data.toJSON() : data;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -50,7 +54,8 @@ export const getLeadById = async (req: Request, res: Response, next: NextFunctio
 export const updateLead = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.updateLead(req.params.id, req.body);
-    return ResponseBuilder.success(res, data);
+    const jsonData = data.toJSON ? data.toJSON() : data;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -60,7 +65,8 @@ export const updateLeadStatus = async (req: Request, res: Response, next: NextFu
   try {
     const { status } = req.body;
     const data = await service.updateLeadStatus(req.params.id, status);
-    return ResponseBuilder.success(res, data);
+    const jsonData = data.toJSON ? data.toJSON() : data;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -88,7 +94,8 @@ export const getNewLeads = async (req: Request, res: Response, next: NextFunctio
   try {
     const days = req.query.days ? parseInt(req.query.days as string) : 7;
     const data = await service.getNewLeads(days);
-    return ResponseBuilder.success(res, data);
+    const jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
