@@ -72,6 +72,20 @@ export const getFileStream = async (filePath: string) => {
 
 // Gera URL pública para acessar arquivo via backend (proxy)
 export const getPublicUrl = (filePath: string): string => {
+  // Se já é uma URL completa, extrair apenas o caminho do arquivo
+  if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+    try {
+      const url = new URL(filePath);
+      // Extrai o caminho e remove /uploads/ ou /api/files/
+      let path = url.pathname;
+      path = path.replace(/^\/uploads\//, '');
+      path = path.replace(/^\/api\/files\//, '');
+      filePath = path;
+    } catch (error) {
+      console.error('Erro ao parsear URL:', filePath);
+    }
+  }
+  
   // Remove possíveis barras iniciais
   let cleanPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
   
