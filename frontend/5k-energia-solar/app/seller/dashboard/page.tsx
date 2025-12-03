@@ -30,9 +30,8 @@ interface Seller {
   email: string;
   phone?: string;
   qrCode: string;
-  qrCodeUrl?: string; // Deprecated
   qrCodeBase64?: string;
-  photoUrl?: string;
+  photoBase64?: string;
   scanCount?: number;
   active: boolean;
 }
