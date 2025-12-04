@@ -20,7 +20,7 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { isAuthenticated, loadFromStorage } = useAuthStore();
+  const { isAuthenticated, loadFromStorage, hydrated } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
     totalPersons: 0,
@@ -64,12 +64,14 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    if (!hydrated) return; // wait until auth state is loaded from localStorage
+
     if (!isAuthenticated) {
       router.push('/login');
       return;
     }
     loadDashboardData();
-  }, [isAuthenticated, router, loadDashboardData]);
+  }, [isAuthenticated, hydrated, router, loadDashboardData]);
 
   // Memoized stats cards configuration
   const statsCards = useMemo(

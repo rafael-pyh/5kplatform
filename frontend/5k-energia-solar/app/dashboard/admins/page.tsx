@@ -13,7 +13,7 @@ import { toast } from 'react-hot-toast';
 
 export default function AdminsPage() {
   const router = useRouter();
-  const { user, isAuthenticated, loadFromStorage } = useAuthStore();
+  const { user, isAuthenticated, loadFromStorage, hydrated } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [admins, setAdmins] = useState<User[]>([]);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
@@ -26,6 +26,8 @@ export default function AdminsPage() {
 
   // Verificar se o usuário tem permissão
   useEffect(() => {
+    if (!hydrated) return; // wait until auth is loaded from localStorage
+
     if (!isAuthenticated) {
       router.push('/login');
       return;
@@ -35,7 +37,7 @@ export default function AdminsPage() {
       toast.error('Você não tem permissão para acessar esta página');
       router.push('/dashboard');
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, hydrated, router]);
 
   const loadAdmins = useCallback(async () => {
     try {
@@ -83,7 +85,7 @@ export default function AdminsPage() {
   };
 
   // Verificação de permissão antes de renderizar
-  if (!isAuthenticated || !user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+  if (!hydrated || !isAuthenticated || !user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
     return (
       <DashboardLayout>
         <LoadingSpinner size="lg" text="Verificando permissões..." />
