@@ -41,7 +41,7 @@ export default function LoginPage() {
         router.push('/seller/dashboard');
         return;
       } else if (response.user.role === 'ADMIN' || response.user.role === 'SUPER_ADMIN') {
-        router.push('/admin/dashboard');
+        router.push('/dashboard');
         return;
       }
     } catch (error: any) {
@@ -57,12 +57,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50 px-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Logo/Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-green-500 rounded-xl mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-br from-blue-500 to-green-500 rounded-xl mb-4">
               <svg
                 className="w-8 h-8 text-white"
                 fill="none"
@@ -138,19 +138,6 @@ export default function LoginPage() {
               {isLoading ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
-
-          {/* Link para vendedores */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              É vendedor?{' '}
-              <a
-                href="/seller/login"
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Acesse aqui
-              </a>
-            </p>
-          </div>
         </div>
       </div>
     </div>

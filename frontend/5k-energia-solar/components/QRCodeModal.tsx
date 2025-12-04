@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
 interface QRCodeModalProps {
@@ -11,6 +11,7 @@ interface QRCodeModalProps {
 }
 
 export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName }: QRCodeModalProps) {
+  const [resolution, setResolution] = useState<number | 'original'>(512);
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -33,12 +34,35 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName 
 
   const handleDownload = () => {
     try {
-      const link = document.createElement('a');
-      link.href = qrCodeBase64;
-      link.download = `qrcode-${personName.replace(/\s+/g, '-').toLowerCase()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const img = document.createElement('img') as HTMLImageElement;
+      img.onload = () => {
+        const targetSize = resolution === 'original' ? Math.max(img.width, img.height) : (resolution as number);
+        const canvas = document.createElement('canvas');
+        canvas.width = targetSize;
+        canvas.height = targetSize;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Cannot get canvas context');
+        // Fill white background to avoid transparent pixels
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Draw the QR centered and scaled to fit
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (!blob) return console.error('Failed to create blob from canvas');
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `qrcode-${personName.replace(/\s+/g, '-').toLowerCase()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+      };
+      img.onerror = (err: Event | string | any) => {
+        console.error('Erro ao carregar imagem do QR Code', err);
+      };
+      img.src = qrCodeBase64;
     } catch (error) {
       console.error('Erro ao baixar QR Code:', error);
     }
@@ -46,7 +70,7 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName 
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
       <div
@@ -98,32 +122,53 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName 
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3">
-          <button
-            onClick={handleDownload}
-            className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        <div className='flex flex-col gap-2'>
+          <div className="flex-1">
+            <label className="block text-sm text-gray-600 mb-1">Resolução</label>
+            <select
+              value={resolution === 'original' ? 'original' : String(resolution)}
+              onChange={(e) => {
+                const v = e.target.value;
+                setResolution(v === 'original' ? 'original' : Number(v));
+              }}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 bg-white cursor-pointer"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-              />
-            </svg>
-            Baixar QR Code
-          </button>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-          >
-            Fechar
-          </button>
+              <option value="256">256</option>
+              <option value="512">512</option>
+              <option value="1024">1024</option>
+              <option value="original">Original</option>
+            </select>
+          </div>
+          <div className="mb-4 flex items-center gap-3">
+
+            <div className="flex-1 flex gap-3">
+              <button
+                onClick={handleDownload}
+                className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+                Baixar QR Code
+              </button>
+              <button
+                onClick={onClose}
+                className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-gray-50 transition-colors font-medium cursor-pointer"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
