@@ -23,14 +23,14 @@ export interface CreateAdminDto {
   name: string;
   email: string;
   password: string;
-  role: 'ADMIN' | 'SUPER_ADMIN';
+  role: 'ADMIN' | 'SUPER_ADMIN' | 'SELLER';
 }
 
 export interface UpdateAdminDto {
   name?: string;
   email?: string;
   password?: string;
-  role?: 'ADMIN' | 'SUPER_ADMIN';
+  role?: 'ADMIN' | 'SUPER_ADMIN' | 'SELLER';
   active?: boolean;
 }
 
