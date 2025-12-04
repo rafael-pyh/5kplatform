@@ -4,9 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
-import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import { LoginCredentials, AuthResponse } from '@/lib/types';
+import { LoginCredentials } from '@/lib/types';
 import { loginAction } from '../actions/auth';
 
 export default function LoginPage() {
@@ -36,8 +35,15 @@ export default function LoginPage() {
       }
 
       setAuth(response.user, response.token);
+      console.log('Login successful:', response);
       toast.success('Login realizado com sucesso!');
-      router.push('/dashboard');
+      if (response.user.role === 'SELLER') {
+        router.push('/seller/dashboard');
+        return;
+      } else if (response.user.role === 'ADMIN' || response.user.role === 'SUPER_ADMIN') {
+        router.push('/admin/dashboard');
+        return;
+      }
     } catch (error: any) {
       console.error('Login error:', error);
       const message =

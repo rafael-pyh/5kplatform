@@ -18,6 +18,8 @@ if (hasResend) {
   resendClient = new Resend(RESEND_API_KEY as string);
 }
 
+console.log(`📧 Resend configured: ${hasResend ? 'yes' : 'no'}`);
+
 export const sendEmail = async (options: EmailOptions): Promise<void> => {
   // Modo desenvolvimento: apenas loga se não houver configuração
   if (!hasResend) {

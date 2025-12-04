@@ -1,5 +1,5 @@
-import app from "./app";
 import "dotenv/config";
+import app from "./app";
 import sequelize from "./database/sequelize";
 
 // Função para inicializar o servidor
