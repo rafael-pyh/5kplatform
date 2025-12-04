@@ -19,12 +19,11 @@ services:
     volumes:
       # Hot reload — apenas o código fonte!
       - ./backend/src:/app/src
-
-      # ❌ REMOVIDO — impede Prisma de criar migrations
-      # - ./backend/prisma:/app/prisma:ro
-
-      # Usar node_modules internos do container
-      - /app/node_modules
+      - ./backend/config:/app/config
+      - ./backend/.sequelizerc:/app/.sequelizerc
+      - ./backend/src/migrations:/app/src/migrations
+      - ./backend/src/seeders:/app/src/seeders
+      # (Removido) Não montar volume anônimo em /app/node_modules — isso escondia as dependências instaladas no build
     depends_on:
       postgres:
         condition: service_healthy
@@ -32,6 +31,7 @@ services:
         condition: service_started
     networks:
       - 5kplatform_network
+    entrypoint: ["/usr/local/bin/docker-entrypoint-dev.sh"]
     command: npm run dev
 
   postgres:
