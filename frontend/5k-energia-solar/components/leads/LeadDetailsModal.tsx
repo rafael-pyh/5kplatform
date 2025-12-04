@@ -43,15 +43,41 @@ function LeadDetailsModal({ isOpen, onClose, lead }: LeadDetailsModalProps) {
 
   const isImageUrl = (url?: string) => {
     if (!url) return false;
-    return /(^data:image\/)|\.(png|jpe?g|webp|gif|bmp)(\?|$)/i.test(url);
+    const maybe = ensureDataUrl(url);
+    return !!maybe && /^data:image\//.test(maybe);
   };
+
+  function ensureDataUrl(value?: string | null): string | null {
+    if (!value) return null;
+    const v = value.trim();
+    if (v.startsWith('data:')) return v;
+    if (/^https?:\/\//i.test(v)) return v;
+
+    // Heuristic: raw base64 without data: prefix
+    // Check first few chars to guess MIME
+    const head = v.substring(0, 4);
+    const b64 = v.replace(/\s+/g, '');
+    if (!/^[A-Za-z0-9+/=]+$/.test(b64)) return v; // not pure base64, return as-is
+
+    // JPEG base64 often starts with /9j or /9 (after decoding), raw base64 may start with '/9j' or similar
+    if (head === '/9j' || head === '/9J' || b64.startsWith('/9j')) return `data:image/jpeg;base64,${b64}`;
+    if (b64.startsWith('iVBOR')) return `data:image/png;base64,${b64}`;
+    if (b64.startsWith('R0lG')) return `data:image/gif;base64,${b64}`;
+    if (b64.startsWith('JVBE') || b64.startsWith('%PDF')) return `data:application/pdf;base64,${b64}`;
+
+    // Default to jpeg if looks like base64
+    return `data:image/jpeg;base64,${b64}`;
+  }
 
   const downloadFile = async (url: string, filename: string) => {
     try {
+      // Normalize potential raw base64 / relative strings to data: or http(s):
+      const target = ensureDataUrl(url) || url;
+
       // If it's a data URL, just use anchor
-      if (url.startsWith('data:')) {
+      if (target.startsWith('data:')) {
         const a = document.createElement('a');
-        a.href = url;
+        a.href = target;
         a.download = filename;
         document.body.appendChild(a);
         a.click();
@@ -59,7 +85,7 @@ function LeadDetailsModal({ isOpen, onClose, lead }: LeadDetailsModalProps) {
         return;
       }
 
-      const res = await fetch(url);
+      const res = await fetch(target);
       if (!res.ok) throw new Error('Network response was not ok');
       const blob = await res.blob();
       const objUrl = URL.createObjectURL(blob);
@@ -80,11 +106,16 @@ function LeadDetailsModal({ isOpen, onClose, lead }: LeadDetailsModalProps) {
   // UX improvements
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  // normalize different field names returned by backend
+  const rawEnergy: string | null = (lead as any).energyBillUrl || (lead as any).energyBill || null;
+  const rawRoof: string | null = (lead as any).roofPhotoUrl || (lead as any).roofPhoto || null;
+  const energyUrl: string | null = ensureDataUrl(rawEnergy) || null;
+  const roofUrl: string | null = ensureDataUrl(rawRoof) || null;
 
   const downloadAll = async () => {
     const files: Array<{ url: string; name: string }> = [];
-    if (lead.energyBillUrl) files.push({ url: lead.energyBillUrl, name: `lead-${lead.id}-energybill` });
-    if (lead.roofPhotoUrl) files.push({ url: lead.roofPhotoUrl, name: `lead-${lead.id}-roof` });
+    if (energyUrl) files.push({ url: energyUrl, name: `lead-${lead.id}-energybill` });
+    if (roofUrl) files.push({ url: roofUrl, name: `lead-${lead.id}-roof` });
     for (const f of files) {
       // eslint-disable-next-line no-await-in-loop
       await downloadFile(f.url, f.name);
@@ -107,7 +138,7 @@ function LeadDetailsModal({ isOpen, onClose, lead }: LeadDetailsModalProps) {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn"
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fadeIn"
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 animate-slideUp max-h-[90vh] overflow-y-auto">
@@ -185,7 +216,7 @@ function LeadDetailsModal({ isOpen, onClose, lead }: LeadDetailsModalProps) {
 
             <div className="space-y-3">
               <div>
-                {(!lead.energyBillUrl && !lead.roofPhotoUrl) && (
+                {(!energyUrl && !roofUrl) && (
                   <p className="text-sm text-gray-500">Nenhuma imagem ou documento anexado</p>
                 )}
 
@@ -194,20 +225,20 @@ function LeadDetailsModal({ isOpen, onClose, lead }: LeadDetailsModalProps) {
                   {selectedImage ? (
                     <div className="border rounded p-2 flex items-center justify-center">
                       <img
-                        src={selectedImage}
+                        src={ensureDataUrl(selectedImage) || undefined}
                         alt="Preview"
                         className="max-h-96 object-contain cursor-pointer"
                         onClick={() => setLightboxOpen(true)}
                       />
                     </div>
                   ) : (
-                    (lead.roofPhotoUrl || lead.energyBillUrl) && (
+                    (roofUrl || energyUrl) && (
                       <div className="border rounded p-2 flex items-center justify-center">
                         <img
-                          src={lead.roofPhotoUrl || lead.energyBillUrl}
+                          src={ensureDataUrl(roofUrl || energyUrl) || undefined}
                           alt="Preview"
                           className="max-h-96 object-contain cursor-pointer"
-                          onClick={() => { setSelectedImage(lead.roofPhotoUrl || lead.energyBillUrl || null); setLightboxOpen(true); }}
+                          onClick={() => { setSelectedImage(roofUrl || energyUrl || null); setLightboxOpen(true); }}
                         />
                       </div>
                     )
@@ -216,26 +247,30 @@ function LeadDetailsModal({ isOpen, onClose, lead }: LeadDetailsModalProps) {
 
                 {/* Thumbnails */}
                 <div className="mt-2 grid grid-cols-2 gap-2">
-                  {lead.roofPhotoUrl && (
-                    <div className={`border rounded overflow-hidden cursor-pointer ${selectedImage === lead.roofPhotoUrl ? 'ring-2 ring-blue-400' : ''}`} onClick={() => setSelectedImage(lead.roofPhotoUrl || null)}>
-                      <img src={lead.roofPhotoUrl} alt="telhado" className="w-full h-28 object-cover bg-white" />
-                      <div className="p-1 flex justify-between">
-                        <Button variant="ghost" size="sm" onClick={() => openFile(lead.roofPhotoUrl!)}>Abrir</Button>
-                        <Button variant="ghost" size="sm" onClick={() => downloadFile(lead.roofPhotoUrl!, `lead-${lead.id}-roof`)}>Baixar</Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {lead.energyBillUrl && (
-                    <div className={`border rounded overflow-hidden cursor-pointer ${selectedImage === lead.energyBillUrl ? 'ring-2 ring-blue-400' : ''}`} onClick={() => setSelectedImage(lead.energyBillUrl || null)}>
-                      {isImageUrl(lead.energyBillUrl) ? (
-                        <img src={lead.energyBillUrl} alt="conta" className="w-full h-28 object-cover bg-white" />
+                  {roofUrl && (
+                    <div className={`border rounded overflow-hidden cursor-pointer ${selectedImage === roofUrl ? 'ring-2 ring-blue-400' : ''}`} onClick={() => setSelectedImage(roofUrl || null)}>
+                      {isImageUrl(roofUrl) ? (
+                        <img src={ensureDataUrl(roofUrl) || undefined} alt="telhado" className="w-full h-28 object-cover bg-white" />
                       ) : (
                         <div className="w-full h-28 flex items-center justify-center bg-gray-50">Documento</div>
                       )}
                       <div className="p-1 flex justify-between">
-                        <Button variant="ghost" size="sm" onClick={() => openFile(lead.energyBillUrl!)}>Abrir</Button>
-                        <Button variant="ghost" size="sm" onClick={() => downloadFile(lead.energyBillUrl!, `lead-${lead.id}-energybill`)}>Baixar</Button>
+                        <Button variant="ghost" size="sm" onClick={() => openFile(ensureDataUrl(roofUrl!) || roofUrl!)}>Abrir</Button>
+                        <Button variant="ghost" size="sm" onClick={() => downloadFile(ensureDataUrl(roofUrl!) || roofUrl!, `lead-${lead.id}-roof`)}>Baixar</Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {energyUrl && (
+                    <div className={`border rounded overflow-hidden cursor-pointer ${selectedImage === energyUrl ? 'ring-2 ring-blue-400' : ''}`} onClick={() => setSelectedImage(energyUrl || null)}>
+                      {isImageUrl(energyUrl) ? (
+                        <img src={ensureDataUrl(energyUrl) || undefined} alt="conta" className="w-full h-28 object-cover bg-white" />
+                      ) : (
+                        <div className="w-full h-28 flex items-center justify-center bg-gray-50">Documento</div>
+                      )}
+                      <div className="p-1 flex justify-between">
+                        <Button variant="ghost" size="sm" onClick={() => openFile(ensureDataUrl(energyUrl!) || energyUrl!)}>Abrir</Button>
+                        <Button variant="ghost" size="sm" onClick={() => downloadFile(ensureDataUrl(energyUrl!) || energyUrl!, `lead-${lead.id}-energybill`)}>Baixar</Button>
                       </div>
                     </div>
                   )}
