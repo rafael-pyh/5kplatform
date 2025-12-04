@@ -254,8 +254,7 @@ function LeadDetailsModal({ isOpen, onClose, lead }: LeadDetailsModalProps) {
                       ) : (
                         <div className="w-full h-28 flex items-center justify-center bg-gray-50">Documento</div>
                       )}
-                      <div className="p-1 flex justify-between">
-                        <Button variant="ghost" size="sm" onClick={() => openFile(ensureDataUrl(roofUrl!) || roofUrl!)}>Abrir</Button>
+                      <div className="p-1 flex w-full justify-end">
                         <Button variant="ghost" size="sm" onClick={() => downloadFile(ensureDataUrl(roofUrl!) || roofUrl!, `lead-${lead.id}-roof`)}>Baixar</Button>
                       </div>
                     </div>
