@@ -69,7 +69,7 @@ export const sendVerificationEmail = async (
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
           .header { background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
           .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
-          .button { display: inline-block; padding: 12px 30px; background: #3B82F6; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .button { display: inline-block; padding: 12px 30px; background: #3B82F6; color: white !important; text-decoration: none; border-radius: 5px; margin: 20px 0; }
           .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
         </style>
       </head>
@@ -84,7 +84,7 @@ export const sendVerificationEmail = async (
             <p>Você foi cadastrado como vendedor na plataforma 5K Energia Solar.</p>
             <p>Para acessar sua conta e visualizar seus leads, você precisa verificar seu email e criar uma senha.</p>
             <p style="text-align: center;">
-              <a href="${verificationUrl}" class="button">Verificar Email e Criar Senha</a>
+              <a href="${verificationUrl}" class="button" style="color: white !important;">Verificar Email e Criar Senha</a>
             </p>
             <p>Ou copie e cole o link abaixo no seu navegador:</p>
             <p style="background: #e5e7eb; padding: 10px; border-radius: 5px; word-break: break-all;">
