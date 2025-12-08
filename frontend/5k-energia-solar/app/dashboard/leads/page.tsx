@@ -98,7 +98,7 @@ export default function LeadsPage() {
           {/* Table */}
           <div className="p-6">
             {loading ? (
-              <div className="flex justify-center py-12">
+              <div className="flex justify-center py-1">
                 <LoadingSpinner size="lg" />
               </div>
             ) : (
