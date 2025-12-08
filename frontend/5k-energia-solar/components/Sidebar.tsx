@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { toast } from 'react-hot-toast';
+import Image from 'next/image';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -15,6 +16,8 @@ export default function Sidebar() {
     toast.success('Logout realizado com sucesso!');
     router.push('/login');
   };
+
+  console.log('User', user);
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
@@ -84,23 +87,12 @@ export default function Sidebar() {
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen fixed left-0 top-0">
       {/* Logo */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="pt-6 pl-6 border-b w-full border-gray-200">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-              />
-            </svg>
-          </div>
-          <div>
-            <h2 className="font-bold text-gray-900">5K Energia</h2>
-            <p className="text-xs text-gray-500">Solar Admin</p>
-          </div>
+          <Image src="/5klogo.png" alt="5K Energia Logo" width={180} height={100} />
         </div>
+        <p className="mt-2 text-gray-700">{user?.name}</p>
+        <p className="text-sm text-gray-500">{user?.email}</p>
       </div>
 
       {/* Menu */}
