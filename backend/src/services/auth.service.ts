@@ -42,8 +42,8 @@ export const register = async (data: CreateUserDto) => {
   // Hash da senha
   const hashedPassword = await hashPassword(data.password);
 
-  // Cria o usuário na tabela Person
-  const user = await Person.create({
+  // Prepara os dados para criar o usuário
+  const createData: any = {
     email: data.email,
     password: hashedPassword,
     name: data.name,
@@ -51,7 +51,15 @@ export const register = async (data: CreateUserDto) => {
     qrCode: `ADMIN-${Date.now()}`,
     emailVerified: true,
     active: true,
-  });
+  };
+
+  // Adiciona photoBase64 se fornecido
+  if ((data as any).photoBase64) {
+    createData.photoBase64 = (data as any).photoBase64;
+  }
+
+  // Cria o usuário na tabela Person
+  const user = await Person.create(createData);
 
   // Gera o token
   const token = generateToken({
@@ -68,6 +76,7 @@ export const register = async (data: CreateUserDto) => {
       role: user.role,
       active: user.active,
       createdAt: user.createdAt,
+      photoBase64: (user as any).photoBase64,
     },
     token,
   };
@@ -135,6 +144,7 @@ export const login = async (data: LoginDto) => {
       email: user.email,
       name: user.name || 'Usuário',
       role: user.role || PersonRole.SELLER,
+      photoBase64: (user as any).photoBase64,
     },
     token,
   };
@@ -145,14 +155,14 @@ export const getAllUsers = async () => {
     where: {
       role: [PersonRole.ADMIN, PersonRole.SUPER_ADMIN],
     },
-    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt'],
+    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt', 'photoBase64', 'phone', 'pixKey'],
     order: [['createdAt', 'DESC']],
   });
 };
 
 export const getUserById = async (id: string) => {
   const user = await Person.findByPk(id, {
-    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt'],
+    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt', 'photoBase64', 'phone', 'pixKey'],
   });
 
   if (!user) {
@@ -176,10 +186,24 @@ export const updateUser = async (
     active: data.active,
   };
 
+  // Support updating photoBase64 (frontend may send as `photoBase64` or `avatar`)
+  if ((data as any).photoBase64) {
+    updateData.photoBase64 = (data as any).photoBase64;
+  } else if ((data as any).avatar) {
+    updateData.photoBase64 = (data as any).avatar;
+  }
+
   // Se a senha foi fornecida, faz o hash
   if (data.password) {
     updateData.password = await hashPassword(data.password);
   }
+
+  // Additional person fields
+  if ((data as any).phone !== undefined) updateData.phone = (data as any).phone;
+  if ((data as any).pixKey !== undefined) updateData.pixKey = (data as any).pixKey;
+  if ((data as any).photoBase64 !== undefined) updateData.photoBase64 = (data as any).photoBase64;
+  if ((data as any).qrCodeBase64 !== undefined) updateData.qrCodeBase64 = (data as any).qrCodeBase64;
+  if ((data as any).emailVerified !== undefined) updateData.emailVerified = (data as any).emailVerified;
 
   await user.update(updateData);
   
@@ -190,6 +214,7 @@ export const updateUser = async (
     role: user.role,
     active: user.active,
     createdAt: user.createdAt,
+    photoBase64: (user as any).photoBase64,
   };
 };
 

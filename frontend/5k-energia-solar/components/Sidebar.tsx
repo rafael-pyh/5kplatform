@@ -87,12 +87,29 @@ export default function Sidebar() {
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen fixed left-0 top-0">
       {/* Logo */}
-      <div className="pt-6 pl-6 border-b w-full border-gray-200">
-        <div className="flex items-center gap-3">
+      <div className="pt-6 pl-6 pb-4 border-b w-full border-gray-200">
+        <div className="flex items-center gap-3 mb-4">
           <Image src="/5klogo.png" alt="5K Energia Logo" width={180} height={100} />
         </div>
-        <p className="mt-2 text-gray-700">{user?.name}</p>
-        <p className="text-sm text-gray-500">{user?.email}</p>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center shrink-0">
+            {user?.photoBase64 ? (
+              <img
+                src={user.photoBase64}
+                alt={`${user.name} avatar`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-blue-600 font-semibold text-lg">
+                {user?.name?.[0]?.toUpperCase() || 'U'}
+              </span>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
+            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+          </div>
+        </div>
       </div>
 
       {/* Menu */}
@@ -118,15 +135,6 @@ export default function Sidebar() {
 
       {/* User Info & Logout */}
       <div className="p-4 border-t border-gray-200">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-            <span className="text-blue-600 font-semibold">{user?.name?.[0] || 'U'}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
-            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-          </div>
-        </div>
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"

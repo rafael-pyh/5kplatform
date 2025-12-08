@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { adminService } from '@/lib/services';
@@ -15,6 +15,8 @@ interface EditAdminModalProps {
 
 export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: EditAdminModalProps) {
   const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const {
     register,
@@ -30,6 +32,18 @@ export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: Ed
       setValue('email', admin.email);
       setValue('role', admin.role);
       setValue('active', admin.active ?? true);
+        setValue('phone', (admin as any).phone || '');
+        setValue('pixKey', (admin as any).pixKey || '');
+      // set existing avatar preview if admin has one
+      if ((admin as any).photoBase64) {
+        setPreview((admin as any).photoBase64);
+      } else if ((admin as any).avatar) {
+        setPreview((admin as any).avatar);
+      } else if ((admin as any).imageBase64) {
+        setPreview((admin as any).imageBase64);
+      } else {
+        setPreview(null);
+      }
     }
   }, [admin, isOpen, setValue]);
 
@@ -44,9 +58,20 @@ export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: Ed
         delete updateData.password;
       }
 
+      // if user selected a new file, read base64 and include as `avatar` (or imageBase64)
+      if (fileInputRef.current && fileInputRef.current.files && fileInputRef.current.files[0]) {
+        const file = fileInputRef.current.files[0];
+        const base64 = await toBase64(file);
+        // attach to payload as `photoBase64` (backend expects this field)
+        (updateData as any).photoBase64 = base64;
+      }
+
       await adminService.update(admin.id, updateData);
       toast.success('Administrador atualizado com sucesso!');
       reset();
+      // clear preview and file input
+      setPreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -57,9 +82,30 @@ export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: Ed
     }
   };
 
+  const toBase64 = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) {
+      setPreview(null);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const handleClose = () => {
     if (!loading) {
       reset();
+      setPreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       onClose();
     }
   };
@@ -70,7 +116,7 @@ export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: Ed
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-black/50 transition-opacity"
         onClick={handleClose}
       ></div>
 
@@ -139,6 +185,34 @@ export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: Ed
                 )}
               </div>
 
+              {/* Phone */}
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                  Telefone
+                </label>
+                <input
+                  id="phone"
+                  type="text"
+                  {...register('phone')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="(xx) xxxxx-xxxx"
+                />
+              </div>
+
+              {/* Pix Key */}
+              <div>
+                <label htmlFor="pixKey" className="block text-sm font-medium text-gray-700 mb-1">
+                  Chave PIX
+                </label>
+                <input
+                  id="pixKey"
+                  type="text"
+                  {...register('pixKey')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="chave@pix"
+                />
+              </div>
+
               {/* Senha (opcional) */}
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
@@ -179,6 +253,33 @@ export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: Ed
                 )}
               </div>
 
+              {/* Avatar upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Imagem de perfil</label>
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                    {preview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                      </svg>
+                    )}
+                  </div>
+
+                  <div className="flex-1">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Envie uma imagem para o perfil (opcional).</p>
+                  </div>
+                </div>
+              </div>
               {/* Status */}
               <div className="flex items-center">
                 <input

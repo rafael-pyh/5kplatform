@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { adminService } from '@/lib/services';
@@ -14,6 +14,8 @@ interface NewAdminModalProps {
 
 export default function NewAdminModal({ isOpen, onClose, onSuccess }: NewAdminModalProps) {
   const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const {
     register,
@@ -25,12 +27,42 @@ export default function NewAdminModal({ isOpen, onClose, onSuccess }: NewAdminMo
 
   const password = watch('password');
 
+  const toBase64 = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) {
+      setPreview(null);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const onSubmit = async (data: CreateAdminDto) => {
     setLoading(true);
     try {
-      await adminService.create(data);
+      const createData = { ...data };
+
+      // Se o usuário selecionou uma imagem, adiciona ao payload
+      if (fileInputRef.current && fileInputRef.current.files && fileInputRef.current.files[0]) {
+        const file = fileInputRef.current.files[0];
+        const base64 = await toBase64(file);
+        (createData as any).photoBase64 = base64;
+      }
+
+      await adminService.create(createData);
       toast.success('Administrador criado com sucesso!');
       reset();
+      setPreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -44,6 +76,8 @@ export default function NewAdminModal({ isOpen, onClose, onSuccess }: NewAdminMo
   const handleClose = () => {
     if (!loading) {
       reset();
+      setPreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       onClose();
     }
   };
@@ -163,6 +197,36 @@ export default function NewAdminModal({ isOpen, onClose, onSuccess }: NewAdminMo
                 {errors.role && (
                   <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
                 )}
+              </div>
+
+              {/* Imagem de perfil */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Imagem de perfil
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                    {preview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                      </svg>
+                    )}
+                  </div>
+
+                  <div className="flex-1">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Envie uma imagem para o perfil (opcional).</p>
+                  </div>
+                </div>
               </div>
             </div>
 

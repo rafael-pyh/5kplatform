@@ -7,6 +7,7 @@ export interface User {
   active?: boolean;
   createdAt: string;
   updatedAt: string;
+  photoBase64?: string;
 }
 
 export interface LoginCredentials {
@@ -32,6 +33,11 @@ export interface UpdateAdminDto {
   password?: string;
   role?: 'ADMIN' | 'SUPER_ADMIN' | 'SELLER';
   active?: boolean;
+  phone?: string;
+  pixKey?: string;
+  photoBase64?: string;
+  qrCodeBase64?: string;
+  emailVerified?: boolean;
 }
 
 // ========== PERSON (VENDEDOR) ==========

@@ -17,6 +17,7 @@ export interface LoginResponse {
     role: 'ADMIN' | 'SUPER_ADMIN' | 'SELLER';
     createdAt: string;
     updatedAt: string;
+    photoBase64?: string;
   };
   error?: string;
 }

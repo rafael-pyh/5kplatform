@@ -24,6 +24,8 @@ module.exports = {
         name: 'Super Admin',
         email: 'admin@5kenergia.com',
         password: hashedPassword,
+        // Pequeno avatar SVG embutido como data URL
+        photoBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="100%" height="100%" fill="%230f172a"/><text x="50%" y="54%" font-size="56" fill="%23a78bfa" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">SA</text></svg>',
         role: 'SUPER_ADMIN',
         qrCode: `ADMIN-${Date.now()}`,
         emailVerified: true,

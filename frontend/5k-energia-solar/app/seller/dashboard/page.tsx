@@ -86,7 +86,7 @@ export default function SellerDashboardPage() {
     localStorage.removeItem('user');
     localStorage.removeItem('userType');
     toast.success('Logout realizado com sucesso!');
-    router.push('/seller/login');
+    router.push('/login');
   };
 
   const getStatusBadge = (status: string) => {
