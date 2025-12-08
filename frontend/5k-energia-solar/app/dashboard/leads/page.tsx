@@ -77,7 +77,7 @@ export default function LeadsPage() {
   return (
     <DashboardLayout>
       <Sidebar />
-      <div className="flex-1 p-8 overflow-auto">
+      <div className="flex-1 p-2 overflow-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
