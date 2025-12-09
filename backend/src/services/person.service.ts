@@ -10,8 +10,11 @@ export interface CreatePersonDto {
   name: string;
   email?: string;
   phone?: string;
+  password?: string;
   pixKey?: string;
   photoBase64?: string;
+  city?: string;
+  state?: string;
 }
 
 export interface UpdatePersonDto {
@@ -19,8 +22,11 @@ export interface UpdatePersonDto {
   email?: string;
   phone?: string;
   pixKey?: string;
+  password?: string;
   photoBase64?: string;
   active?: boolean;
+  city?: string;
+  state?: string;
 }
 
 export const createPerson = async (data: CreatePersonDto) => {

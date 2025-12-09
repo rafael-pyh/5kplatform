@@ -31,7 +31,8 @@ export const personService = {
 
   // Criar novo vendedor
   async create(data: CreatePersonDto): Promise<Person> {
-    const response = await api.post<ApiResponse<Person>>('/person', data);
+    const response = await api.post<ApiResponse<Person>>('/manual-register', data);
+    console.log(response);
     return normalizePersonUrls(response.data.data!);
   },
 

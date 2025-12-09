@@ -78,6 +78,12 @@ export class Person extends Model {
   @Column(DataType.BOOLEAN)
   emailVerified!: boolean;
 
+  @Column(DataType.STRING)
+  city: string;
+
+  @Column(DataType.STRING)
+  state: string;
+
   @Unique
   @AllowNull(true)
   @Column(DataType.STRING)
@@ -101,3 +107,5 @@ export class Person extends Model {
   @HasMany(() => QRCodeScan)
   qrCodeScans?: QRCodeScan[];
 }
+
+// Removi a chamada redundante de Person.init, pois o decorador @Table já cuida da configuração do modelo.

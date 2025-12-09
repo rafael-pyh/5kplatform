@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
+import Image from 'next/image';
 import { useAuthStore } from '@/store/auth';
 import { LoginCredentials } from '@/lib/types';
 import { loginAction } from '../actions/auth';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -62,22 +64,8 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Logo/Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-br from-blue-500 to-green-500 rounded-xl mb-4">
-              <svg
-                className="w-8 h-8 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">5K Energia Solar</h1>
+            <Image src="/5klogo.png" alt="5K Energia Logo" width={150} height={80} className="mx-auto mb-4" />
+            <h1 className="text-2xl font-thin text-gray-900">Energia Solar</h1>
             <p className="text-gray-600 mt-2">Faça login para acessar o sistema</p>
           </div>
 
@@ -137,6 +125,12 @@ export default function LoginPage() {
             >
               {isLoading ? 'Entrando...' : 'Entrar'}
             </button>
+            <div className="w-full flex justify-between">
+              <p>Ainda não tem uma conta?</p>
+              <Link href="/register" className="text-blue-600 hover:cursor-pointer">
+                Cadastre-se
+              </Link>
+            </div>
           </form>
         </div>
       </div>
