@@ -46,10 +46,30 @@ export default function SellerDashboardPage() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const userType = localStorage.getItem('userType');
+    let userType = localStorage.getItem('userType');
+    
+    // Fallback: verificar role do user no localStorage
+    if (!userType) {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          userType = user.role;
+          // Salvar userType para próximas verificações
+          if (userType) {
+            localStorage.setItem('userType', userType);
+          }
+        } catch (e) {
+          console.error('Erro ao parsear user:', e);
+        }
+      }
+    }
+    
+    console.log('User Type:', userType);
+    console.log('Token:', token);
 
-    if (!token || userType !== 'seller') {
-      router.push('/seller/login');
+    if (!token || userType !== 'SELLER') {
+      // router.push('/login');
       return;
     }
 
@@ -72,7 +92,7 @@ export default function SellerDashboardPage() {
       console.error('Erro ao carregar dados:', error);
       if (error.response?.status === 401 || error.response?.status === 403) {
         toast.error('Sessão expirada. Faça login novamente.');
-        router.push('/seller/login');
+        // router.push('/login');
       } else {
         toast.error('Erro ao carregar dados');
       }

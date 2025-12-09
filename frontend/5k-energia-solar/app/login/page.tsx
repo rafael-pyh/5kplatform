@@ -37,6 +37,14 @@ export default function LoginPage() {
       }
 
       setAuth(response.user, response.token);
+      
+      // Salvar userType baseado no role
+      if (response.user.role === 'SELLER') {
+        localStorage.setItem('userType', 'SELLER');
+      } else if (response.user.role === 'ADMIN' || response.user.role === 'SUPER_ADMIN') {
+        localStorage.setItem('userType', response.user.role);
+      }
+      
       console.log('Login successful:', response);
       toast.success('Login realizado com sucesso!');
       if (response.user.role === 'SELLER') {

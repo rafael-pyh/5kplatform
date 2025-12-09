@@ -13,9 +13,8 @@ manualRegisterRouter.post("/manual-register", async (req, res) => {
       return res.status(400).json({ message: "Email é obrigatório." });
     }
 
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-
-    const newUser = await createPerson({
+    // createPerson já gera o verificationToken e envia o email
+    await createPerson({
       name,
       email,
       password,
@@ -25,8 +24,6 @@ manualRegisterRouter.post("/manual-register", async (req, res) => {
       city,
       state,
     });
-
-    await sendVerificationEmail(email, name, verificationToken);
 
     return res.status(201).json({
       message: "Usuário registrado com sucesso. Verifique seu email para ativação.",

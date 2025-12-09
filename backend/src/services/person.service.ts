@@ -4,6 +4,7 @@ import { Lead } from "../models/Lead";
 import { QRCodeScan } from "../models/QRCodeScan";
 import { generateQRCode, generateQRCodeBase64 } from "../utils/qr";
 import { sendVerificationEmail } from "../utils/email";
+import { hashPassword } from "../utils/bcrypt";
 import crypto from "crypto";
 
 export interface CreatePersonDto {
@@ -15,6 +16,8 @@ export interface CreatePersonDto {
   photoBase64?: string;
   city?: string;
   state?: string;
+  verificationToken?: string;
+  verificationTokenExpiry?: Date;
 }
 
 export interface UpdatePersonDto {
@@ -57,9 +60,16 @@ export const createPerson = async (data: CreatePersonDto) => {
     tokenExpiry.setHours(tokenExpiry.getHours() + 24); // 24 horas
   }
 
+  // Hash da senha se fornecida
+  let hashedPassword: string | undefined = undefined;
+  if (data.password) {
+    hashedPassword = await hashPassword(data.password);
+  }
+
   // Cria a pessoa no banco (sempre como SELLER)
   const person = await Person.create({
     ...data,
+    password: hashedPassword,
     qrCode,
     qrCodeBase64, // Salva o base64 no banco
     role: PersonRole.SELLER,
@@ -167,7 +177,13 @@ export const updateById = async (id: string, data: UpdatePersonDto) => {
   const person = await Person.findByPk(id);
   if (!person) throw new Error("Vendedor não encontrado");
   
-  await person.update(data);
+  // Hash da senha se estiver sendo atualizada
+  const updateData: any = { ...data };
+  if (data.password) {
+    updateData.password = await hashPassword(data.password);
+  }
+  
+  await person.update(updateData);
   await person.reload();
   
   return person;
