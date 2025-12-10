@@ -3,7 +3,7 @@ import { Person, PersonRole } from "../models/Person";
 import { Lead } from "../models/Lead";
 import { QRCodeScan } from "../models/QRCodeScan";
 import { generateQRCode, generateQRCodeBase64 } from "../utils/qr";
-import { sendEmailVerificationOnly } from "../utils/email";
+import { sendEmailVerificationOnly, sendEmailConfirmation, sendVerificationEmail } from "../utils/email";
 import { hashPassword } from "../utils/bcrypt";
 import crypto from "crypto";
 
@@ -67,27 +67,35 @@ export const createPerson = async (data: CreatePersonDto) => {
   }
 
   // Cria a pessoa no banco (sempre como SELLER)
-  // Se foi criado pelo admin (tem senha), aprova automaticamente
-  // Se foi registro público (sem senha), fica pendente
+  // Se foi criado pelo admin (não tem senha), aprova automaticamente
+  // Se foi registro público (tem senha), fica pendente
   const person = await Person.create({
     ...data,
     password: hashedPassword,
     qrCode,
     qrCodeBase64, // Salva o base64 no banco
     role: PersonRole.SELLER,
-    approvalStatus: hashedPassword ? 'approved' : 'pending',
+    approvalStatus: !hashedPassword ? 'approved' : 'pending',
     verificationToken,
     tokenExpiry,
   });
 
-  // Envia email de verificação se email foi fornecido
+  // Envia email baseado no tipo de registro
   if (data.email && verificationToken) {
     try {
-      console.log(`Tentando enviar email para: ${data.email}, com token: ${verificationToken}`);
-      await sendEmailVerificationOnly(data.email, data.name, verificationToken);
-      console.log(`Email de verificação enviado para ${data.email}`);
+      if (hashedPassword) {
+        // Registro manual (usuário criou com senha) - envia email de confirmação
+        console.log(`Enviando email de confirmação para: ${data.email}`);
+        await sendEmailConfirmation(data.email, data.name, verificationToken);
+        console.log(`Email de confirmação enviado para ${data.email}`);
+      } else {
+        // Criado pelo admin (sem senha) - envia email para criar senha
+        console.log(`Enviando email para criar senha para: ${data.email}`);
+        await sendVerificationEmail(data.email, data.name, verificationToken);
+        console.log(`Email de verificação e criar senha enviado para ${data.email}`);
+      }
     } catch (error) {
-      console.error("Erro ao enviar email de verificação:", error);
+      console.error("Erro ao enviar email:", error);
       // Não falha a criação se o email não for enviado
     }
   }

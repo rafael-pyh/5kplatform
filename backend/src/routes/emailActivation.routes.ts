@@ -17,7 +17,7 @@ emailActivationRouter.get("/verify-email", async (req, res) => {
       return res.status(404).json({ message: "Token inválido ou expirado." });
     }
 
-    person.verificationToken = null;
+    person.verificationToken = undefined;
     person.emailVerified = true;
     await person.save();
 
