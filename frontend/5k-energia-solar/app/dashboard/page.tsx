@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/DashboardLayout';
 import StatsCard from '@/components/dashboard/StatsCard';
 import RecentLeadsTable from '@/components/dashboard/RecentLeadsTable';
@@ -20,7 +20,7 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { isAuthenticated, loadFromStorage, hydrated } = useAuthStore();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
     totalPersons: 0,
@@ -29,10 +29,6 @@ export default function DashboardPage() {
     newLeads: 0,
   });
   const [recentLeads, setRecentLeads] = useState<Lead[]>([]);
-
-  useEffect(() => {
-    loadFromStorage();
-  }, [loadFromStorage]);
 
   const loadDashboardData = useCallback(async () => {
     try {
@@ -64,14 +60,14 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (!hydrated) return; // wait until auth state is loaded from localStorage
+    if (authLoading) return; // wait until auth state is loaded
 
     if (!isAuthenticated) {
       router.push('/login');
       return;
     }
     loadDashboardData();
-  }, [isAuthenticated, hydrated, router, loadDashboardData]);
+  }, [isAuthenticated, authLoading, router, loadDashboardData]);
 
   // Memoized stats cards configuration
   const statsCards = useMemo(

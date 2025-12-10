@@ -16,6 +16,7 @@ router.get("/users", authenticate, requireAdmin, authController.getAllUsers);
 router.get("/users/:id", authenticate, requireAdmin, authController.getUserById);
 router.put("/users/:id", authenticate, requireAdmin, authController.updateUser);
 router.delete("/users/:id", authenticate, requireAdmin, authController.deleteUser);
+router.get("/me", authenticate, authController.getCurrentUser);
 
 // Rota para admin criar outros usuários admin (requer ser admin)
 router.post("/admin/users", authenticate, requireAdmin, authController.createAdminUser);

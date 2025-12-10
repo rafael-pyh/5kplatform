@@ -1,21 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth';
-import { toast } from 'react-hot-toast';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user, clearAuth } = useAuthStore();
-
-  const handleLogout = () => {
-    clearAuth();
-    toast.success('Logout realizado com sucesso!');
-    router.push('/login');
-  };
+  const { user, logout } = useAuth();
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
@@ -134,7 +126,7 @@ export default function Sidebar() {
       {/* User Info & Logout */}
       <div className="p-4 border-t border-gray-200">
         <button
-          onClick={handleLogout}
+          onClick={logout}
           className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

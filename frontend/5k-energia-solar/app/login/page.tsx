@@ -1,18 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import Image from 'next/image';
-import { useAuthStore } from '@/store/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { LoginCredentials } from '@/lib/types';
-import { loginAction } from '../actions/auth';
 import Link from 'next/link';
 
 export default function LoginPage() {
-  const router = useRouter();
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -24,43 +21,10 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginCredentials) => {
     setIsLoading(true);
     try {
-      const response = await loginAction(data);
-
-      if (!response.success) {
-        toast.error(response.error || 'Erro ao fazer login');
-        return;
-      }
-
-      if (!response.token || !response.user) {
-        toast.error('Dados de autenticação incompletos');
-        return;
-      }
-
-      setAuth(response.user, response.token);
-      
-      // Salvar userType baseado no role
-      if (response.user.role === 'SELLER') {
-        localStorage.setItem('userType', 'SELLER');
-      } else if (response.user.role === 'ADMIN' || response.user.role === 'SUPER_ADMIN') {
-        localStorage.setItem('userType', response.user.role);
-      }
-      
-      console.log('Login successful:', response);
-      toast.success('Login realizado com sucesso!');
-      if (response.user.role === 'SELLER') {
-        router.push('/seller/dashboard');
-        return;
-      } else if (response.user.role === 'ADMIN' || response.user.role === 'SUPER_ADMIN') {
-        router.push('/dashboard');
-        return;
-      }
+      await login(data);
+      // O redirecionamento é feito automaticamente pelo Context
     } catch (error: any) {
       console.error('Login error:', error);
-      const message =
-        error.response?.data?.message ||
-        error.message ||
-        'Erro ao fazer login. Verifique suas credenciais.';
-      toast.error(message);
     } finally {
       setIsLoading(false);
     }

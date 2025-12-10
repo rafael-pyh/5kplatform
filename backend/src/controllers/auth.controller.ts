@@ -82,3 +82,17 @@ export const confirmEmail = async (req: Request, res: Response, next: NextFuncti
     next(error);
   }
 };
+
+export const getCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw new Error("Usuário não autenticado");
+    }
+    const user = await authService.getCurrentUser(userId);
+    const jsonData = user.toJSON ? user.toJSON() : user;
+    return ResponseBuilder.success(res, jsonData);
+  } catch (error) {
+    next(error);
+  }
+};

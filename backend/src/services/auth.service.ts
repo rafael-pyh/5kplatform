@@ -293,3 +293,19 @@ export const confirmEmail = async (token: string) => {
 
   return { message: "Email confirmado com sucesso." };
 };
+
+export const getCurrentUser = async (userId: string) => {
+  const user = await Person.findByPk(userId, {
+    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt', 'photoBase64', 'phone', 'pixKey', 'emailVerified'],
+  });
+
+  if (!user) {
+    throw new Error("Usuário não encontrado");
+  }
+
+  if (!user.active) {
+    throw new UnauthorizedError("Conta desativada");
+  }
+
+  return user;
+};

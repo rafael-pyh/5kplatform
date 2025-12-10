@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/DashboardLayout';
 import { AdminTable, NewAdminModal, EditAdminModal } from '@/components/admins';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -13,20 +13,16 @@ import { toast } from 'react-hot-toast';
 
 export default function AdminsPage() {
   const router = useRouter();
-  const { user, isAuthenticated, loadFromStorage, hydrated } = useAuthStore();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [admins, setAdmins] = useState<User[]>([]);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<User | null>(null);
 
-  useEffect(() => {
-    loadFromStorage();
-  }, [loadFromStorage]);
-
   // Verificar se o usuário tem permissão
   useEffect(() => {
-    if (!hydrated) return; // wait until auth is loaded from localStorage
+    if (authLoading) return; // wait until auth is loaded
 
     if (!isAuthenticated) {
       router.push('/login');
@@ -37,7 +33,7 @@ export default function AdminsPage() {
       toast.error('Você não tem permissão para acessar esta página');
       router.push('/dashboard');
     }
-  }, [isAuthenticated, user, hydrated, router]);
+  }, [isAuthenticated, user, authLoading, router]);
 
   const loadAdmins = useCallback(async () => {
     try {
@@ -85,7 +81,7 @@ export default function AdminsPage() {
   };
 
   // Verificação de permissão antes de renderizar
-  if (!hydrated || !isAuthenticated || !user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+  if (authLoading || !isAuthenticated || !user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
     return (
       <DashboardLayout>
         <LoadingSpinner size="lg" text="Verificando permissões..." />

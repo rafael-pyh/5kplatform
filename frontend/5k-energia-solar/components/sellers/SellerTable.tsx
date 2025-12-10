@@ -5,32 +5,36 @@ import { Person } from '@/types/Person';
 import SellerTableRow from './SellerTableRow';
 import EmptyState from '@/components/ui/EmptyState';
 import { approveSeller, rejectSeller } from '@/lib/actions/sellerActions';
+import toast from 'react-hot-toast';
 
 interface SellerTableProps {
   persons: Person[];
   onViewQRCode: (person: Person) => void;
   onEdit: (person: Person) => void;
   onDeactivate: (id: string) => void;
+  onRefetch?: () => void;
 }
 
-function SellerTable({ persons, onViewQRCode, onEdit, onDeactivate }: SellerTableProps) {
+function SellerTable({ persons, onViewQRCode, onEdit, onDeactivate, onRefetch }: SellerTableProps) {
   const handleApprove = async (id: string) => {
     try {
       await approveSeller(id);
-      alert('Vendedor aprovado com sucesso!');
+      toast.success('Vendedor aprovado com sucesso!');
+      onRefetch?.();
     } catch (error) {
       console.error('Erro ao aprovar vendedor:', error);
-      alert('Erro ao aprovar vendedor.');
+      toast.error('Erro ao aprovar vendedor.');
     }
   };
 
   const handleReject = async (id: string) => {
     try {
       await rejectSeller(id);
-      alert('Vendedor rejeitado com sucesso!');
+      toast.success('Vendedor rejeitado com sucesso!');
+      onRefetch?.();
     } catch (error) {
       console.error('Erro ao rejeitar vendedor:', error);
-      alert('Erro ao rejeitar vendedor.');
+      toast.error('Erro ao rejeitar vendedor.');
     }
   };
 
