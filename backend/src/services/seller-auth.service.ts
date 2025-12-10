@@ -49,6 +49,11 @@ export const sellerLogin = async (data: SellerLoginDto) => {
     throw new UnauthorizedError("Email não verificado. Verifique seu email antes de fazer login.");
   }
 
+  // Verificação: vendedor deve estar aprovado
+  if (person.approvalStatus !== 'approved') {
+    throw new UnauthorizedError("Sua conta ainda não foi aprovada pelo administrador. Aguarde a aprovação.");
+  }
+
   if (!person.password) {
     throw new UnauthorizedError("Senha não definida. Complete o cadastro através do link enviado por email.");
   }

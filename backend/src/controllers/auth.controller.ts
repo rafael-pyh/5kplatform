@@ -72,3 +72,13 @@ export const createAdminUser = async (req: Request, res: Response, next: NextFun
     next(error);
   }
 };
+
+export const confirmEmail = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { token } = req.body;
+    const result = await authService.confirmEmail(token);
+    return ResponseBuilder.success(res, result);
+  } catch (error) {
+    next(error);
+  }
+};

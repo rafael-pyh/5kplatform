@@ -18,9 +18,19 @@ export const useAuthStore = create<AuthState>((set) => ({
   hydrated: false,
   
   setAuth: (user, token) => {
-    localStorage.setItem('user', JSON.stringify(user));
+    // Filtrar apenas os campos essenciais do usuário
+    const filteredUser = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+
+    localStorage.setItem('user', JSON.stringify(filteredUser));
     localStorage.setItem('token', token);
-    set({ user, token, isAuthenticated: true, hydrated: true });
+    set({ user: filteredUser, token, isAuthenticated: true, hydrated: true });
   },
   
   clearAuth: () => {

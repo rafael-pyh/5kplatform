@@ -11,7 +11,7 @@ import { Card } from '@/components/ui';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { usePersons, useToggle } from '@/hooks';
 import { personService } from '@/lib/services';
-import { Person } from '@/lib/types';
+import { Person } from '@/types/Person';
 
 // Lazy load modals for better performance
 const NewSellerModal = dynamic(() => import('@/components/NewSellerModal'), {

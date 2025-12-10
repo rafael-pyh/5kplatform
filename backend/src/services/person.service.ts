@@ -3,7 +3,7 @@ import { Person, PersonRole } from "../models/Person";
 import { Lead } from "../models/Lead";
 import { QRCodeScan } from "../models/QRCodeScan";
 import { generateQRCode, generateQRCodeBase64 } from "../utils/qr";
-import { sendVerificationEmail } from "../utils/email";
+import { sendEmailVerificationOnly } from "../utils/email";
 import { hashPassword } from "../utils/bcrypt";
 import crypto from "crypto";
 
@@ -67,12 +67,15 @@ export const createPerson = async (data: CreatePersonDto) => {
   }
 
   // Cria a pessoa no banco (sempre como SELLER)
+  // Se foi criado pelo admin (tem senha), aprova automaticamente
+  // Se foi registro público (sem senha), fica pendente
   const person = await Person.create({
     ...data,
     password: hashedPassword,
     qrCode,
     qrCodeBase64, // Salva o base64 no banco
     role: PersonRole.SELLER,
+    approvalStatus: hashedPassword ? 'approved' : 'pending',
     verificationToken,
     tokenExpiry,
   });
@@ -80,7 +83,8 @@ export const createPerson = async (data: CreatePersonDto) => {
   // Envia email de verificação se email foi fornecido
   if (data.email && verificationToken) {
     try {
-      await sendVerificationEmail(data.email, data.name, verificationToken);
+      console.log(`Tentando enviar email para: ${data.email}, com token: ${verificationToken}`);
+      await sendEmailVerificationOnly(data.email, data.name, verificationToken);
       console.log(`Email de verificação enviado para ${data.email}`);
     } catch (error) {
       console.error("Erro ao enviar email de verificação:", error);

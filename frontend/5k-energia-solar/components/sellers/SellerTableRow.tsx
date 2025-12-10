@@ -1,7 +1,7 @@
 'use client';
 
 import { memo } from 'react';
-import { Person } from '@/lib/types';
+import { Person } from '@/types/Person';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 
@@ -10,9 +10,11 @@ interface SellerTableRowProps {
   onViewQRCode: (person: Person) => void;
   onEdit: (person: Person) => void;
   onDeactivate: (id: string) => void;
+  onApprove: (id: string) => void;
+  onReject: (id: string) => void;
 }
 
-function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate }: SellerTableRowProps) {
+function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onApprove, onReject }: SellerTableRowProps) {
   return (
     <tr className="hover:bg-gray-50">
       <td className="px-6 py-4 whitespace-nowrap">
@@ -40,6 +42,15 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate }: SellerTa
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm text-gray-900">{person.phone}</div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="text-sm text-gray-900">{person.city}</div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="text-sm text-gray-900">{person.state}</div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="text-sm text-gray-900">{person.pixKey}</div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-center">
         <div className="text-sm text-gray-900">{person.scanCount || 0}</div>
@@ -97,6 +108,24 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate }: SellerTa
             >
               Desativar
             </Button>
+          )}
+          {person.approvalStatus === 'pending' && (
+            <>
+              <Button
+                variant="success"
+                size="sm"
+                onClick={() => onApprove(person.id)}
+              >
+                Aprovar
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => onReject(person.id)}
+              >
+                Rejeitar
+              </Button>
+            </>
           )}
         </div>
       </td>

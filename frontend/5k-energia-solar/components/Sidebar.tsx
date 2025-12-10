@@ -17,8 +17,6 @@ export default function Sidebar() {
     router.push('/login');
   };
 
-  console.log('User', user);
-
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
   const menuItems = [

@@ -175,3 +175,138 @@ export const sendPasswordResetEmail = async (
     text: `Olá, ${name}!\n\nPara redefinir sua senha, acesse: ${resetUrl}\n\nEste link expira em 1 hora.`,
   });
 };
+
+export const sendEmailConfirmation = async (
+  email: string,
+  name: string,
+  token: string
+): Promise<void> => {
+  const confirmationUrl = `${env.FRONTEND_URL}/confirm-email?token=${token}`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+          .button { display: inline-block; padding: 12px 30px; background: #3B82F6; color: white !important; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🌞 5K Energia Solar</h1>
+            <p>Confirme seu Email</p>
+          </div>
+          <div class="content">
+            <h2>Olá, ${name}!</h2>
+            <p>Obrigado por se registrar na plataforma 5K Energia Solar.</p>
+            <p>Para confirmar seu email, clique no botão abaixo:</p>
+            <p style="text-align: center;">
+              <a href="${confirmationUrl}" class="button" style="color: white !important;">Confirmar Email</a>
+            </p>
+            <p>Ou copie e cole o link abaixo no seu navegador:</p>
+            <p style="background: #e5e7eb; padding: 10px; border-radius: 5px; word-break: break-all;">
+              ${confirmationUrl}
+            </p>
+            <p><strong>Este link expira em 24 horas.</strong></p>
+            <p>Se você não solicitou este cadastro, ignore este email.</p>
+          </div>
+          <div class="footer">
+            <p>© 2025 5K Energia Solar. Todos os direitos reservados.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const text = `
+Olá, ${name}!
+
+Obrigado por se registrar na plataforma 5K Energia Solar.
+
+Para confirmar seu email, clique no link abaixo:
+${confirmationUrl}
+
+Este link expira em 24 horas.
+
+Se você não solicitou este cadastro, ignore este email.
+  `;
+
+  await sendEmail({
+    to: email,
+    subject: '🌞 Confirme seu Email - 5K Energia Solar',
+    html,
+    text,
+  });
+};
+
+export const sendEmailVerificationOnly = async (
+  email: string,
+  name: string,
+  token: string
+): Promise<void> => {
+  const verificationUrl = `${env.FRONTEND_URL}/verify-email?token=${token}`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+          .button { display: inline-block; padding: 12px 30px; background: #3B82F6; color: white !important; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🌞 5K Energia Solar</h1>
+            <p>Bem-vindo à Plataforma de Vendedores</p>
+          </div>
+          <div class="content">
+            <h2>Olá, ${name}!</h2>
+            <p>Para acessar sua conta, você precisa verificar seu email.</p>
+            <p style="text-align: center;">
+              <a href="${verificationUrl}" class="button" style="color: white !important;">Verificar Email</a>
+            </p>
+            <p>Ou copie e cole o link abaixo no seu navegador:</p>
+            <p style="background: #e5e7eb; padding: 10px; border-radius: 5px; word-break: break-all;">
+              ${verificationUrl}
+            </p>
+            <p><strong>Este link expira em 24 horas.</strong></p>
+            <p>Se você não solicitou este cadastro, ignore este email.</p>
+          </div>
+          <div class="footer">
+            <p>© 2025 5K Energia Solar. Todos os direitos reservados.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const text = `
+Olá, ${name}!
+
+Para acessar sua conta, verifique seu email através do link:
+${verificationUrl}
+
+Este link expira em 24 horas.
+
+Se você não solicitou este cadastro, ignore este email.
+  `;
+
+  await sendEmail({
+    to: email,
+    subject: '🌞 Verifique seu Email - 5K Energia Solar',
+    html,
+    text,
+  });
+};

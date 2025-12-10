@@ -44,16 +44,21 @@ export interface UpdateAdminDto {
 export interface Person {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  pixKey: string;
+  email?: string;
+  phone?: string;
+  pixKey?: string;
   photoBase64?: string; // Base64 data URL da foto de perfil
   qrCode: string;
   qrCodeBase64?: string; // Base64 data URL do QR code
   scanCount: number;
   active: boolean;
-  createdAt: string;
-  updatedAt: string;
+  role: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN';
+  emailVerified: boolean;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  city: string;
+  state: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 export interface CreatePersonDto {

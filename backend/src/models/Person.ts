@@ -106,6 +106,10 @@ export class Person extends Model {
 
   @HasMany(() => QRCodeScan)
   qrCodeScans?: QRCodeScan[];
+
+  @Default('pending')
+  @Column(DataType.ENUM('pending', 'approved', 'rejected'))
+  approvalStatus!: 'pending' | 'approved' | 'rejected';
 }
 
 // Removi a chamada redundante de Person.init, pois o decorador @Table já cuida da configuração do modelo.

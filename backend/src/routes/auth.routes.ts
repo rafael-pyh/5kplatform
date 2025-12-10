@@ -8,6 +8,9 @@ const router = Router();
 router.post("/register", authController.register);
 router.post("/login", authController.login);
 
+// Nova rota para confirmar email
+router.post("/confirm-email", authController.confirmEmail);
+
 // Rotas protegidas (requerem autenticação de administrador)
 router.get("/users", authenticate, requireAdmin, authController.getAllUsers);
 router.get("/users/:id", authenticate, requireAdmin, authController.getUserById);

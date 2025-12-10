@@ -1,9 +1,10 @@
 'use client';
 
 import { memo } from 'react';
-import { Person } from '@/lib/types';
+import { Person } from '@/types/Person';
 import SellerTableRow from './SellerTableRow';
 import EmptyState from '@/components/ui/EmptyState';
+import { approveSeller, rejectSeller } from '@/lib/actions/sellerActions';
 
 interface SellerTableProps {
   persons: Person[];
@@ -13,6 +14,26 @@ interface SellerTableProps {
 }
 
 function SellerTable({ persons, onViewQRCode, onEdit, onDeactivate }: SellerTableProps) {
+  const handleApprove = async (id: string) => {
+    try {
+      await approveSeller(id);
+      alert('Vendedor aprovado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao aprovar vendedor:', error);
+      alert('Erro ao aprovar vendedor.');
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      await rejectSeller(id);
+      alert('Vendedor rejeitado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao rejeitar vendedor:', error);
+      alert('Erro ao rejeitar vendedor.');
+    }
+  };
+
   if (persons.length === 0) {
     return (
       <EmptyState
@@ -56,6 +77,24 @@ function SellerTable({ persons, onViewQRCode, onEdit, onDeactivate }: SellerTabl
             </th>
             <th
               scope="col"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Cidade
+            </th>
+            <th
+              scope="col"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Estado
+            </th>
+            <th
+              scope="col"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Chave Pix
+            </th>
+            <th
+              scope="col"
               className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Escaneamentos
@@ -79,6 +118,8 @@ function SellerTable({ persons, onViewQRCode, onEdit, onDeactivate }: SellerTabl
               onViewQRCode={onViewQRCode}
               onEdit={onEdit}
               onDeactivate={onDeactivate}
+              onApprove={() => handleApprove(person.id)}
+              onReject={() => handleReject(person.id)}
             />
           ))}
         </tbody>

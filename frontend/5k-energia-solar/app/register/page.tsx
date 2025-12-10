@@ -124,9 +124,8 @@ const RegisterPage = () => {
 
     setIsLoading(true);
     try {
-      const response = await registerAction(formData);
+      await registerAction(formData);
       toast.success("Registro criado com sucesso! QR Code gerado.");
-      console.log(response);
       // router.push("/login");
     } catch (error) {
       console.error("Erro ao criar registro:", error);

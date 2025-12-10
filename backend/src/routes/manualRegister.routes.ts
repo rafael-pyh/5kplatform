@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { createPerson } from "../services/person.service";
-import { sendVerificationEmail } from "../utils/email";
+import { sendEmailConfirmation } from "../utils/email";
 import crypto from "crypto";
 
 const manualRegisterRouter = Router();
@@ -14,7 +14,7 @@ manualRegisterRouter.post("/manual-register", async (req, res) => {
     }
 
     // createPerson já gera o verificationToken e envia o email
-    await createPerson({
+    const newUser = await createPerson({
       name,
       email,
       password,
@@ -24,6 +24,9 @@ manualRegisterRouter.post("/manual-register", async (req, res) => {
       city,
       state,
     });
+
+    // Enviar email de confirmação
+    await sendEmailConfirmation(email, name, newUser.verificationToken!);
 
     return res.status(201).json({
       message: "Usuário registrado com sucesso. Verifique seu email para ativação.",

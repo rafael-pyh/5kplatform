@@ -277,3 +277,19 @@ export const createAdminUser = async (data: CreateUserDto, creatorRole: string) 
     createdAt: user.createdAt,
   };
 };
+
+export const confirmEmail = async (token: string) => {
+  const person = await Person.findOne({ where: { verificationToken: token } });
+
+  if (!person) {
+    throw new Error("Token inválido ou expirado.");
+  }
+
+  person.emailVerified = true;
+  person.verificationToken = undefined;
+  person.tokenExpiry = undefined;
+
+  await person.save();
+
+  return { message: "Email confirmado com sucesso." };
+};

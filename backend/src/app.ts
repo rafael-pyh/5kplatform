@@ -8,6 +8,7 @@ import uploadRoutes from "./routes/upload.routes";
 import sellerAuthRoutes from "./routes/seller-auth.routes";
 import sellerLeadsRoutes from "./routes/seller-leads.routes";
 import manualRegisterRoutes from "./routes/manualRegister.routes";
+import approvalRoutes from "./routes/approval.routes";
 import { errorHandler } from "./shared/errorHandler";
 
 const app = express();
@@ -36,6 +37,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/seller", sellerAuthRoutes);
 app.use("/api/seller", sellerLeadsRoutes);
 app.use("/api", manualRegisterRoutes);
+app.use("/api/approval", approvalRoutes);
 
 // Rota 404
 app.use((req, res) => {

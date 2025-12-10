@@ -87,3 +87,29 @@ export async function getTokenFromCookies(): Promise<string | undefined> {
   const cookieStore = await cookies();
   return cookieStore.get('token')?.value;
 }
+
+export async function confirmEmailAction(token: string): Promise<{ message: string }> {
+  try {
+    // Para server actions, usamos a URL do backend diretamente
+    const apiUrl = process.env.API_URL || 'http://localhost:4000';
+
+    const response = await fetch(`${apiUrl}/api/auth/confirm-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ token }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Erro ao confirmar email");
+    }
+
+    const result = await response.json();
+    return result.data || result;
+  } catch (error: any) {
+    console.error('Error in confirmEmailAction:', error);
+    throw new Error(error.message || "Erro ao confirmar email");
+  }
+}
