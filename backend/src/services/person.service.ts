@@ -3,7 +3,7 @@ import { Person, PersonRole } from "../models/Person";
 import { Lead } from "../models/Lead";
 import { QRCodeScan } from "../models/QRCodeScan";
 import { generateQRCode, generateQRCodeBase64 } from "../utils/qr";
-import { sendEmailVerificationOnly, sendEmailConfirmation, sendVerificationEmail } from "../utils/email";
+import { sendEmailConfirmation, sendVerificationEmail } from "../utils/email";
 import { hashPassword } from "../utils/bcrypt";
 import crypto from "crypto";
 
@@ -85,17 +85,19 @@ export const createPerson = async (data: CreatePersonDto) => {
     try {
       if (hashedPassword) {
         // Registro manual (usuário criou com senha) - envia email de confirmação
-        console.log(`Enviando email de confirmação para: ${data.email}`);
+        console.log(`📧 [createPerson] Registro MANUAL - Enviando email de confirmação para: ${data.email}`);
+        console.log(`📧 [createPerson] Tem senha: SIM (hashedPassword existe)`);
         await sendEmailConfirmation(data.email, data.name, verificationToken);
-        console.log(`Email de confirmação enviado para ${data.email}`);
+        console.log(`✅ [createPerson] Email de confirmação enviado com sucesso`);
       } else {
         // Criado pelo admin (sem senha) - envia email para criar senha
-        console.log(`Enviando email para criar senha para: ${data.email}`);
+        console.log(`📧 [createPerson] Criado por ADMIN - Enviando email para criar senha para: ${data.email}`);
+        console.log(`📧 [createPerson] Tem senha: NÃO (sem hashedPassword)`);
         await sendVerificationEmail(data.email, data.name, verificationToken);
-        console.log(`Email de verificação e criar senha enviado para ${data.email}`);
+        console.log(`✅ [createPerson] Email para criar senha enviado com sucesso`);
       }
     } catch (error) {
-      console.error("Erro ao enviar email:", error);
+      console.error("❌ [createPerson] Erro ao enviar email:", error);
       // Não falha a criação se o email não for enviado
     }
   }

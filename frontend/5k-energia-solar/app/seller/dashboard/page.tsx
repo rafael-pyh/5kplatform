@@ -34,6 +34,8 @@ interface Seller {
   photoBase64?: string;
   scanCount?: number;
   active: boolean;
+  emailVerified?: boolean;
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
 }
 
 export default function SellerDashboardPage() {
@@ -43,6 +45,7 @@ export default function SellerDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [seller, setSeller] = useState<Seller | null>(null);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [blockedReason, setBlockedReason] = useState<'unverified' | 'pendingApproval' | 'inactive' | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -64,9 +67,6 @@ export default function SellerDashboardPage() {
         }
       }
     }
-    
-    console.log('User Type:', userType);
-    console.log('Token:', token);
 
     if (!token || userType !== 'SELLER') {
       // router.push('/login');
@@ -79,15 +79,42 @@ export default function SellerDashboardPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [leadsRes, statsRes, profileRes] = await Promise.all([
+      // Fetch profile first to verify access (avoid waiting on other endpoints)
+      const profileRes = await api.get('/seller/profile');
+      const loadedSeller = profileRes.data.data;
+      setSeller(loadedSeller);
+
+      if (loadedSeller) {
+        if (!loadedSeller.emailVerified) {
+          toast.error('Email não verificado. Verifique seu email antes de acessar.');
+          setBlockedReason('unverified');
+          setLoading(false);
+          return;
+        }
+
+        if (loadedSeller.approvalStatus && loadedSeller.approvalStatus !== 'approved') {
+          toast.error('Conta ainda não aprovada pelo administrador. Aguarde aprovação.');
+          setBlockedReason('pendingApproval');
+          setLoading(false);
+          return;
+        }
+
+        if (loadedSeller.active === false) {
+          toast.error('Conta inativa. Contate o suporte para mais informações.');
+          setBlockedReason('inactive');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Profile OK — fetch leads and stats in parallel
+      const [leadsRes, statsRes] = await Promise.all([
         api.get('/seller/my-leads'),
         api.get('/seller/my-stats'),
-        api.get('/seller/profile'),
       ]);
 
       setLeads(leadsRes.data.data);
       setStats(statsRes.data.data);
-      setSeller(profileRes.data.data);
     } catch (error: any) {
       console.error('Erro ao carregar dados:', error);
       if (error.response?.status === 401 || error.response?.status === 403) {
@@ -180,6 +207,39 @@ export default function SellerDashboardPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {blockedReason && (
+          <div className="max-w-3xl mx-auto mb-6">
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+              <div className="flex items-start gap-3">
+                <div className="shrink-0">
+                  <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-yellow-800">
+                    {blockedReason === 'unverified' && 'Email não verificado'}
+                    {blockedReason === 'pendingApproval' && 'Conta pendente de aprovação'}
+                    {blockedReason === 'inactive' && 'Conta inativa'}
+                  </h3>
+                  <p className="mt-1 text-sm text-yellow-700">
+                    {blockedReason === 'unverified' && 'Você precisa verificar seu email antes de acessar o painel. Verifique sua caixa de entrada (ou spam) e clique no link de ativação.'}
+                    {blockedReason === 'pendingApproval' && 'Sua conta ainda está sendo avaliada pelo administrador. Aguarde a aprovação e você será notificado por email.'}
+                    {blockedReason === 'inactive' && 'Sua conta foi marcada como inativa. Contate o suporte para obter mais informações.'}
+                  </p>
+                  <div className="mt-3 flex items-center gap-3">
+                    <button
+                      onClick={handleLogout}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
+                    >
+                      Sair
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <div className="bg-white rounded-lg shadow p-6">

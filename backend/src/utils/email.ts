@@ -116,7 +116,7 @@ Se você não solicitou este cadastro, ignore este email.
 
   await sendEmail({
     to: email,
-    subject: '🌞 Bem-vindo à 5K Energia Solar - Verifique seu Email',
+    subject: '🔑 Crie sua Senha - 5K Energia Solar',
     html,
     text,
   });

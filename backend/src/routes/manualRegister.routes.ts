@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { createPerson } from "../services/person.service";
-import { sendEmailConfirmation } from "../utils/email";
 
 const manualRegisterRouter = Router();
 

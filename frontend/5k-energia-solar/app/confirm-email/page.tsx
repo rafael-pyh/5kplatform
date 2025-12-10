@@ -50,7 +50,7 @@ function ConfirmEmailContent() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-blue-500 to-green-500 text-white">
         <h1 className="text-3xl font-bold mb-4">Email confirmado com sucesso!</h1>
-        <p className="text-lg mb-6">Seu perfil está em análise em breve você receberá um e-mail e poderá acessar sua conta.</p>
+        <p className="text-lg mb-6">Seu perfil está em análise em breve você receberá um e-mail com mais informações</p>
         <button
           onClick={() => router.push("/login")}
           className="px-6 py-3 bg-white text-blue-500 font-semibold rounded-lg shadow-md hover:bg-gray-100"
