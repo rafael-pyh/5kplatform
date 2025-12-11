@@ -136,7 +136,7 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50 px-4 text-slate-700">
       <div className="w-full max-w-4xl mt-4">
         <div className="bg-white rounded-2xl shadow-xl px-8 py-4">
           {/* Logo/Header */}
@@ -144,13 +144,10 @@ const RegisterPage = () => {
             <Image
               src="/5klogo.png"
               alt="5K Energia Logo"
-              width={150}
+              width={180}
               height={80}
               className="mx-auto mb-4"
             />
-            <h1 className="text-2xl font-thin text-gray-900">
-              Energia Solar
-            </h1>
             <p className="text-gray-600 w-10/12 mx-auto">
               Crie sua conta para que possamos analisar seu perfil.
             </p>
