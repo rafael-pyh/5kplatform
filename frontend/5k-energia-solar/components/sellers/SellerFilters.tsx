@@ -18,7 +18,7 @@ function SellerFilters({ filter, onFilterChange, onAddNew }: SellerFiltersProps)
           Gerencie os vendedores e seus QR codes
         </p>
       </div>
-      <Button onClick={onAddNew} size="md">
+      <Button onClick={onAddNew} size="md" variant="outline-green">
         <svg
           className="w-5 h-5 mr-2"
           fill="none"
