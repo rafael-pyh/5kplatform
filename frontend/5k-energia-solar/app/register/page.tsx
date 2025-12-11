@@ -136,7 +136,7 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50 px-4 text-slate-700">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50 px-4 text-slate-700 mb-4">
       <div className="w-full max-w-4xl mt-4">
         <div className="bg-white rounded-2xl shadow-xl px-8 py-4">
           {/* Logo/Header */}
