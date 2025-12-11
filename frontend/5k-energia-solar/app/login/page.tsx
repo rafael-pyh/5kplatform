@@ -31,13 +31,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50 px-4 text-slate-700">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Logo/Header */}
-          <div className="text-center mb-8">
-            <Image src="/5klogo.png" alt="5K Energia Logo" width={150} height={80} className="mx-auto mb-4" />
-            <h1 className="text-2xl font-thin text-gray-900">Energia Solar</h1>
+          <div className="text-center mb-6">
+            <Image src="/5klogo.png" alt="5K Energia Logo" width={200} height={80} className="mx-auto mb-4" />
             <p className="text-gray-600 mt-2">Faça login para acessar o sistema</p>
           </div>
 
