@@ -310,3 +310,54 @@ Se você não solicitou este cadastro, ignore este email.
     text,
   });
 };
+
+export const sendApprovalOrRejectionEmail = async (
+  email: string,
+  name: string,
+  subject: string,
+  message: string,
+  buttonText?: string,
+  buttonUrl?: string
+): Promise<void> => {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+          .button { display: inline-block; padding: 12px 30px; background: #3B82F6; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🌞 5K Energia Solar</h1>
+          </div>
+          <div class="content">
+            <h2>Olá, ${name}!</h2>
+            <p>${message}</p>
+            <p style="text-align: center; text-decoration: none; color: white !important; ${buttonUrl ? '' : 'display: none;'}">
+              <a href="${buttonUrl}" class="button">${buttonText}</a>
+            </p>
+          </div>
+          <div class="footer">
+            <p>© 2025 5K Energia Solar. Todos os direitos reservados.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const text = `Olá, ${name}!\n\n${message}\n\nAcesse o link: ${buttonUrl}`;
+
+  await sendEmail({
+    to: email,
+    subject,
+    html,
+    text,
+  });
+};
