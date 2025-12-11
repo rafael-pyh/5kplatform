@@ -8,6 +8,12 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   photoBase64?: string;
+  emailVerified?: boolean;
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  qrCode?: string;
+  qrCodeBase64?: string;
+  phone?: string;
+  pixKey?: string;
 }
 
 export interface LoginCredentials {

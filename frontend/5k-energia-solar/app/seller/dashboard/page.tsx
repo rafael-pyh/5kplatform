@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import api from '@/lib/api';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import SellerQRCodeModal from '@/components/seller/SellerQRCodeModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Lead {
   id: string;
@@ -40,6 +41,7 @@ interface Seller {
 
 export default function SellerDashboardPage() {
   const router = useRouter();
+  const { user, refreshUser, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -48,63 +50,77 @@ export default function SellerDashboardPage() {
   const [blockedReason, setBlockedReason] = useState<'unverified' | 'pendingApproval' | 'inactive' | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    let userType = localStorage.getItem('userType');
-    
-    // Fallback: verificar role do user no localStorage
-    if (!userType) {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        try {
-          const user = JSON.parse(userStr);
-          userType = user.role;
-          // Salvar userType para próximas verificações
-          if (userType) {
-            localStorage.setItem('userType', userType);
-          }
-        } catch (e) {
-          console.error('Erro ao parsear user:', e);
-        }
+    const initDashboard = async () => {
+      // Resetar estados ao montar o componente
+      setBlockedReason(null);
+      setLoading(true);
+
+      // Aguarda o carregamento da autenticação
+      if (authLoading) {
+        return;
       }
-    }
 
-    if (!token || userType !== 'SELLER') {
-      // router.push('/login');
-      return;
-    }
+      // Verifica autenticação
+      if (!user) {
+        toast.error('Faça login novamente.');
+        router.push('/login');
+        return;
+      }
 
-    loadData();
-  }, []);
+      // Verifica se é vendedor
+      if (user.role?.toUpperCase() !== 'SELLER') {
+        toast.error('Acesso negado. Faça login como vendedor.');
+        router.push('/login');
+        return;
+      }
+
+      // Atualiza dados do usuário do backend e carrega os dados
+      await refreshUser();
+      loadData();
+    };
+
+    initDashboard();
+  }, [authLoading]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      // Fetch profile first to verify access (avoid waiting on other endpoints)
+      
+      // Usa os dados do usuário do Context API
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      console.log('User data from context:', {
+        emailVerified: user.emailVerified,
+        approvalStatus: user.approvalStatus,
+        active: user.active
+      });
+
+      // Fetch profile para obter QR Code e outros dados específicos do vendedor
       const profileRes = await api.get('/seller/profile');
       const loadedSeller = profileRes.data.data;
       setSeller(loadedSeller);
 
-      if (loadedSeller) {
-        if (!loadedSeller.emailVerified) {
-          toast.error('Email não verificado. Verifique seu email antes de acessar.');
-          setBlockedReason('unverified');
-          setLoading(false);
-          return;
-        }
+      // Validações usando dados do Context API (mais atualizados)
+      if (!user.emailVerified) {
+        setBlockedReason('unverified');
+        setLoading(false);
+        return;
+      }
 
-        if (loadedSeller.approvalStatus && loadedSeller.approvalStatus !== 'approved') {
-          toast.error('Conta ainda não aprovada pelo administrador. Aguarde aprovação.');
-          setBlockedReason('pendingApproval');
-          setLoading(false);
-          return;
-        }
+      if (user.approvalStatus !== 'approved') {
+        console.log('Bloqueando por approvalStatus:', user.approvalStatus);
+        setBlockedReason('pendingApproval');
+        setLoading(false);
+        return;
+      }
 
-        if (loadedSeller.active === false) {
-          toast.error('Conta inativa. Contate o suporte para mais informações.');
-          setBlockedReason('inactive');
-          setLoading(false);
-          return;
-        }
+      if (user.active === false) {
+        setBlockedReason('inactive');
+        setLoading(false);
+        return;
       }
 
       // Profile OK — fetch leads and stats in parallel
@@ -115,16 +131,20 @@ export default function SellerDashboardPage() {
 
       setLeads(leadsRes.data.data);
       setStats(statsRes.data.data);
+      setBlockedReason(null); // Garantir que não há bloqueio
     } catch (error: any) {
       console.error('Erro ao carregar dados:', error);
       if (error.response?.status === 401 || error.response?.status === 403) {
-        toast.error('Sessão expirada. Faça login novamente.');
-        // router.push('/login');
+        toast.error('Sessão expirada ou acesso negado. Faça login novamente.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('userType');
+        router.push('/login');
       } else {
         toast.error('Erro ao carregar dados');
       }
     } finally {
-      setLoading(false);
+      setLoading(false); // Garantir que o estado de carregamento seja atualizado
     }
   };
 
@@ -155,6 +175,44 @@ export default function SellerDashboardPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <LoadingSpinner size="lg" text="Carregando..." />
+      </div>
+    );
+  }
+
+  if (blockedReason) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-3xl mx-auto mb-6">
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+            <div className="flex items-start gap-3">
+              <div className="shrink-0">
+                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-yellow-800">
+                  {blockedReason === 'unverified' && 'Email não verificado'}
+                  {blockedReason === 'pendingApproval' && 'Conta pendente de aprovação'}
+                  {blockedReason === 'inactive' && 'Conta inativa'}
+                </h3>
+                <p className="mt-1 text-sm text-yellow-700">
+                  {blockedReason === 'unverified' && 'Você precisa verificar seu email antes de acessar o painel. Verifique sua caixa de entrada (ou spam) e clique no link de ativação.'}
+                  {blockedReason === 'pendingApproval' && 'Sua conta ainda está sendo avaliada pelo administrador. Aguarde a aprovação e você será notificado por email.'}
+                  {blockedReason === 'inactive' && 'Sua conta foi marcada como inativa. Contate o suporte para obter mais informações.'}
+                </p>
+                <div className="mt-3 flex items-center gap-3">
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
+                  >
+                    Sair
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -207,53 +265,20 @@ export default function SellerDashboardPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {blockedReason && (
-          <div className="max-w-3xl mx-auto mb-6">
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
-              <div className="flex items-start gap-3">
-                <div className="shrink-0">
-                  <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-yellow-800">
-                    {blockedReason === 'unverified' && 'Email não verificado'}
-                    {blockedReason === 'pendingApproval' && 'Conta pendente de aprovação'}
-                    {blockedReason === 'inactive' && 'Conta inativa'}
-                  </h3>
-                  <p className="mt-1 text-sm text-yellow-700">
-                    {blockedReason === 'unverified' && 'Você precisa verificar seu email antes de acessar o painel. Verifique sua caixa de entrada (ou spam) e clique no link de ativação.'}
-                    {blockedReason === 'pendingApproval' && 'Sua conta ainda está sendo avaliada pelo administrador. Aguarde a aprovação e você será notificado por email.'}
-                    {blockedReason === 'inactive' && 'Sua conta foi marcada como inativa. Contate o suporte para obter mais informações.'}
-                  </p>
-                  <div className="mt-3 flex items-center gap-3">
-                    <button
-                      onClick={handleLogout}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
-                    >
-                      Sair
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white rounded-lg shadow p-6">
-                <p className="text-sm font-medium text-gray-600">Total de Leads</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.total || 0}</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <p className="text-sm font-medium text-gray-600">Negociando</p>
-                <p className="text-3xl font-bold text-yellow-600 mt-2">{stats?.negotiation || 0}</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <p className="text-sm font-medium text-gray-600">Compraram</p>
-                <p className="text-3xl font-bold text-green-600 mt-2">{stats?.bought || 0}</p>
-              </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <p className="text-sm font-medium text-gray-600">Total de Leads</p>
+            <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.total || 0}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <p className="text-sm font-medium text-gray-600">Negociando</p>
+            <p className="text-3xl font-bold text-yellow-600 mt-2">{stats?.negotiation || 0}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <p className="text-sm font-medium text-gray-600">Compraram</p>
+            <p className="text-3xl font-bold text-green-600 mt-2">{stats?.bought || 0}</p>
+          </div>
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-sm font-medium text-gray-600">Taxa de Conversão</p>
             <p className="text-3xl font-bold text-blue-600 mt-2">{stats?.conversionRate || '0%'}</p>

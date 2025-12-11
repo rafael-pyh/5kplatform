@@ -296,7 +296,7 @@ export const confirmEmail = async (token: string) => {
 
 export const getCurrentUser = async (userId: string) => {
   const user = await Person.findByPk(userId, {
-    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt', 'photoBase64', 'phone', 'pixKey', 'emailVerified'],
+    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt', 'photoBase64', 'phone', 'pixKey', 'emailVerified', 'approvalStatus', 'qrCode', 'qrCodeBase64'],
   });
 
   if (!user) {
