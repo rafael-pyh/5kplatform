@@ -69,47 +69,41 @@ function SellerTable({ persons, onViewQRCode, onEdit, onDeactivate, onRefetch }:
           <tr>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Vendedor
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Telefone
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Cidade
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Estado
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Chave Pix
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Escaneamentos
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Localização
+            </th>
+            <th
+              scope="col"
+              className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Status
             </th>
-            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
               Ações
             </th>
           </tr>

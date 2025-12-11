@@ -44,6 +44,8 @@ export default function VendedoresPage() {
     };
   }, [persons]);
 
+  console.log('Persons:', persons);
+
   // Memoized handlers
   const handleOpenQRModal = useCallback((person: Person) => {
     if (!person.qrCodeBase64) {

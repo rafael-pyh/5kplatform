@@ -111,10 +111,6 @@ export default function ImageUpload({
       // Comprimir e redimensionar imagem
       const compressedBase64 = await compressImage(file);
       
-      // Calcular tamanho da imagem comprimida
-      const sizeInKB = Math.round(compressedBase64.length / 1024);
-      console.log(`Imagem comprimida: ${sizeInKB}KB`);
-      
       // Validar tamanho final
       if (compressedBase64.length > 2 * 1024 * 1024) {
         alert('A imagem ainda está muito grande após a compressão. Por favor, selecione uma imagem menor.');

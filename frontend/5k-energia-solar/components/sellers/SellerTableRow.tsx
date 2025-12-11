@@ -4,6 +4,7 @@ import { memo } from 'react';
 import { Person } from '@/types/Person';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import { Icon } from '../ui/Icon';
 
 interface SellerTableRowProps {
   person: Person;
@@ -16,8 +17,8 @@ interface SellerTableRowProps {
 
 function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onApprove, onReject }: SellerTableRowProps) {
   return (
-    <tr className="hover:bg-gray-50">
-      <td className="px-6 py-4 whitespace-nowrap">
+    <tr className="hover:bg-gray-50 border-b border-slate-200">
+      <td className="px-2 py-4 whitespace-nowrap">
         <div className="flex items-center">
           <div className="h-10 w-10 shrink-0">
             {person.photoBase64 ? (
@@ -40,27 +41,24 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onApprove,
           </div>
         </div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-2 py-4 whitespace-nowrap">
         <div className="text-sm text-gray-900">{person.phone}</div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm text-gray-900">{person.city}</div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm text-gray-900">{person.state}</div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-2 py-4 whitespace-nowrap">
         <div className="text-sm text-gray-900">{person.pixKey}</div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-center">
+      <td className="px-2 py-4 whitespace-nowrap text-center">
         <div className="text-sm text-gray-900">{person.scanCount || 0}</div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-2 py-4 whitespace-nowrap text-center">
+        <div className="text-sm text-gray-900">{person.city ? `${person.city}/${person.state}` : 'Não informado'}</div>
+      </td>
+      <td className="px-2 py-4 whitespace-nowrap">
         <Badge variant={person.active ? 'success' : 'danger'}>
           {person.active ? 'Ativo' : 'Inativo'}
         </Badge>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+      <td className="px-2 py-4 whitespace-nowrap text-right text-sm font-medium">
         <div className="flex items-center justify-end gap-2">
           <button
             onClick={() => onViewQRCode(person)}
@@ -102,24 +100,32 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onApprove,
           </button>
           {person.active && (
             <Button
-              variant="danger"
+              variant="outline-danger"
               size="sm"
               onClick={() => onDeactivate(person.id)}
             >
-              Desativar
+              <Icon icon="mdi:account-off-outline" className="w-5 h-5" />
             </Button>
           )}
           {person.approvalStatus === 'pending' && (
             <>
+                <div className="relative group">
+                <Button
+                  variant="outline-success"
+                  size="sm"
+                  onClick={() => onApprove(person.id)}
+                  disabled={!person.emailVerified}
+                >
+                  Aprovar
+                </Button>
+                {!person.emailVerified && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/1 mb-2 px-3 py-2 text-sm text-white bg-gray-800 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                  Usuário não verificou o email ainda, quando for verificado a opção de aprovar será habilitada
+                  </div>
+                )}
+                </div>
               <Button
-                variant="success"
-                size="sm"
-                onClick={() => onApprove(person.id)}
-              >
-                Aprovar
-              </Button>
-              <Button
-                variant="danger"
+                variant="outline-danger"
                 size="sm"
                 onClick={() => onReject(person.id)}
               >

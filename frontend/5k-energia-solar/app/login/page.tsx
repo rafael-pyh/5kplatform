@@ -98,7 +98,7 @@ export default function LoginPage() {
               {isLoading ? 'Entrando...' : 'Entrar'}
             </button>
             <div className="w-full flex justify-between">
-              <p>Gostaria de ser um parceiro?</p>
+              <p>Gostaria de se tornar um parceiro?</p>
               <Link href="/register" className="text-blue-600 hover:cursor-pointer">
                 Cadastre-se
               </Link>

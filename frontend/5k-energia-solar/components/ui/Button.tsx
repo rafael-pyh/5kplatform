@@ -2,7 +2,7 @@ import { ButtonHTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/utils/cn';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'success';
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'success' | 'outline' | 'outline-danger' | 'outline-success';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
@@ -32,10 +32,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
       ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
       success: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
+      outline: 'border border-gray-300 text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+      'outline-success': 'border border-blue-600 text-blue-600 hover:bg-blue-50 focus:ring-blue-500',
+      'outline-danger': 'border border-red-600 text-red-600 hover:bg-red-50 focus:ring-red-500',
     };
 
     const sizes = {
-      sm: 'px-3 py-1.5 text-sm',
+      sm: 'px-2 py-1.5 text-sm',
       md: 'px-4 py-2 text-base',
       lg: 'px-6 py-3 text-lg',
     };
@@ -44,7 +47,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         disabled={disabled || isLoading}
-        className={cn(baseStyles, variants[variant], sizes[size], className)}
+        className={cn(baseStyles, variants[variant], sizes[size], className, "cursor-pointer")}
         {...props}
       >
         {isLoading ? (
