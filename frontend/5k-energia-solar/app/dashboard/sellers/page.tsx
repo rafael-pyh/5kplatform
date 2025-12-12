@@ -7,11 +7,13 @@ import DashboardLayout from '@/components/DashboardLayout';
 import SellerFilters from '@/components/sellers/SellerFilters';
 import SellerTabs from '@/components/sellers/SellerTabs';
 import SellerTable from '@/components/sellers/SellerTable';
-import { Card } from '@/components/ui';
+import { Card, Button } from '@/components/ui';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { usePersons, useToggle } from '@/hooks';
 import { personService } from '@/lib/services';
 import { Person } from '@/types/Person';
+import { exportToCSV } from '@/lib/utils/exportToCSV';
+import { Icon } from '@/components/ui/Icon';
 
 // Lazy load modals for better performance
 const NewSellerModal = dynamic(() => import('@/components/NewSellerModal'), {
@@ -89,14 +91,47 @@ export default function VendedoresPage() {
     setSelectedPerson(null);
   }, [refetch, setIsEditModalOpen]);
 
+  const exportFilteredDataToCSV = () => {
+    const filteredData = persons.map(({ photoBase64, ...rest }) => rest);
+    exportToCSV(filteredData, 'sellers.csv');
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <SellerFilters
-          filter={filter}
-          onFilterChange={setFilter}
-          onAddNew={() => setIsModalOpen(true)}
-        />
+        <div className="flex items-center justify-between">
+          <SellerFilters
+            filter={filter}
+            onFilterChange={setFilter}
+            onAddNew={() => setIsModalOpen(true)}
+          />
+          <div className="flex gap-4">
+            <Button onClick={() => setIsModalOpen(true)} size="md" variant="outline-green">
+          <svg
+            className="w-5 h-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          Novo Vendedor
+        </Button>
+            <Button
+              onClick={exportFilteredDataToCSV}
+              variant='outline-blue'
+              disabled={persons.length === 0}
+            >
+              <Icon icon="bi-filetype-csv" className="w-5 h-5 mr-2" />
+              Exportar CSV
+            </Button>
+          </div>
+          </div>
 
         <Card padding="none">
           <div className="px-6 pt-6">
@@ -122,43 +157,43 @@ export default function VendedoresPage() {
             )}
           </div>
         </Card>
+
+        {/* Modals - Only render when open */}
+        {isModalOpen && (
+          <Suspense fallback={null}>
+            <NewSellerModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              onSuccess={handleModalSuccess}
+            />
+          </Suspense>
+        )}
+
+        {isEditModalOpen && selectedPerson && (
+          <Suspense fallback={null}>
+            <EditSellerModal
+              isOpen={isEditModalOpen}
+              onClose={() => {
+                setIsEditModalOpen(false);
+                setSelectedPerson(null);
+              }}
+              onSuccess={handleEditModalSuccess}
+              person={selectedPerson}
+            />
+          </Suspense>
+        )}
+
+        {qrModalOpen && selectedPerson && (
+          <Suspense fallback={null}>
+            <QRCodeModal
+              isOpen={qrModalOpen}
+              onClose={handleCloseQRModal}
+              qrCodeBase64={selectedPerson.qrCodeBase64 || ''}
+              personName={selectedPerson.name}
+            />
+          </Suspense>
+        )}
       </div>
-
-      {/* Modals - Only render when open */}
-      {isModalOpen && (
-        <Suspense fallback={null}>
-          <NewSellerModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onSuccess={handleModalSuccess}
-          />
-        </Suspense>
-      )}
-
-      {isEditModalOpen && selectedPerson && (
-        <Suspense fallback={null}>
-          <EditSellerModal
-            isOpen={isEditModalOpen}
-            onClose={() => {
-              setIsEditModalOpen(false);
-              setSelectedPerson(null);
-            }}
-            onSuccess={handleEditModalSuccess}
-            person={selectedPerson}
-          />
-        </Suspense>
-      )}
-
-      {qrModalOpen && selectedPerson && (
-        <Suspense fallback={null}>
-          <QRCodeModal
-            isOpen={qrModalOpen}
-            onClose={handleCloseQRModal}
-            qrCodeBase64={selectedPerson.qrCodeBase64 || ''}
-            personName={selectedPerson.name}
-          />
-        </Suspense>
-      )}
     </DashboardLayout>
   );
 }

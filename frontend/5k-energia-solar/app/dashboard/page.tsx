@@ -50,7 +50,6 @@ export default function DashboardPage() {
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
       
-      // Se não for erro 401, mostra o toast
       if (error.response?.status !== 401) {
         toast.error('Erro ao carregar dados do dashboard');
       }
@@ -60,7 +59,7 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (authLoading) return; // wait until auth state is loaded
+    if (authLoading) return;
 
     if (!isAuthenticated) {
       router.push('/login');
@@ -69,7 +68,6 @@ export default function DashboardPage() {
     loadDashboardData();
   }, [isAuthenticated, authLoading, router, loadDashboardData]);
 
-  // Memoized stats cards configuration
   const statsCards = useMemo(
     () => [
       {
