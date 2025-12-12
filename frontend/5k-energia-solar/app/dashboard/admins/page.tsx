@@ -10,6 +10,8 @@ import Button from '@/components/ui/Button';
 import { adminService } from '@/lib/services';
 import { User } from '@/lib/types';
 import { toast } from 'react-hot-toast';
+import { exportToCSV } from '@/lib/utils/exportToCSV';
+import { Icon } from '@/components/ui/Icon';
 
 export default function AdminsPage() {
   const router = useRouter();
@@ -106,22 +108,19 @@ export default function AdminsPage() {
             <h1 className="text-2xl font-bold text-gray-900">Administradores</h1>
             <p className="text-gray-600 mt-1">Gerencie os usuários administradores do sistema</p>
           </div>
-          <Button onClick={() => setIsNewModalOpen(true)} variant='outline-green'>
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="flex space-x-4">
+            <Button onClick={() => setIsNewModalOpen(true)} variant='outline-green'>
+              <Icon icon="bi-person-plus" className="w-5 h-5 mr-2" />
+              Novo Administrador
+            </Button>
+            <Button
+              onClick={() => exportToCSV(admins, 'admins.csv')}
+              variant='outline-blue'
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Novo Administrador
-          </Button>
+              <Icon icon="bi-filetype-csv" className="w-5 h-5 mr-2" />
+              Exportar CSV
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
