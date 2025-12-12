@@ -14,17 +14,18 @@ function ConfirmEmailContent() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (!token) {
-      toast.error("Token inválido ou ausente.");
-      router.push("/");
-      return;
-    }
-
     const confirmEmail = async () => {
+      if (!token) {
+        toast.error("Token inválido ou ausente.");
+        router.push("/");
+        return;
+      }
+
       try {
-        const response = await confirmEmailAction(token!);
+        const response = await confirmEmailAction(token);
         toast.success(response.message || "Email confirmado com sucesso!");
         setSuccess(true);
+
       } catch (error: any) {
         console.error("Erro ao confirmar email:", error);
         toast.error(

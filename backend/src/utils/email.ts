@@ -341,7 +341,7 @@ export const sendApprovalOrRejectionEmail = async (
             <h2>Olá, ${name}!</h2>
             <p>${message}</p>
             <p style="text-align: center; text-decoration: none; color: white !important; ${buttonUrl ? '' : 'display: none;'}">
-              <a href="${buttonUrl}" class="button">${buttonText}</a>
+              <a href="${buttonUrl}" class="button" style="color: white !important;">${buttonText}</a>
             </p>
           </div>
           <div class="footer">
