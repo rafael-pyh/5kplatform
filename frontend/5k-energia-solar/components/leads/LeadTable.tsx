@@ -38,46 +38,46 @@ function LeadTable({ leads, onViewDetails, onUpdateStatus }: LeadTableProps) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+      <table className="w-11/12 divide-y divide-gray-200">
+        <thead className="bg-gray-50 w-full">
           <tr>
             <th
               scope="col"
-              className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Cliente
             </th>
             <th
               scope="col"
-              className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Telefone
             </th>
             <th
               scope="col"
-              className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Vendedor
             </th>
             <th
               scope="col"
-              className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Status
             </th>
             <th
               scope="col"
-              className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Data
             </th>
             <th
               scope="col"
-              className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Localização
             </th>
-            <th scope="col" className="px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="p-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
               Ações
             </th>
           </tr>

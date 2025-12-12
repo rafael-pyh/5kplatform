@@ -32,7 +32,7 @@ function LeadFilters({
   useEffect(() => {
     const timeout = setTimeout(() => {
       onAdditionalFiltersChange({ ...additionalFilters, name: nameFilter });
-    }, 300); // Apply filter after 300ms debounce
+    }, 300);
 
     return () => clearTimeout(timeout);
   }, [nameFilter, additionalFilters, onAdditionalFiltersChange]);
@@ -77,16 +77,6 @@ function LeadFilters({
               {state}
             </option>
           ))}
-        </Select>
-        <Select
-          label="Status"
-          name="status"
-          value={additionalFilters.status}
-          onChange={handleSelectChange}
-        >
-          <option value="all">Todos</option>
-          <option value="active">Ativo</option>
-          <option value="inactive">Inativo</option>
         </Select>
       </div>
     </div>
