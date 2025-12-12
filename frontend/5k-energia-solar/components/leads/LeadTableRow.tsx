@@ -62,6 +62,9 @@ function LeadTableRow({ lead, onViewDetails, onUpdateStatus }: LeadTableRowProps
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm text-gray-500">{formatDate(lead.createdAt)}</div>
       </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="text-sm text-gray-900">{lead.city || '-'}/{lead.state || '-'}</div>
+      </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
         <div className="flex items-center justify-end gap-2">
           <button
