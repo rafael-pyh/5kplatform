@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import SellerQRCodeModal from '@/components/seller/SellerQRCodeModal';
 import { useAuth } from '@/contexts/AuthContext';
+import Image from 'next/image';
 
 interface Lead {
   id: string;
@@ -85,7 +86,7 @@ export default function SellerDashboardPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      
+
       // Usa os dados do usuário do Context API
       if (!user) {
         router.push('/login');
@@ -221,17 +222,22 @@ export default function SellerDashboardPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">5K Energia Solar</h1>
-                <p className="text-sm text-gray-600">{seller?.name}</p>
+            <div className="flex items-center gap-8">
+              <Image src="/5klogo.png" alt="Logo 5K Energia Solar" width={100} height={100} />
+              <div className="flex gap-2">
+                <Image
+                  src={seller?.photoBase64 || '/default-avatar.png'}
+                  alt="Foto do Vendedor"
+                  width={40}
+                  height={40}
+                  className="rounded-full object-cover"
+                />
+                <div>
+                  <p className="text-sm text-gray-600">{seller?.name}</p>
+                  <p className="text-xs text-gray-500">{seller?.email}</p>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
