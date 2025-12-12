@@ -10,6 +10,9 @@ import LeadTabs from '@/components/leads/LeadTabs';
 import { useLeads } from '@/lib/hooks/useLeads';
 import { Lead, LeadStatus } from '@/lib/types';
 import { useToggle } from '@/hooks/useToggle';
+import { exportToCSV } from '@/lib/utils/exportToCSV';
+import Button from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 
 const LeadDetailsModal = lazy(() => import('@/components/leads/LeadDetailsModal'));
 const UpdateStatusModal = lazy(() => import('@/components/leads/UpdateStatusModal'));
@@ -20,20 +23,20 @@ export default function LeadsPage() {
   const { leads, loading, error, refetch, filterByStatus, getCounts } = useLeads();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  
+
   const [isDetailsModalOpen, toggleDetailsModal, setIsDetailsModalOpen] = useToggle(false);
   const [isStatusModalOpen, toggleStatusModal, setIsStatusModalOpen] = useToggle(false);
 
   // Filtra leads baseado na aba ativa
   const filteredLeads = useMemo(() => {
     if (activeTab === 'all') return leads;
-    
+
     const statusMap: Record<Exclude<TabType, 'all'>, LeadStatus> = {
       bought: LeadStatus.BOUGHT,
       negotiation: LeadStatus.NEGOTIATION,
       cancelled: LeadStatus.CANCELLED,
     };
-    
+
     return filterByStatus(statusMap[activeTab as Exclude<TabType, 'all'>]);
   }, [leads, activeTab, filterByStatus]);
 
@@ -79,11 +82,21 @@ export default function LeadsPage() {
       <Sidebar />
       <div className="flex-1 p-2 overflow-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
-          <p className="text-gray-600 mt-1">
-            Gerencie os leads capturados através dos QR codes
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
+            <p className="text-gray-600 mt-1">
+              Gerencie os leads capturados através dos QR codes
+            </p>
+          </div>
+          <Button
+            onClick={() => exportToCSV(filteredLeads, 'leads.csv')}
+            variant='outline-blue'
+            disabled={filteredLeads.length === 0}
+          >
+            <Icon icon="bi-filetype-csv" className="w-5 h-5 mr-2" />
+            Exportar CSV
+          </Button>
         </div>
 
         {/* Content Card */}

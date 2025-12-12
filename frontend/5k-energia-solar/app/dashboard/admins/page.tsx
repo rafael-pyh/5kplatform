@@ -116,6 +116,7 @@ export default function AdminsPage() {
             <Button
               onClick={() => exportToCSV(admins, 'admins.csv')}
               variant='outline-blue'
+              disabled={admins.length === 0}
             >
               <Icon icon="bi-filetype-csv" className="w-5 h-5 mr-2" />
               Exportar CSV
