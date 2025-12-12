@@ -63,6 +63,14 @@ export class Lead extends Model {
   @Column(DataType.TEXT)
   notes?: string;
 
+  @AllowNull(true)
+  @Column(DataType.STRING)
+  city?: string;
+
+  @AllowNull(true)
+  @Column(DataType.STRING)
+  state?: string;
+
   @CreatedAt
   @Column(DataType.DATE)
   createdAt!: Date;

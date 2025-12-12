@@ -13,6 +13,8 @@ interface LeadFormData {
   phone?: string;
   energyBill?: string;
   roofPhoto?: string;
+  city?: string;
+  state?: string;
 }
 
 export default function NewLeadForm() {
@@ -88,6 +90,8 @@ export default function NewLeadForm() {
         phone: data.phone,
         energyBill: energyBill || undefined,
         roofPhoto: roofPhoto || undefined,
+        city: data.city || undefined,
+        state: data.state || undefined,
       };
 
       const response = await createLeadFromQR(qrCode, leadData);
@@ -215,6 +219,34 @@ export default function NewLeadForm() {
               <p className="mt-1 text-xs text-gray-500">
                 * Forneça pelo menos um meio de contato (email ou telefone)
               </p>
+            </div>
+
+            {/* Cidade */}
+            <div>
+              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
+                Cidade
+              </label>
+              <input
+                id="city"
+                type="text"
+                {...register('city')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                placeholder="Digite a cidade"
+              />
+            </div>
+
+            {/* Estado */}
+            <div>
+              <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
+                Estado
+              </label>
+              <input
+                id="state"
+                type="text"
+                {...register('state')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                placeholder="Digite o estado"
+              />
             </div>
 
             {/* Conta de energia */}

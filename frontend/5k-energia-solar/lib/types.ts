@@ -103,6 +103,8 @@ export interface Lead {
   owner?: Person;
   createdAt: string;
   updatedAt: string;
+  city?: string;
+  state?: string;
 }
 
 export interface CreateLeadDto {
@@ -112,6 +114,8 @@ export interface CreateLeadDto {
   energyBillUrl?: string;
   roofPhotoUrl?: string;
   ownerId: string;
+  city?: string;
+  state?: string;
 }
 
 export interface UpdateLeadDto {
@@ -121,6 +125,8 @@ export interface UpdateLeadDto {
   energyBillUrl?: string;
   roofPhotoUrl?: string;
   status?: LeadStatus;
+  city?: string;
+  state?: string;
 }
 
 // ========== QR CODE SCAN ==========
