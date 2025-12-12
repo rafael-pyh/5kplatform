@@ -10,6 +10,9 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { personService, leadService } from '@/lib/services';
 import { Lead } from '@/lib/types';
 import { toast } from 'react-hot-toast';
+import { exportToCSV } from '@/lib/utils/exportToCSV';
+import { Icon } from '@/components/ui/Icon';
+import Button from '@/components/ui/Button';
 
 interface DashboardStats {
   totalPersons: number;
@@ -49,7 +52,7 @@ export default function DashboardPage() {
       setRecentLeads(newLeads.slice(0, 5));
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
-      
+
       if (error.response?.status !== 401) {
         toast.error('Erro ao carregar dados do dashboard');
       }
@@ -138,6 +141,45 @@ export default function DashboardPage() {
     [stats]
   );
 
+  const exportDashboardDataToCSV = () => {
+    const statsData = [
+      {
+        title: 'Total de Vendedores',
+        value: stats.totalPersons,
+      },
+      {
+        title: 'Vendedores Ativos',
+        value: stats.activePersons,
+      },
+      {
+        title: 'Total de Leads',
+        value: stats.totalLeads,
+      },
+      {
+        title: 'Novos Leads',
+        value: stats.newLeads,
+      },
+    ];
+
+    const recentLeadsData = recentLeads.map(({ id, name, email, phone, status }) => ({
+      id,
+      name,
+      email,
+      phone,
+      status,
+    }));
+
+    const combinedData = [
+      { title: 'Dashboard Stats' },
+      ...statsData,
+      {}, // Empty row for separation
+      { title: 'Recent Leads' },
+      ...recentLeadsData,
+    ];
+
+    exportToCSV(combinedData, 'dashboard.csv');
+  };
+
   if (!isAuthenticated || loading) {
     return (
       <DashboardLayout>
@@ -150,9 +192,19 @@ export default function DashboardPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Visão geral da plataforma</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-600 mt-1">Visão geral da plataforma</p>
+          </div>
+          <Button
+            onClick={exportDashboardDataToCSV}
+            variant="outline-blue"
+            disabled={loading}
+          >
+            <Icon icon="bi-filetype-csv" className="w-5 h-5 mr-2" />
+            Exportar CSV
+          </Button>
         </div>
 
         {/* Stats Grid */}
