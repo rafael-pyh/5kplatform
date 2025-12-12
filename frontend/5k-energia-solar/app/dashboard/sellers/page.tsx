@@ -34,6 +34,12 @@ export default function VendedoresPage() {
   const [isEditModalOpen, toggleEditModal, setIsEditModalOpen] = useToggle(false);
   const [qrModalOpen, toggleQRModal, setQrModalOpen] = useToggle(false);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+  const [additionalFilters, setAdditionalFilters] = useState({
+    name: '',
+    city: '',
+    state: '',
+    status: 'all',
+  });
 
   const { persons, loading, refetch } = usePersons(filter === 'active');
 
@@ -96,16 +102,37 @@ export default function VendedoresPage() {
     exportToCSV(filteredData, 'sellers.csv');
   };
 
+  // Apply additional filters to the persons data
+  const filteredPersons = useMemo(() => {
+    return persons.filter((person) => {
+      const matchesName = additionalFilters.name ? person.name.toLowerCase().includes(additionalFilters.name.toLowerCase()) : true;
+      const matchesCity = additionalFilters.city ? person.city.toLowerCase().includes(additionalFilters.city.toLowerCase()) : true;
+      const matchesState = additionalFilters.state ? person.state.toLowerCase() === additionalFilters.state.toLowerCase() : true;
+      const matchesStatus = additionalFilters.status === 'all' || (additionalFilters.status === 'active' ? person.active : !person.active);
+
+      return matchesName && matchesCity && matchesState && matchesStatus;
+    });
+  }, [persons, additionalFilters]);
+
+  const cities = useMemo(() => {
+    return Array.from(new Set(persons.map(p => p.city).filter(Boolean))).sort();
+  }, [persons]);
+
+  const states = useMemo(() => {
+    return Array.from(new Set(persons.map(p => p.state).filter(Boolean))).sort();
+  }, [persons]);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <SellerFilters
-            filter={filter}
-            onFilterChange={setFilter}
-            onAddNew={() => setIsModalOpen(true)}
+            additionalFilters={additionalFilters}
+            onAdditionalFiltersChange={setAdditionalFilters}
+            cities={cities}
+            states={states}
           />
-          <div className="flex gap-4">
+          <div className="flex gap-4 h-full items-end self-end">
             <Button onClick={() => setIsModalOpen(true)} size="md" variant="outline-green">
           <svg
             className="w-5 h-5 mr-2"
@@ -148,7 +175,7 @@ export default function VendedoresPage() {
               <LoadingSpinner size="lg" text="Carregando vendedores..." />
             ) : (
               <SellerTable
-                persons={persons}
+                persons={filteredPersons}
                 onViewQRCode={handleOpenQRModal}
                 onEdit={handleOpenEditModal}
                 onDeactivate={handleDeactivate}

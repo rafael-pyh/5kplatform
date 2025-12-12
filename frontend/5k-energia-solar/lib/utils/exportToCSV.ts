@@ -1,5 +1,4 @@
-// Utility function to export data to a CSV file
-export function exportToCSV(data, filename) {
+export function exportToCSV(data: any[], filename: string) {
   if (!data || !data.length) {
     console.error("No data available to export.");
     return;
