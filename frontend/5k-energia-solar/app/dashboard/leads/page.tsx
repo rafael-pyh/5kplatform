@@ -7,6 +7,7 @@ import Card from '@/components/ui/Card';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import LeadTable from '@/components/leads/LeadTable';
 import LeadTabs from '@/components/leads/LeadTabs';
+import LeadFilters from '@/components/leads/LeadFilters';
 import { useLeads } from '@/lib/hooks/useLeads';
 import { Lead, LeadStatus } from '@/lib/types';
 import { useToggle } from '@/hooks/useToggle';
@@ -23,6 +24,12 @@ export default function LeadsPage() {
   const { leads, loading, error, refetch, filterByStatus, getCounts } = useLeads();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [additionalFilters, setAdditionalFilters] = useState({
+    name: '',
+    city: '',
+    state: '',
+    status: 'all',
+  });
 
   const [isDetailsModalOpen, toggleDetailsModal, setIsDetailsModalOpen] = useToggle(false);
   const [isStatusModalOpen, toggleStatusModal, setIsStatusModalOpen] = useToggle(false);
@@ -39,6 +46,16 @@ export default function LeadsPage() {
 
     return filterByStatus(statusMap[activeTab as Exclude<TabType, 'all'>]);
   }, [leads, activeTab, filterByStatus]);
+
+  const finalFilteredLeads = useMemo(() => {
+    return filteredLeads.filter((lead) => {
+      const matchesName = additionalFilters.name ? lead.name.toLowerCase().includes(additionalFilters.name.toLowerCase()) : true;
+      const matchesCity = additionalFilters.city ? lead.city?.toLowerCase() === additionalFilters.city.toLowerCase() : true;
+      const matchesState = additionalFilters.state ? lead.state?.toLowerCase() === additionalFilters.state.toLowerCase() : true;
+
+      return matchesName && matchesCity && matchesState;
+    });
+  }, [filteredLeads, additionalFilters]);
 
   // Handlers
   const handleViewDetails = useCallback((lead: Lead) => {
@@ -89,15 +106,22 @@ export default function LeadsPage() {
               Gerencie os leads capturados através dos QR codes
             </p>
           </div>
+          {/* Filters */}
           <Button
-            onClick={() => exportToCSV(filteredLeads, 'leads.csv')}
+            onClick={() => exportToCSV(finalFilteredLeads, 'leads.csv')}
             variant='outline-blue'
-            disabled={filteredLeads.length === 0}
+            disabled={finalFilteredLeads.length === 0}
           >
             <Icon icon="bi-filetype-csv" className="w-5 h-5 mr-2" />
             Exportar CSV
           </Button>
         </div>
+        <LeadFilters
+          additionalFilters={additionalFilters}
+          onAdditionalFiltersChange={setAdditionalFilters}
+          cities={Array.from(new Set(leads.map((lead) => lead.city).filter((city): city is string => Boolean(city)))).sort()}
+          states={Array.from(new Set(leads.map((lead) => lead.state).filter((state): state is string => Boolean(state)))).sort()}
+        />
 
         {/* Content Card */}
         <Card>
@@ -108,6 +132,7 @@ export default function LeadsPage() {
             counts={counts}
           />
 
+
           {/* Table */}
           <div>
             {loading ? (
@@ -116,7 +141,7 @@ export default function LeadsPage() {
               </div>
             ) : (
               <LeadTable
-                leads={filteredLeads}
+                leads={finalFilteredLeads}
                 onViewDetails={handleViewDetails}
                 onUpdateStatus={handleUpdateStatus}
               />
