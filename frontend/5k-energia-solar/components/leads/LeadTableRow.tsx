@@ -43,29 +43,29 @@ function LeadTableRow({ lead, onViewDetails, onUpdateStatus }: LeadTableRowProps
   };
 
   return (
-    <tr className="hover:bg-gray-50">
-      <td className="p-4 whitespace-nowrap">
+    <tr className="hover:bg-gray-50 w-20/21">
+      <td className="w-4/20 p-4 whitespace-nowrap">
         <div className="text-sm font-medium text-gray-900">{lead.name}</div>
         <div className="text-sm text-gray-500">{lead.email}</div>
       </td>
-      <td className="p-4 whitespace-nowrap">
+      <td className="w-2/20 p-4 whitespace-nowrap">
         <div className="text-sm text-gray-900">{lead.phone}</div>
       </td>
-      <td className="p-4 whitespace-nowrap">
+      <td className="w-4/20 p-4 whitespace-nowrap">
         <div className="text-sm text-gray-900">
           {lead.owner?.name || 'Sem vendedor'}
         </div>
       </td>
-      <td className="p-4 whitespace-nowrap">
+      <td className="w-2/20 p-4 whitespace-nowrap">
         {getStatusBadge(lead.status)}
       </td>
-      <td className="p-4 whitespace-nowrap">
+      <td className="w-2/20 p-4 whitespace-nowrap">
         <div className="text-sm text-gray-500">{formatDate(lead.createdAt)}</div>
       </td>
-      <td className="p-4 whitespace-nowrap">
+      <td className="w-2/20 p-4 whitespace-nowrap">
         <div className="text-sm text-gray-900">{lead.city || '-'}/{lead.state || '-'}</div>
       </td>
-      <td className="p-4 whitespace-nowrap text-right text-sm font-medium">
+      <td className="w-4/20 p-4 whitespace-nowrap text-right text-sm font-medium">
         <div className="flex items-center justify-end gap-2">
           <button
             onClick={() => onViewDetails(lead)}
