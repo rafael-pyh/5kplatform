@@ -4,6 +4,8 @@ import { useEffect, useCallback, memo, useState } from 'react';
 import { cn } from '@/lib/utils/cn';
 import { Lead } from '@/lib/types';
 import Button from '@/components/ui/Button';
+import { Icon } from '../ui/Icon';
+import toast from 'react-hot-toast';
 
 interface LeadDetailsModalProps {
   isOpen: boolean;
@@ -130,7 +132,7 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
-      setTimeout(() => alert('Copiado para a área de transferência'), 50);
+      setTimeout(() => toast.success('Copiado para a área de transferência!'), 200);
     } catch (err) {
       console.error('Erro ao copiar', err);
     }
@@ -140,49 +142,54 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
 
   return (
     <div
-      className={cn('fixed min-w-full inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fadeIn', className)}
+      className={cn('fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fadeIn min-w-full', className)}
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 animate-slideUp max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full p-6 animate-slideUp max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Detalhes do Lead</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-            aria-label="Fechar modal"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900">Detalhes do Lead</h2>
+            <p className="text-sm text-gray-500">Informações detalhadas e anexos</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" onClick={downloadAll} className="hidden sm:inline-flex">
+              <Icon icon="bi-download" className="mr-2" /> Baixar tudo
+            </Button>
+            <button onClick={onClose} aria-label="Fechar modal" className="rounded-md p-2 text-gray-500 hover:bg-gray-100">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Content */}
         <div className="space-y-6">
           {/* Personal Info */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-3">Informações Pessoais</h3>
-            <div className="grid grid-cols-2 gap-4">
+          <div className="bg-gray-50 border border-gray-100 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-gray-600 mb-3">Informações Pessoais</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-gray-500">Nome</label>
-                <p className="text-sm font-medium text-gray-900">{lead.name}</p>
+                <p className="text-xs text-gray-500">Nome</p>
+                <p className="text-sm font-semibold text-gray-900">{lead.name || '-'}</p>
               </div>
               <div>
-                <label className="text-xs text-gray-500">Email</label>
-                <p className="text-sm font-medium text-gray-900">{lead.email}</p>
+                <p className="text-xs text-gray-500">Email</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-gray-800 truncate">{lead.email || '-'}</p>
+                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(lead.email)}><Icon icon="bi-clipboard" /></Button>
+                </div>
               </div>
               <div>
-                <label className="text-xs text-gray-500">Telefone</label>
-                <p className="text-sm font-medium text-gray-900">{lead.phone}</p>
+                <p className="text-xs text-gray-500">Telefone</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-gray-800">{lead.phone || '-'}</p>
+                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(lead.phone)}><Icon icon="bi-clipboard" /></Button>
+                </div>
               </div>
               <div>
-                <label className="text-xs text-gray-500">Vendedor</label>
+                <p className="text-xs text-gray-500">Vendedor</p>
                 <p className="text-sm font-medium text-gray-900">{lead.owner?.name || '-'}</p>
               </div>
             </div>
@@ -197,22 +204,18 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs text-gray-500">Email</label>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-0.5">
                       <p className="text-sm font-medium text-gray-900">{lead.email || '-'}</p>
-                      <Button variant="ghost" size="sm" onClick={() => copyToClipboard(lead.email)}>Copiar</Button>
+                      <Button variant="ghost" size="sm" onClick={() => copyToClipboard(lead.email)}><Icon icon="bi-copy" /></Button>
                     </div>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">Telefone</label>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-0.5">
                       <p className="text-sm font-medium text-gray-900">{lead.phone || '-'}</p>
-                      <Button variant="ghost" size="sm" onClick={() => copyToClipboard(lead.phone)}>Copiar</Button>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={downloadAll}>Baixar tudo</Button>
               </div>
             </div>
 
@@ -222,56 +225,61 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
                   <p className="text-sm text-gray-500">Nenhuma imagem ou documento anexado</p>
                 )}
 
-                <div className="mt-2">
-                  {/* Main preview */}
-                  {selectedImage ? (
-                    <div className="border rounded p-2 flex items-center justify-center">
-                      <img
-                        src={ensureDataUrl(selectedImage) || undefined}
-                        alt="Preview"
-                        className="max-h-96 object-contain cursor-pointer"
-                        onClick={() => setLightboxOpen(true)}
-                      />
+                    <div className="mt-2">
+                      {/* Main preview */}
+                      {selectedImage ? (
+                        <div className="border rounded p-2 flex items-center justify-center bg-white">
+                          <img
+                            src={ensureDataUrl(selectedImage) || undefined}
+                            alt="Preview"
+                            className="max-h-96 object-contain cursor-pointer"
+                            onClick={() => setLightboxOpen(true)}
+                          />
+                        </div>
+                      ) : (
+                        (roofUrl || energyUrl) && (
+                          <div className="border rounded p-2 flex items-center justify-center bg-white">
+                            <img
+                              src={ensureDataUrl(roofUrl || energyUrl) || undefined}
+                              alt="Preview"
+                              className="max-h-96 object-contain cursor-pointer"
+                              onClick={() => { setSelectedImage(roofUrl || energyUrl || null); setLightboxOpen(true); }}
+                            />
+                          </div>
+                        )
+                      )}
                     </div>
-                  ) : (
-                    (roofUrl || energyUrl) && (
-                      <div className="border rounded p-2 flex items-center justify-center">
-                        <img
-                          src={ensureDataUrl(roofUrl || energyUrl) || undefined}
-                          alt="Preview"
-                          className="max-h-96 object-contain cursor-pointer"
-                          onClick={() => { setSelectedImage(roofUrl || energyUrl || null); setLightboxOpen(true); }}
-                        />
-                      </div>
-                    )
-                  )}
-                </div>
 
                 {/* Thumbnails */}
-                <div className="mt-2 grid grid-cols-2 gap-2">
+                <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {roofUrl && (
-                    <div className={`border rounded overflow-hidden cursor-pointer ${selectedImage === roofUrl ? 'ring-2 ring-blue-400' : ''}`} onClick={() => setSelectedImage(roofUrl || null)}>
-                      {isImageUrl(roofUrl) ? (
-                        <img src={ensureDataUrl(roofUrl) || undefined} alt="telhado" className="w-full h-28 object-cover bg-white" />
-                      ) : (
-                        <div className="w-full h-28 flex items-center justify-center bg-gray-50">Documento</div>
-                      )}
-                      <div className="p-1 flex w-full justify-end">
-                        <Button variant="ghost" size="sm" onClick={() => downloadFile(ensureDataUrl(roofUrl!) || roofUrl!, `lead-${lead.id}-roof`)}>Baixar</Button>
+                    <div>
+                      Foto do telhado
+                      <div className={`border rounded overflow-hidden cursor-pointer relative ${selectedImage === roofUrl ? 'ring-2 ring-blue-400' : ''}`} onClick={() => setSelectedImage(roofUrl || null)}>
+                        {isImageUrl(roofUrl) ? (
+                          <img src={ensureDataUrl(roofUrl) || undefined} alt="telhado" className="w-full h-28 object-cover bg-white" />
+                        ) : (
+                          <div className="w-full h-28 flex items-center justify-center bg-gray-50">Documento</div>
+                        )}
+                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 hover:opacity-100">
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); downloadFile(ensureDataUrl(roofUrl!) || roofUrl!, `lead-${lead.id}-roof`); }}>Baixar</Button>
+                        </div>
                       </div>
                     </div>
                   )}
 
                   {energyUrl && (
-                    <div className={`border rounded overflow-hidden cursor-pointer ${selectedImage === energyUrl ? 'ring-2 ring-blue-400' : ''}`} onClick={() => setSelectedImage(energyUrl || null)}>
-                      {isImageUrl(energyUrl) ? (
-                        <img src={ensureDataUrl(energyUrl) || undefined} alt="conta" className="w-full h-28 object-cover bg-white" />
-                      ) : (
-                        <div className="w-full h-28 flex items-center justify-center bg-gray-50">Documento</div>
-                      )}
-                      <div className="p-1 flex justify-between">
-                        <Button variant="ghost" size="sm" onClick={() => openFile(ensureDataUrl(energyUrl!) || energyUrl!)}>Abrir</Button>
-                        <Button variant="ghost" size="sm" onClick={() => downloadFile(ensureDataUrl(energyUrl!) || energyUrl!, `lead-${lead.id}-energybill`)}>Baixar</Button>
+                    <div>
+                        Conta de energia
+                      <div className={`border rounded overflow-hidden cursor-pointer relative ${selectedImage === energyUrl ? 'ring-2 ring-blue-400' : ''}`} onClick={() => setSelectedImage(energyUrl || null)}>
+                        {isImageUrl(energyUrl) ? (
+                          <img src={ensureDataUrl(energyUrl) || undefined} alt="conta" className="w-full h-28 object-cover bg-white" />
+                        ) : (
+                          <div className="w-full h-28 flex items-center justify-center bg-gray-50">Documento</div>
+                        )}
+                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 hover:opacity-100">
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); downloadFile(ensureDataUrl(energyUrl!) || energyUrl!, `lead-${lead.id}-energybill`); }}>Baixar</Button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -314,6 +322,16 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
           </Button>
         </div>
       </div>
+      {lightboxOpen && selectedImage && (
+        <div className="fixed inset-0 z-60 bg-black/70 flex items-center justify-center p-4">
+          <div className="relative max-w-4xl w-full">
+            <button className="absolute top-3 right-3 z-10 rounded p-2 bg-white/90" onClick={() => setLightboxOpen(false)}>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <img src={ensureDataUrl(selectedImage) || undefined} alt="Lightbox" className="w-full max-h-[80vh] object-contain rounded"/>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
