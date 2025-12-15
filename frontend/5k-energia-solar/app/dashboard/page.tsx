@@ -32,24 +32,26 @@ export default function DashboardPage() {
     newLeads: 0,
   });
   const [recentLeads, setRecentLeads] = useState<Lead[]>([]);
+  const [persons, setPersons] = useState<any[]>([]);
 
   const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
-      const [persons, allLeads, newLeads] = await Promise.all([
+      const [personsRes, allLeads, newLeads] = await Promise.all([
         personService.getAll(),
         leadService.getAll(),
         leadService.getNewLeads(),
       ]);
 
       setStats({
-        totalPersons: persons.length,
-        activePersons: persons.filter((p) => p.active).length,
+        totalPersons: personsRes.length,
+        activePersons: personsRes.filter((p) => p.active).length,
         totalLeads: allLeads.length,
         newLeads: newLeads.length,
       });
 
       setRecentLeads(newLeads.slice(0, 5));
+      setPersons(personsRes);
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
 
@@ -218,7 +220,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Leads */}
-        <RecentLeadsTable leads={recentLeads} />
+        <RecentLeadsTable
+          leads={recentLeads}
+          sellers={persons.filter((p) => p.role !== 'ADMIN' && p.role !== 'SUPER_ADMIN')}
+        />
       </div>
     </DashboardLayout>
   );

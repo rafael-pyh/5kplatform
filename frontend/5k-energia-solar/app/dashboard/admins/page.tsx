@@ -12,6 +12,7 @@ import { User } from '@/lib/types';
 import { toast } from 'react-hot-toast';
 import { exportToCSV } from '@/lib/utils/exportToCSV';
 import { Icon } from '@/components/ui/Icon';
+import { Card } from '@/components/ui';
 
 export default function AdminsPage() {
   const router = useRouter();
@@ -205,12 +206,14 @@ export default function AdminsPage() {
         </div>
 
         {/* Table */}
+        <Card padding='xs'>
         <AdminTable
           admins={admins}
           currentUserId={user?.id || ''}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
+        </Card>
 
         {/* Modals */}
         <NewAdminModal
