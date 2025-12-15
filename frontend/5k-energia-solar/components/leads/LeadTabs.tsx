@@ -31,7 +31,7 @@ function LeadTabs({ activeTab, onTabChange, counts, className }: LeadTabsProps) 
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={`
-              whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors
+              whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer
               ${
                 activeTab === tab.id
                   ? 'border-green-500 text-green-600'

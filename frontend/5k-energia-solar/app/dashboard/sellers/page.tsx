@@ -28,7 +28,7 @@ const QRCodeModal = dynamic(() => import('@/components/QRCodeModal'), {
   ssr: false,
 });
 
-export default function VendedoresPage() {
+export default function SellersPage() {
   const [filter, setFilter] = useState<'all' | 'active'>('all');
   const [isModalOpen, toggleModal, setIsModalOpen] = useToggle(false);
   const [isEditModalOpen, toggleEditModal, setIsEditModalOpen] = useToggle(false);
@@ -124,31 +124,33 @@ export default function VendedoresPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <SellerFilters
-            additionalFilters={additionalFilters}
-            onAdditionalFiltersChange={setAdditionalFilters}
-            cities={cities}
-            states={states}
-          />
-          <div className="flex gap-4 h-full items-end self-end">
+      <div className="space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Vendedores</h1>
+              <p className="mt-1 text-sm text-gray-600">
+                Gerencie os vendedores e seus QR codes
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-4 h-full items-start self-start">
             <Button onClick={() => setIsModalOpen(true)} size="md" variant="outline-green">
-          <svg
-            className="w-5 h-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          Novo Vendedor
-        </Button>
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Novo Vendedor
+            </Button>
             <Button
               onClick={exportFilteredDataToCSV}
               variant='outline-blue'
@@ -158,31 +160,33 @@ export default function VendedoresPage() {
               Exportar CSV
             </Button>
           </div>
-          </div>
+        </div>
 
-        <Card padding="none">
-          <div className="px-6 pt-6">
-            <SellerTabs
-              activeTab={filter}
-              onTabChange={setFilter}
-              allCount={counts.all}
-              activeCount={counts.active}
+        <SellerFilters
+          additionalFilters={additionalFilters}
+          onAdditionalFiltersChange={setAdditionalFilters}
+          cities={cities}
+          states={states}
+        />
+
+        <Card padding="xs">
+          <SellerTabs
+            activeTab={filter}
+            onTabChange={setFilter}
+            allCount={counts.all}
+            activeCount={counts.active}
+          />
+          {loading ? (
+            <LoadingSpinner size="lg" text="Carregando vendedores..." />
+          ) : (
+            <SellerTable
+              persons={filteredPersons}
+              onViewQRCode={handleOpenQRModal}
+              onEdit={handleOpenEditModal}
+              onDeactivate={handleDeactivate}
+              onRefetch={refetch}
             />
-          </div>
-
-          <div className="p-6">
-            {loading ? (
-              <LoadingSpinner size="lg" text="Carregando vendedores..." />
-            ) : (
-              <SellerTable
-                persons={filteredPersons}
-                onViewQRCode={handleOpenQRModal}
-                onEdit={handleOpenEditModal}
-                onDeactivate={handleDeactivate}
-                onRefetch={refetch}
-              />
-            )}
-          </div>
+          )}
         </Card>
 
         {/* Modals - Only render when open */}

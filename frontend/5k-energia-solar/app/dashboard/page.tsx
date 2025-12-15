@@ -190,21 +190,24 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600 mt-1">Visão geral da plataforma</p>
+      <div className="space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-gray-600 mt-1">Visão geral da plataforma</p>
+            </div>
           </div>
-          <Button
-            onClick={exportDashboardDataToCSV}
-            variant="outline-blue"
-            disabled={loading}
-          >
-            <Icon icon="bi-filetype-csv" className="w-5 h-5 mr-2" />
-            Exportar CSV
-          </Button>
+          <div className="flex gap-4 h-full items-start self-start">
+            <Button
+              onClick={exportDashboardDataToCSV}
+              variant="outline-blue"
+              disabled={loading}
+            >
+              <Icon icon="bi-filetype-csv" className="w-5 h-5 mr-2" />
+              Exportar CSV
+            </Button>
+          </div>
         </div>
 
         {/* Stats Grid */}

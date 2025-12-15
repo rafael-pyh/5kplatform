@@ -46,35 +46,35 @@ function LeadTableRow({ lead, onViewDetails, onUpdateStatus, className }: LeadTa
 
     return (
       <tr className={cn('hover:bg-gray-50 border-b border-slate-200', className)}>
-        <td className="p-4 align-top">
-          <div className="text-sm font-medium text-gray-900">{lead.name}</div>
-          <div className="text-sm text-gray-500 truncate">{lead.email}</div>
-          <div className="mt-2 text-sm text-gray-700 md:hidden">{lead.phone} • {lead.owner?.name || 'Sem vendedor'}</div>
+        <td className="p-4 align-top max-w-[18rem] min-w-0">
+          <div className="text-sm font-medium text-gray-900 truncate wrap-break-words">{lead.name}</div>
+          <div className="text-sm text-gray-500 truncate wrap-break-words">{lead.email}</div>
+          <div className="mt-2 text-sm text-gray-700 md:hidden truncate wrap-break-words">{lead.phone} • {lead.owner?.name || 'Sem vendedor'}</div>
         </td>
 
-        <td className="p-4 hidden md:table-cell whitespace-nowrap">
-          <div className="text-sm text-gray-900">{lead.phone}</div>
+        <td className="p-4 hidden md:table-cell max-w-40 min-w-0">
+          <div className="text-sm text-gray-900 truncate wrap-break-words">{lead.phone}</div>
         </td>
 
-        <td className="p-4 hidden md:table-cell whitespace-nowrap">
-          <div className="text-sm text-gray-900">{lead.owner?.name || 'Sem vendedor'}</div>
+        <td className="p-4 hidden md:table-cell max-w-48 min-w-0">
+          <div className="text-sm text-gray-900 truncate wrap-break-words">{lead.owner?.name || 'Sem vendedor'}</div>
         </td>
 
-        <td className="p-4 hidden md:table-cell whitespace-nowrap">{getStatusBadge(lead.status)}</td>
+        <td className="p-4 hidden md:table-cell max-w-32 min-w-0">{getStatusBadge(lead.status)}</td>
 
-        <td className="p-4 hidden lg:table-cell whitespace-nowrap">
-          <div className="text-sm text-gray-500">{formatDate(lead.createdAt)}</div>
+        <td className="p-4 hidden lg:table-cell max-w-40 min-w-0">
+          <div className="text-sm text-gray-500 truncate">{formatDate(lead.createdAt)}</div>
         </td>
 
-        <td className="p-4 hidden lg:table-cell whitespace-nowrap">
-          <div className="text-sm text-gray-900">{lead.city || '-'}/{lead.state || '-'}</div>
+        <td className="p-4 hidden lg:table-cell max-w-32 min-w-0">
+          <div className="text-sm text-gray-900 truncate wrap-break-words">{lead.city || '-'}/{lead.state || '-'}</div>
         </td>
 
-        <td className="p-4 text-right text-sm font-medium">
+        <td className="p-4 text-right text-sm font-medium w-48">
           <div className="flex items-center justify-end gap-2">
             <button
               onClick={() => onViewDetails(lead)}
-              className="text-blue-600 hover:text-blue-900 transition-colors"
+              className="text-blue-600 hover:text-blue-900 transition-colors p-1"
               title="Ver Detalhes"
             >
               <svg
@@ -101,6 +101,7 @@ function LeadTableRow({ lead, onViewDetails, onUpdateStatus, className }: LeadTa
               variant="ghost"
               size="sm"
               onClick={() => onUpdateStatus(lead)}
+              className="hidden md:inline-flex"
             >
               Atualizar Status
             </Button>

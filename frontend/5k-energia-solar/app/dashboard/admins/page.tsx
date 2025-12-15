@@ -101,14 +101,15 @@ export default function AdminsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Administradores</h1>
-            <p className="text-gray-600 mt-1">Gerencie os usuários administradores do sistema</p>
+      <div className="space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Administradores</h1>
+              <p className="text-gray-600 mt-1">Gerencie os usuários administradores do sistema</p>
+            </div>
           </div>
-          <div className="flex space-x-4">
+          <div className="flex gap-4 h-full items-start self-start">
             <Button onClick={() => setIsNewModalOpen(true)} variant='outline-green'>
               <Icon icon="bi-person-plus" className="w-5 h-5 mr-2" />
               Novo Administrador

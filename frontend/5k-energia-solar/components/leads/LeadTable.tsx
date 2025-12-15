@@ -39,47 +39,47 @@ function LeadTable({ leads, onViewDetails, onUpdateStatus, className }: LeadTabl
   }
 
   return (
-    <div className={cn('overflow-x-auto', className)}>
-      <table className="min-w-full divide-y divide-gray-200">
+    <div className={cn('overflow-x-auto w-full max-w-full', className)}>
+      <table className="w-full table-fixed divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
             <th
               scope="col"
-              className="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider truncate"
             >
               Cliente
             </th>
             <th
               scope="col"
-              className="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider truncate"
             >
               Telefone
             </th>
             <th
               scope="col"
-              className="hidden md:table-cell p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="hidden md:table-cell p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider truncate"
             >
               Vendedor
             </th>
             <th
               scope="col"
-              className="hidden md:table-cell p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="hidden md:table-cell p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider truncate"
             >
               Status
             </th>
             <th
               scope="col"
-              className="hidden lg:table-cell p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="hidden lg:table-cell p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider truncate"
             >
               Data
             </th>
             <th
               scope="col"
-              className="hidden lg:table-cell p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="hidden lg:table-cell p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider truncate"
             >
               Localização
             </th>
-            <th scope="col" className="w-4/20 p-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="p-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
               Ações
             </th>
           </tr>

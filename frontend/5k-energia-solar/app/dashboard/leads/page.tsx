@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useMemo, Suspense, lazy } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
-import Sidebar from '@/components/Sidebar';
 import Card from '@/components/ui/Card';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import LeadTable from '@/components/leads/LeadTable';
@@ -84,7 +83,6 @@ export default function LeadsPage() {
   if (error) {
     return (
       <DashboardLayout>
-        <Sidebar />
         <div className="flex-1 p-8">
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
             {error}
@@ -96,26 +94,26 @@ export default function LeadsPage() {
 
   return (
     <DashboardLayout>
-      <Sidebar />
-      <div className="flex-1 p-2 overflow-auto">
+      <div className="space-y-4 w-full min-w-0">
         {/* Header */}
-        <div className="mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
-            <p className="text-gray-600 mt-1">
-              Gerencie os leads capturados através dos QR codes
-            </p>
+        <div className="flex items-start justify-between">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
+              <p className="text-gray-600 mt-1">Gerencie os leads capturados através dos QR codes</p>
+            </div>
           </div>
-          {/* Filters */}
-          <Button
-            onClick={() => exportToCSV(finalFilteredLeads, 'leads.csv')}
-            variant='outline-blue'
-            disabled={finalFilteredLeads.length === 0}
-            className="w-full md:w-auto"
-          >
-            <Icon icon="bi-filetype-csv" className="w-5 h-5 mr-2" />
-            Exportar CSV
-          </Button>
+          <div className="flex gap-4 h-full items-start self-start">
+            <Button
+              onClick={() => exportToCSV(finalFilteredLeads, 'leads.csv')}
+              variant='outline-blue'
+              disabled={finalFilteredLeads.length === 0}
+              className="w-full md:w-auto"
+            >
+              <Icon icon="bi-filetype-csv" className="w-5 h-5 mr-2" />
+              Exportar CSV
+            </Button>
+          </div>
         </div>
 
         {/* Filters Section */}
@@ -128,7 +126,7 @@ export default function LeadsPage() {
         />
 
         {/* Content Card */}
-        <Card className="overflow-hidden" padding="xs">
+        <Card className="overflow-hidden w-full min-w-0 mt-4" padding="xs">
           {/* Tabs */}
           <LeadTabs
             activeTab={activeTab}
@@ -137,7 +135,7 @@ export default function LeadsPage() {
           />
 
           {/* Table */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             {loading ? (
               <div className="flex justify-center py-1">
                 <LoadingSpinner size="lg" />

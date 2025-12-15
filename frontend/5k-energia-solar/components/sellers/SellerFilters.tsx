@@ -43,16 +43,7 @@ function SellerFilters({
   };
 
   return (
-    <div className="space-y-4 w-1/2">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Vendedores</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Gerencie os vendedores e seus QR codes
-          </p>
-        </div>
-      </div>
-
+    <div className="space-y-4 w-full">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Input
           label="Nome"
