@@ -45,7 +45,7 @@ function LeadTableRow({ lead, onViewDetails, onUpdateStatus, className }: LeadTa
   };
 
     return (
-      <tr className={cn('hover:bg-gray-50', className)}>
+      <tr className={cn('hover:bg-gray-50 border-b border-slate-200', className)}>
         <td className="p-4 align-top">
           <div className="text-sm font-medium text-gray-900">{lead.name}</div>
           <div className="text-sm text-gray-500 truncate">{lead.email}</div>

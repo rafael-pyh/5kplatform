@@ -3,12 +3,13 @@ import { cn } from '@/lib/utils/cn';
 export interface CardProps {
   children: React.ReactNode;
   className?: string;
-  padding?: 'none' | 'sm' | 'md' | 'lg';
+  padding?: 'none' | 'xs' | 'sm' | 'md' | 'lg';
 }
 
 export default function Card({ children, className, padding = 'md' }: CardProps) {
   const paddings = {
     none: '',
+    xs: 'p-2',
     sm: 'p-4',
     md: 'p-6',
     lg: 'p-8',

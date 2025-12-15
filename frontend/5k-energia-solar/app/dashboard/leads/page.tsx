@@ -128,7 +128,7 @@ export default function LeadsPage() {
         />
 
         {/* Content Card */}
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden" padding="xs">
           {/* Tabs */}
           <LeadTabs
             activeTab={activeTab}
