@@ -29,8 +29,8 @@ function StatsCard({
       <CardContent>
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
+            <p className="text-sm font-medium text-slate-600 mb-1">{title}</p>
+            <p className="text-2xl font-bold text-slate-700">{value}</p>
             {trend && (
               <p
                 className={cn(

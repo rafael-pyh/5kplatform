@@ -128,7 +128,7 @@ export default function SellersPage() {
         <div className="flex items-start justify-between">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Vendedores</h1>
+              <h1 className="text-2xl font-bold text-slate-700">Vendedores</h1>
               <p className="mt-1 text-sm text-gray-600">
                 Gerencie os vendedores e seus QR codes
               </p>

@@ -194,7 +194,7 @@ export default function DashboardPage() {
         <div className="flex items-start justify-between">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+              <h1 className="text-2xl font-bold text-slate-700">Dashboard</h1>
               <p className="text-gray-600 mt-1">Visão geral da plataforma</p>
             </div>
           </div>
