@@ -152,12 +152,12 @@ function RecentLeadsTable({ leads = [], sellers = [] }: RecentLeadsTableProps) {
             <tbody className="bg-white divide-y divide-gray-200">
               {currentItems.map((item: any) => (
                 <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td title={item.name || '-'} className="px-4 py-3 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{item.name || '-'}</div>
-                    {item.email && <div className="text-sm text-gray-500">{item.email}</div>}
+                    {item.email && <div title={item.email} className="text-sm text-gray-500">{item.email}</div>}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.phone || '-'}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : '-'}</td>
+                  <td title={item.phone || '-'} className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.phone || '-'}</td>
+                  <td title={item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'} className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : '-'}</td>
                 </tr>
               ))}
             </tbody>

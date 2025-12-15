@@ -79,7 +79,7 @@ function LeadTable({ leads, onViewDetails, onUpdateStatus, className }: LeadTabl
             >
               Localização
             </th>
-            <th scope="col" className="p-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Ações
             </th>
           </tr>

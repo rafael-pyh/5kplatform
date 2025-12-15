@@ -45,27 +45,27 @@ function LeadTableRow({ lead, onViewDetails, onUpdateStatus, className }: LeadTa
     return (
       <tr className={cn('hover:bg-gray-50 border-b border-slate-200', className)}>
         <td className="p-4 align-top max-w-[18rem] min-w-0">
-          <div className="text-sm font-medium text-gray-900 truncate wrap-break-words">{lead.name}</div>
-          <div className="text-sm text-gray-500 truncate wrap-break-words">{lead.email}</div>
-          <div className="mt-2 text-sm text-gray-700 md:hidden truncate wrap-break-words">{lead.phone} • {lead.owner?.name || 'Sem vendedor'}</div>
+          <div title={lead.name || '-'} className="text-sm font-medium text-gray-900 truncate wrap-break-words">{lead.name}</div>
+          <div title={lead.email || '-'} className="text-sm text-gray-500 truncate wrap-break-words">{lead.email}</div>
+          <div title={`${lead.phone || '-'} • ${lead.owner?.name || 'Sem vendedor'}`} className="mt-2 text-sm text-gray-700 md:hidden truncate wrap-break-words">{lead.phone} • {lead.owner?.name || 'Sem vendedor'}</div>
         </td>
 
         <td className="p-4 hidden md:table-cell max-w-40 min-w-0">
-          <div className="text-sm text-gray-900 truncate wrap-break-words">{lead.phone}</div>
+          <div title={lead.phone || '-'} className="text-sm text-gray-900 truncate wrap-break-words">{lead.phone}</div>
         </td>
 
         <td className="p-4 hidden md:table-cell max-w-48 min-w-0">
-          <div className="text-sm text-gray-900 truncate wrap-break-words">{lead.owner?.name || 'Sem vendedor'}</div>
+          <div title={lead.owner?.name || 'Sem vendedor'} className="text-sm text-gray-900 truncate wrap-break-words">{lead.owner?.name || 'Sem vendedor'}</div>
         </td>
 
         <td className="p-4 hidden md:table-cell max-w-32 min-w-0">{getStatusBadge(lead.status)}</td>
 
         <td className="p-4 hidden lg:table-cell max-w-40 min-w-0">
-          <div className="text-sm text-gray-500 truncate">{formatDate(lead.createdAt)}</div>
+          <div title={lead.createdAt ? new Date(lead.createdAt).toISOString() : '-'} className="text-sm text-gray-500 truncate">{formatDate(lead.createdAt)}</div>
         </td>
 
         <td className="p-4 hidden lg:table-cell max-w-32 min-w-0">
-          <div className="text-sm text-gray-900 truncate wrap-break-words">{lead.city || '-'}/{lead.state || '-'}</div>
+          <div title={`${lead.city || '-'}/${lead.state || '-'}`} className="text-sm text-gray-900 truncate wrap-break-words">{lead.city || '-'}/{lead.state || '-'}</div>
         </td>
 
         <td className="p-4 text-right text-sm font-medium w-48">
@@ -96,12 +96,12 @@ function LeadTableRow({ lead, onViewDetails, onUpdateStatus, className }: LeadTa
               </svg>
             </button>
             <Button
-              variant="ghost"
+              variant="outline-blue"
               size="sm"
               onClick={() => onUpdateStatus(lead)}
               className="hidden md:inline-flex"
             >
-              Atualizar Status
+              Atualizar
             </Button>
           </div>
         </td>
