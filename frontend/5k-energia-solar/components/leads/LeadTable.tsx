@@ -1,6 +1,7 @@
-'use client';
+ 'use client';
 
 import { memo } from 'react';
+import { cn } from '@/lib/utils/cn';
 import { Lead } from '@/lib/types';
 import LeadTableRow from './LeadTableRow';
 import EmptyState from '@/components/ui/EmptyState';
@@ -9,9 +10,10 @@ interface LeadTableProps {
   leads: Lead[];
   onViewDetails: (lead: Lead) => void;
   onUpdateStatus: (lead: Lead) => void;
+  className?: string;
 }
 
-function LeadTable({ leads, onViewDetails, onUpdateStatus }: LeadTableProps) {
+function LeadTable({ leads, onViewDetails, onUpdateStatus, className }: LeadTableProps) {
   if (leads.length === 0) {
     return (
       <EmptyState
@@ -37,43 +39,43 @@ function LeadTable({ leads, onViewDetails, onUpdateStatus }: LeadTableProps) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-20/21 divide-y divide-gray-200">
-        <thead className="bg-gray-50 w-full">
+    <div className={cn('overflow-x-auto', className)}>
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
           <tr>
             <th
               scope="col"
-              className="w-4/20 p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Cliente
             </th>
             <th
               scope="col"
-              className="w-2/20 p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Telefone
             </th>
             <th
               scope="col"
-              className="w-4/20 p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="hidden md:table-cell p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Vendedor
             </th>
             <th
               scope="col"
-              className="w-2/20 p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="hidden md:table-cell p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Status
             </th>
             <th
               scope="col"
-              className="w-2/20 p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="hidden lg:table-cell p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Data
             </th>
             <th
               scope="col"
-              className="w-2/20 p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="hidden lg:table-cell p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Localização
             </th>

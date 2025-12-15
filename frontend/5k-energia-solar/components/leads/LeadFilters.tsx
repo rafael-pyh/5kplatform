@@ -1,8 +1,9 @@
-'use client';
+ 'use client';
 
 import { memo, useEffect, useState } from 'react';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import { cn } from '@/lib/utils/cn';
 
 interface LeadFiltersProps {
   additionalFilters: {
@@ -19,6 +20,7 @@ interface LeadFiltersProps {
   }) => void;
   cities: string[];
   states: string[];
+  className?: string;
 }
 
 function LeadFilters({
@@ -26,6 +28,7 @@ function LeadFilters({
   onAdditionalFiltersChange,
   cities,
   states,
+  className,
 }: LeadFiltersProps) {
   const [nameFilter, setNameFilter] = useState(additionalFilters.name);
 
@@ -43,8 +46,8 @@ function LeadFilters({
   };
 
   return (
-    <div className="space-y-4 w-1/2 mb-2">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className={cn('space-y-4 mb-2 w-full', className)}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
         <Input
           label="Nome"
           name="name"

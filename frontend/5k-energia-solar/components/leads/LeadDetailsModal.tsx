@@ -1,6 +1,7 @@
-'use client';
+ 'use client';
 
 import { useEffect, useCallback, memo, useState } from 'react';
+import { cn } from '@/lib/utils/cn';
 import { Lead } from '@/lib/types';
 import Button from '@/components/ui/Button';
 
@@ -8,9 +9,10 @@ interface LeadDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   lead: Lead;
+  className?: string;
 }
 
-function LeadDetailsModal({ isOpen, onClose, lead }: LeadDetailsModalProps) {
+function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModalProps) {
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -138,7 +140,7 @@ function LeadDetailsModal({ isOpen, onClose, lead }: LeadDetailsModalProps) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fadeIn"
+      className={cn('fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fadeIn', className)}
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 animate-slideUp max-h-[90vh] overflow-y-auto">

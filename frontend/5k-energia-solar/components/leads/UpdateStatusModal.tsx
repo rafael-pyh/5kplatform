@@ -1,6 +1,7 @@
-'use client';
+ 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { cn } from '@/lib/utils/cn';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import Button from '@/components/ui/Button';
@@ -12,6 +13,7 @@ interface UpdateStatusModalProps {
   onClose: () => void;
   onSuccess: () => void;
   lead: Lead;
+  className?: string;
 }
 
 export default function UpdateStatusModal({
@@ -19,6 +21,7 @@ export default function UpdateStatusModal({
   onClose,
   onSuccess,
   lead,
+  className,
 }: UpdateStatusModalProps) {
   const [loading, setLoading] = useState(false);
 
@@ -72,7 +75,7 @@ export default function UpdateStatusModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fadeIn"
+      className={cn('fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fadeIn', className)}
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-slideUp">

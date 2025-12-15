@@ -99,7 +99,7 @@ export default function LeadsPage() {
       <Sidebar />
       <div className="flex-1 p-2 overflow-auto">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
             <p className="text-gray-600 mt-1">
@@ -111,20 +111,24 @@ export default function LeadsPage() {
             onClick={() => exportToCSV(finalFilteredLeads, 'leads.csv')}
             variant='outline-blue'
             disabled={finalFilteredLeads.length === 0}
+            className="w-full md:w-auto"
           >
             <Icon icon="bi-filetype-csv" className="w-5 h-5 mr-2" />
             Exportar CSV
           </Button>
         </div>
+
+        {/* Filters Section */}
         <LeadFilters
           additionalFilters={additionalFilters}
           onAdditionalFiltersChange={setAdditionalFilters}
           cities={Array.from(new Set(leads.map((lead) => lead.city).filter((city): city is string => Boolean(city)))).sort()}
           states={Array.from(new Set(leads.map((lead) => lead.state).filter((state): state is string => Boolean(state)))).sort()}
+          
         />
 
         {/* Content Card */}
-        <Card>
+        <Card className="overflow-hidden">
           {/* Tabs */}
           <LeadTabs
             activeTab={activeTab}
@@ -132,9 +136,8 @@ export default function LeadsPage() {
             counts={counts}
           />
 
-
           {/* Table */}
-          <div>
+          <div className="overflow-x-auto">
             {loading ? (
               <div className="flex justify-center py-1">
                 <LoadingSpinner size="lg" />
@@ -156,6 +159,7 @@ export default function LeadsPage() {
               isOpen={isDetailsModalOpen}
               onClose={handleDetailsModalClose}
               lead={selectedLead}
+              className="max-w-full sm:max-w-lg mx-auto"
             />
           </Suspense>
         )}
@@ -170,6 +174,7 @@ export default function LeadsPage() {
               }}
               onSuccess={handleStatusUpdateSuccess}
               lead={selectedLead}
+              className="max-w-full sm:max-w-lg mx-auto"
             />
           </Suspense>
         )}

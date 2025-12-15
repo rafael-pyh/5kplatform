@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 
-export default function Sidebar() {
+export default function Sidebar({ className }: { className?: string }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
@@ -75,7 +75,7 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen fixed left-0 top-0">
+    <div className={`w-64 bg-white border-r border-gray-200 flex flex-col h-screen fixed left-0 top-0 ${className || ''}`}>
       {/* Logo */}
       <div className="pt-6 pl-6 pb-4 border-b w-full border-gray-200">
         <div className="flex items-center gap-3 mb-4">

@@ -1,6 +1,7 @@
-'use client';
+ 'use client';
 
 import { memo } from 'react';
+import { cn } from '@/lib/utils/cn';
 
 interface LeadTabsProps {
   activeTab: 'all' | 'bought' | 'negotiation' | 'cancelled';
@@ -11,9 +12,10 @@ interface LeadTabsProps {
     negotiation: number;
     cancelled: number;
   };
+  className?: string;
 }
 
-function LeadTabs({ activeTab, onTabChange, counts }: LeadTabsProps) {
+function LeadTabs({ activeTab, onTabChange, counts, className }: LeadTabsProps) {
   const tabs = [
     { id: 'all' as const, label: 'Todos', count: counts.all },
     { id: 'bought' as const, label: 'Compraram', count: counts.bought },
@@ -22,7 +24,7 @@ function LeadTabs({ activeTab, onTabChange, counts }: LeadTabsProps) {
   ];
 
   return (
-    <div className="border-b border-gray-200">
+    <div className={cn('border-b border-gray-200', className)}>
       <nav className="-mb-px flex space-x-8">
         {tabs.map((tab) => (
           <button
