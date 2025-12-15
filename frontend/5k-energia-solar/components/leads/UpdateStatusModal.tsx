@@ -75,7 +75,7 @@ export default function UpdateStatusModal({
 
   return (
     <div
-      className={cn('fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fadeIn', className)}
+      className={cn('fixed min-w-full inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fadeIn', className)}
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-slideUp">

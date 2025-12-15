@@ -19,7 +19,13 @@ const Select: React.FC<SelectProps> = ({ label, name, value, onChange, children 
         name={name}
         value={value}
         onChange={onChange}
-        className="h-full px-3 py-2 border text-slate-700 border-slate-200 bg-white rounded-lg focus:ring-transparent focus:border-blue-500 shadow-xs"
+        className="h-full pl-3 pr-4 py-2 border text-slate-700 border-slate-200 bg-white rounded-lg focus:ring-transparent focus:border-blue-500 shadow-xs appearance-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/></svg>")`,
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'right 0.4rem center',
+          backgroundSize: '1rem',
+        }}
       >
         {children}
       </select>

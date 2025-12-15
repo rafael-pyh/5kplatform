@@ -93,12 +93,6 @@ export default function SellerDashboardPage() {
         return;
       }
 
-      console.log('User data from context:', {
-        emailVerified: user.emailVerified,
-        approvalStatus: user.approvalStatus,
-        active: user.active
-      });
-
       // Fetch profile para obter QR Code e outros dados específicos do vendedor
       const profileRes = await api.get('/seller/profile');
       const loadedSeller = profileRes.data.data;
@@ -112,7 +106,6 @@ export default function SellerDashboardPage() {
       }
 
       if (user.approvalStatus !== 'approved') {
-        console.log('Bloqueando por approvalStatus:', user.approvalStatus);
         setBlockedReason('pendingApproval');
         setLoading(false);
         return;

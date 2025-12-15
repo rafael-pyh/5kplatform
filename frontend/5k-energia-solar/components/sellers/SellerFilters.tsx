@@ -10,15 +10,20 @@ interface SellerFiltersProps {
     city: string;
     state: string;
     status: string;
+    month?: string;
+    year?: string;
   };
   onAdditionalFiltersChange: (filters: {
     name: string;
     city: string;
     state: string;
     status: string;
+    month?: string;
+    year?: string;
   }) => void;
   cities: string[];
   states: string[];
+  years?: string[];
 }
 
 function SellerFilters({
@@ -26,16 +31,19 @@ function SellerFilters({
   onAdditionalFiltersChange,
   cities,
   states,
+  years,
 }: SellerFiltersProps) {
   const [nameFilter, setNameFilter] = useState(additionalFilters.name);
+  const [month, setMonth] = useState(additionalFilters.month || '');
+  const [year, setYear] = useState(additionalFilters.year || '');
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      onAdditionalFiltersChange({ ...additionalFilters, name: nameFilter });
+      onAdditionalFiltersChange({ ...additionalFilters, name: nameFilter, month, year });
     }, 300); // Apply filter after 300ms debounce
 
     return () => clearTimeout(timeout);
-  }, [nameFilter, additionalFilters, onAdditionalFiltersChange]);
+  }, [nameFilter, month, year, additionalFilters, onAdditionalFiltersChange]);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -44,7 +52,7 @@ function SellerFilters({
 
   return (
     <div className="space-y-4 w-full">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <Input
           label="Nome"
           name="name"
@@ -87,6 +95,39 @@ function SellerFilters({
           <option value="all">Todos</option>
           <option value="active">Ativo</option>
           <option value="inactive">Inativo</option>
+        </Select>
+        <Select
+          label="Mês"
+          name="month"
+          value={month}
+          onChange={(e) => setMonth(e.target.value)}
+        >
+          <option value="">Todos</option>
+          <option value="1">Janeiro</option>
+          <option value="2">Fevereiro</option>
+          <option value="3">Março</option>
+          <option value="4">Abril</option>
+          <option value="5">Maio</option>
+          <option value="6">Junho</option>
+          <option value="7">Julho</option>
+          <option value="8">Agosto</option>
+          <option value="9">Setembro</option>
+          <option value="10">Outubro</option>
+          <option value="11">Novembro</option>
+          <option value="12">Dezembro</option>
+        </Select>
+        <Select
+          label="Ano"
+          name="year"
+          value={year}
+          onChange={(e) => setYear(e.target.value)}
+        >
+          <option value="">Todos</option>
+          {(years && years.length > 0 ? years : Array.from({ length: 6 }).map((_, idx) => String(new Date().getFullYear() - idx))).map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
         </Select>
       </div>
     </div>

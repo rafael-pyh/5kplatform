@@ -34,11 +34,20 @@ export default function SellersPage() {
   const [isEditModalOpen, toggleEditModal, setIsEditModalOpen] = useToggle(false);
   const [qrModalOpen, toggleQRModal, setQrModalOpen] = useToggle(false);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
-  const [additionalFilters, setAdditionalFilters] = useState({
+  const [additionalFilters, setAdditionalFilters] = useState<{
+    name: string;
+    city: string;
+    state: string;
+    status: string;
+    month?: string;
+    year?: string;
+  }>({
     name: '',
     city: '',
     state: '',
     status: 'all',
+    month: '',
+    year: '',
   });
 
   const { persons, loading, refetch } = usePersons(filter === 'active');
@@ -52,7 +61,6 @@ export default function SellersPage() {
     };
   }, [persons]);
 
-  console.log('Persons:', persons);
 
   // Memoized handlers
   const handleOpenQRModal = useCallback((person: Person) => {
@@ -110,7 +118,15 @@ export default function SellersPage() {
       const matchesState = additionalFilters.state ? person.state.toLowerCase() === additionalFilters.state.toLowerCase() : true;
       const matchesStatus = additionalFilters.status === 'all' || (additionalFilters.status === 'active' ? person.active : !person.active);
 
-      return matchesName && matchesCity && matchesState && matchesStatus;
+      const matchesMonth = additionalFilters.month && person.createdAt
+        ? new Date(person.createdAt).getMonth() + 1 === Number(additionalFilters.month)
+        : true;
+
+      const matchesYear = additionalFilters.year && person.createdAt
+        ? new Date(person.createdAt).getFullYear() === Number(additionalFilters.year)
+        : true;
+
+      return matchesName && matchesCity && matchesState && matchesStatus && matchesMonth && matchesYear;
     });
   }, [persons, additionalFilters]);
 
@@ -167,6 +183,7 @@ export default function SellersPage() {
           onAdditionalFiltersChange={setAdditionalFilters}
           cities={cities}
           states={states}
+          years={Array.from(new Set(persons.filter(p => p.createdAt).map(p => new Date(p.createdAt).getFullYear().toString()))).sort((a,b) => Number(b) - Number(a))}
         />
 
         <Card padding="xs">

@@ -23,11 +23,20 @@ export default function LeadsPage() {
   const { leads, loading, error, refetch, filterByStatus, getCounts } = useLeads();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [additionalFilters, setAdditionalFilters] = useState({
+  const [additionalFilters, setAdditionalFilters] = useState<{
+    name: string;
+    city: string;
+    state: string;
+    status: string;
+    month?: string;
+    year?: string;
+  }>({
     name: '',
     city: '',
     state: '',
     status: 'all',
+    month: '',
+    year: '',
   });
 
   const [isDetailsModalOpen, toggleDetailsModal, setIsDetailsModalOpen] = useToggle(false);
@@ -52,7 +61,15 @@ export default function LeadsPage() {
       const matchesCity = additionalFilters.city ? lead.city?.toLowerCase() === additionalFilters.city.toLowerCase() : true;
       const matchesState = additionalFilters.state ? lead.state?.toLowerCase() === additionalFilters.state.toLowerCase() : true;
 
-      return matchesName && matchesCity && matchesState;
+      const matchesMonth = additionalFilters.month
+        ? new Date(lead.createdAt).getMonth() + 1 === Number(additionalFilters.month)
+        : true;
+
+      const matchesYear = additionalFilters.year
+        ? new Date(lead.createdAt).getFullYear() === Number(additionalFilters.year)
+        : true;
+
+      return matchesName && matchesCity && matchesState && matchesMonth && matchesYear;
     });
   }, [filteredLeads, additionalFilters]);
 
@@ -122,6 +139,7 @@ export default function LeadsPage() {
           onAdditionalFiltersChange={setAdditionalFilters}
           cities={Array.from(new Set(leads.map((lead) => lead.city).filter((city): city is string => Boolean(city)))).sort()}
           states={Array.from(new Set(leads.map((lead) => lead.state).filter((state): state is string => Boolean(state)))).sort()}
+          years={Array.from(new Set(leads.map((l) => new Date(l.createdAt).getFullYear().toString()))).sort((a,b) => Number(b) - Number(a))}
           
         />
 
