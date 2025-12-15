@@ -77,7 +77,7 @@ export default function Sidebar({ className }: { className?: string }) {
   return (
     <div className={`w-64 bg-white border-r border-gray-200 flex flex-col h-screen fixed left-0 top-0 ${className || ''}`}>
       {/* Logo */}
-      <div className="pt-6 pl-6 pb-4 border-b w-full border-gray-200">
+      <div className="pt-6 pl-6 flex flex-col gap-4 pb-4 border-b w-full border-gray-200">
         <div className="flex items-center gap-3 mb-4">
           <Image src="/5klogo.png" alt="5K Energia Logo" width={180} height={100} />
         </div>
@@ -96,8 +96,8 @@ export default function Sidebar({ className }: { className?: string }) {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-slate-700 truncate">{user?.name}</p>
-            <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+            <p className="ml-1 text-sm font-medium text-slate-700 truncate">{user?.name}</p>
+            <p className="ml-1 text-xs text-slate-500 truncate">{user?.email}</p>
           </div>
         </div>
       </div>

@@ -10,9 +10,6 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { personService, leadService } from '@/lib/services';
 import { Lead } from '@/lib/types';
 import { toast } from 'react-hot-toast';
-import { exportToCSV } from '@/lib/utils/exportToCSV';
-import { Icon } from '@/components/ui/Icon';
-import Button from '@/components/ui/Button';
 
 interface DashboardStats {
   totalPersons: number;
@@ -143,45 +140,6 @@ export default function DashboardPage() {
     [stats]
   );
 
-  const exportDashboardDataToCSV = () => {
-    const statsData = [
-      {
-        title: 'Total de Vendedores',
-        value: stats.totalPersons,
-      },
-      {
-        title: 'Vendedores Ativos',
-        value: stats.activePersons,
-      },
-      {
-        title: 'Total de Leads',
-        value: stats.totalLeads,
-      },
-      {
-        title: 'Novos Leads',
-        value: stats.newLeads,
-      },
-    ];
-
-    const recentLeadsData = recentLeads.map(({ id, name, email, phone, status }) => ({
-      id,
-      name,
-      email,
-      phone,
-      status,
-    }));
-
-    const combinedData = [
-      { title: 'Dashboard Stats' },
-      ...statsData,
-      {}, // Empty row for separation
-      { title: 'Recent Leads' },
-      ...recentLeadsData,
-    ];
-
-    exportToCSV(combinedData, 'dashboard.csv');
-  };
-
   if (!isAuthenticated || loading) {
     return (
       <DashboardLayout>
@@ -201,14 +159,6 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex gap-4 h-full items-start self-start">
-            <Button
-              onClick={exportDashboardDataToCSV}
-              variant="outline-blue"
-              disabled={loading}
-            >
-              <Icon icon="bi-filetype-csv" className="w-5 h-5 mr-2" />
-              Exportar CSV
-            </Button>
           </div>
         </div>
 

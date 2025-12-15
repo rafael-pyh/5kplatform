@@ -4,6 +4,9 @@ import { memo, useState } from 'react';
 import { Lead } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui';
 import EmptyState from '@/components/ui/EmptyState';
+import Button from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
+import { exportToCSV } from '@/lib/utils/exportToCSV';
 
 interface RecentLeadsTableProps {
   leads?: Lead[];
@@ -84,7 +87,8 @@ function RecentLeadsTable({ leads = [], sellers = [] }: RecentLeadsTableProps) {
       <CardHeader>
         <div className="w-full">
           <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
+            <div className="flex items-center justify-between">
+              <nav className="-mb-px flex space-x-8">
               <button
                 onClick={() => setActive('leads')}
                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
@@ -107,7 +111,31 @@ function RecentLeadsTable({ leads = [], sellers = [] }: RecentLeadsTableProps) {
                   {totalSellers}
                 </span>
               </button>
-            </nav>
+              </nav>
+              <div className="ml-4">
+                <Button
+                  onClick={() => {
+                    // Export current items depending on active tab
+                    const items = currentItems || [];
+                    if (active === 'leads') {
+                      const rows = (items as any[]).map((it) => ({ id: it.id, name: it.name, email: it.email, phone: it.phone, status: it.status }));
+                      exportToCSV(rows, 'leads.csv');
+                    } else if (active === 'sellers') {
+                      const rows = (items as any[]).map((it) => ({ id: it.id, name: it.name, email: it.email ?? '-', phone: it.phone ?? '-', createdAt: it.createdAt ?? '-' }));
+                      exportToCSV(rows, 'sellers.csv');
+                    } else {
+                      const rows = (items as any[]).map((it) => ({ id: it.id, name: it.name, email: it.email ?? '-', phone: it.phone ?? '-', createdAt: it.createdAt ?? '-' }));
+                      exportToCSV(rows, 'admins.csv');
+                    }
+                  }}
+                  variant="outline-blue"
+                  className="mb-1"
+                >
+                  <Icon icon="bi-filetype-csv" className="w-4 h-4 mr-2" />
+                  Exportar
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </CardHeader>
