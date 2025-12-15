@@ -11,6 +11,7 @@ interface LeadFiltersProps {
     city: string;
     state: string;
     status: string;
+    owner?: string;
     month?: string;
     year?: string;
   };
@@ -19,12 +20,14 @@ interface LeadFiltersProps {
     city: string;
     state: string;
     status: string;
+    owner?: string;
     month?: string;
     year?: string;
   }) => void;
   cities: string[];
   states: string[];
   years?: string[];
+  sellers?: { id: string; name: string }[];
   className?: string;
 }
 
@@ -34,19 +37,21 @@ function LeadFilters({
   cities,
   states,
   years,
+  sellers,
   className,
 }: LeadFiltersProps) {
   const [nameFilter, setNameFilter] = useState(additionalFilters.name);
+  const [owner, setOwner] = useState(additionalFilters.owner || '');
   const [month, setMonth] = useState(additionalFilters.month || '');
   const [year, setYear] = useState(additionalFilters.year || '');
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      onAdditionalFiltersChange({ ...additionalFilters, name: nameFilter, month, year });
+      onAdditionalFiltersChange({ ...additionalFilters, name: nameFilter, owner, month, year });
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, [nameFilter, month, year, additionalFilters, onAdditionalFiltersChange]);
+  }, [nameFilter, owner, month, year, additionalFilters, onAdditionalFiltersChange]);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -55,7 +60,7 @@ function LeadFilters({
 
   return (
     <div className={cn('space-y-4 mb-2 w-full', className)}>
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-2 w-full">
         <Input
           label="Nome"
           name="name"
@@ -63,6 +68,19 @@ function LeadFilters({
           onChange={(e) => setNameFilter(e.target.value)}
           placeholder="Filtrar por nome"
         />
+        <Select
+          label="Vendedor"
+          name="owner"
+          value={owner}
+          onChange={(e) => setOwner(e.target.value)}
+        >
+          <option value="">Todos</option>
+          {sellers && sellers.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </Select>
         <Select
           label="Cidade"
           name="city"

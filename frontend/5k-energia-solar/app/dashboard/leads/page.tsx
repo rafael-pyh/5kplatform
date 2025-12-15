@@ -28,6 +28,7 @@ export default function LeadsPage() {
     city: string;
     state: string;
     status: string;
+    owner?: string;
     month?: string;
     year?: string;
   }>({
@@ -35,6 +36,7 @@ export default function LeadsPage() {
     city: '',
     state: '',
     status: 'all',
+    owner: '',
     month: '',
     year: '',
   });
@@ -60,6 +62,9 @@ export default function LeadsPage() {
       const matchesName = additionalFilters.name ? lead.name.toLowerCase().includes(additionalFilters.name.toLowerCase()) : true;
       const matchesCity = additionalFilters.city ? lead.city?.toLowerCase() === additionalFilters.city.toLowerCase() : true;
       const matchesState = additionalFilters.state ? lead.state?.toLowerCase() === additionalFilters.state.toLowerCase() : true;
+      const matchesOwner = additionalFilters.owner
+        ? (lead.owner?.id ? lead.owner.id === additionalFilters.owner : (lead.owner?.name || '').toLowerCase() === additionalFilters.owner.toLowerCase())
+        : true;
 
       const matchesMonth = additionalFilters.month
         ? new Date(lead.createdAt).getMonth() + 1 === Number(additionalFilters.month)
@@ -69,7 +74,7 @@ export default function LeadsPage() {
         ? new Date(lead.createdAt).getFullYear() === Number(additionalFilters.year)
         : true;
 
-      return matchesName && matchesCity && matchesState && matchesMonth && matchesYear;
+      return matchesName && matchesCity && matchesState && matchesOwner && matchesMonth && matchesYear;
     });
   }, [filteredLeads, additionalFilters]);
 
@@ -140,6 +145,7 @@ export default function LeadsPage() {
           cities={Array.from(new Set(leads.map((lead) => lead.city).filter((city): city is string => Boolean(city)))).sort()}
           states={Array.from(new Set(leads.map((lead) => lead.state).filter((state): state is string => Boolean(state)))).sort()}
           years={Array.from(new Set(leads.map((l) => new Date(l.createdAt).getFullYear().toString()))).sort((a,b) => Number(b) - Number(a))}
+          sellers={Array.from(new Map(leads.map((lead) => [lead.owner?.id ?? lead.owner?.name, { id: lead.owner?.id ?? lead.owner?.name, name: lead.owner?.name ?? lead.owner?.email ?? lead.owner?.id }])).values()).filter((s): s is { id: string; name: string } => Boolean(s.id && s.name))}
           
         />
 
