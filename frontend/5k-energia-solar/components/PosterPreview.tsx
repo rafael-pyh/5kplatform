@@ -51,7 +51,7 @@ export default function PosterPreview({
             <div className="w-full h-full flex items-center justify-center text-sm text-gray-500">Gerando preview...</div>
           )}
 
-          {(posterPreview || customPoster) && (
+          {(customPoster) && (
             <div
               ref={overlayRef}
               style={{

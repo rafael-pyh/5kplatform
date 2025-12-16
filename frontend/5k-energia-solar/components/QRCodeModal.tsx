@@ -38,7 +38,14 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
   useModalEscape(isOpen, onClose);
 
   // poster preview generator hook (handles auto composition when not using customPoster)
-  const posterPreviewHook = usePosterPreview({ previewMode, qrCodeBase64, customPoster });
+  const posterPreviewHook = usePosterPreview({
+    previewMode,
+    qrCodeBase64,
+    customPoster,
+    boxCenterXRatio: overlayCenter.x,
+    boxCenterYRatio: overlayCenter.y,
+    boxSizeRatio: overlaySizePercent / 100,
+  });
   const posterPreviewValue = posterPreviewHook.posterPreview;
 
   // overlay dragging
