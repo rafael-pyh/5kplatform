@@ -1,6 +1,6 @@
  'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { composePosterBlob } from '../lib/composePoster';
 import SliderControl from './SliderControl';
@@ -66,6 +66,22 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
     if (!imageDragRef.current) return;
     setPanPos({ x: imageDragRef.current.startPanX + dx, y: imageDragRef.current.startPanY + dy });
   });
+
+  // When entering poster preview or when preview size/state changes, initialize overlay position/size
+  useEffect(() => {
+    if (previewMode !== 'poster') return;
+    const init = () => {
+      if (!previewRef.current) return;
+      const rect = previewRef.current.getBoundingClientRect();
+      const sizePx = Math.round(rect.width * (overlaySizePercent / 100));
+      setOverlaySize(sizePx);
+      const left = Math.round(rect.width * overlayCenter.x - sizePx / 2);
+      const top = Math.round(rect.height * overlayCenter.y - sizePx / 2);
+      setOverlayPos({ x: Math.max(0, Math.min(left, rect.width - sizePx)), y: Math.max(0, Math.min(top, rect.height - sizePx)) });
+    };
+    const t = setTimeout(init, 50);
+    return () => clearTimeout(t);
+  }, [previewMode, posterPreviewValue, customPoster, overlayCenter.x, overlayCenter.y, overlaySizePercent]);
 
   // Handlers
   const handleDownload = () => {
