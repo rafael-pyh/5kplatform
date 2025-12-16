@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import Button from '@/components/ui/Button';
-import { personService } from '@/lib/services';
+import { personService, uploadService } from '@/lib/services';
 import { Person, UpdatePersonDto } from '@/lib/types';
 
 interface EditSellerModalProps {
@@ -34,6 +34,7 @@ export default function EditSellerModal({
       name: person.name,
       email: person.email,
       phone: person.phone,
+      pixKey: (person as any).pixKey || '',
     },
   });
 
@@ -74,17 +75,29 @@ export default function EditSellerModal({
     try {
       setLoading(true);
 
-      const formData = new FormData();
-      if (data.name) formData.append('name', data.name);
-      if (data.email) formData.append('email', data.email);
-      if (data.phone) formData.append('phone', data.phone);
-      
+      let photoBase64: string | undefined = undefined;
+
+      // If user selected a file, upload via uploadService and get base64
       if (photoFile) {
-        formData.append('photo', photoFile);
+        try {
+          photoBase64 = await uploadService.uploadProfilePhoto(photoFile);
+        } catch (err) {
+          console.error('Erro ao fazer upload da foto:', err);
+          toast.error('Erro ao enviar foto. Tente novamente.');
+          setLoading(false);
+          return;
+        }
       }
 
-      await personService.update(person.id, formData as any);
-      
+      const updateData: any = {};
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.email !== undefined) updateData.email = data.email;
+      if (data.phone !== undefined) updateData.phone = data.phone;
+      if ((data as any).pixKey !== undefined) updateData.pixKey = (data as any).pixKey;
+      if (photoBase64) updateData.photoBase64 = photoBase64;
+
+      await personService.update(person.id, updateData);
+
       toast.success('Vendedor atualizado com sucesso!');
       reset();
       setPhotoPreview(null);
@@ -232,6 +245,23 @@ export default function EditSellerModal({
             />
             {errors.phone && (
               <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
+            )}
+          </div>
+
+          {/* Pix Key */}
+          <div>
+            <label htmlFor="pixKey" className="block text-sm font-medium text-gray-700 mb-1">
+              Chave Pix
+            </label>
+            <input
+              id="pixKey"
+              type="text"
+              {...register('pixKey')}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="CPF, email, telefone ou chave aleatória"
+            />
+            {errors && (errors as any).pixKey && (
+              <p className="text-red-500 text-sm mt-1">{(errors as any).pixKey.message}</p>
             )}
           </div>
 

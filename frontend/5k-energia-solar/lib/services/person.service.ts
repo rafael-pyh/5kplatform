@@ -31,7 +31,10 @@ export const personService = {
 
   // Criar novo vendedor
   async create(data: CreatePersonDto): Promise<Person> {
-    const response = await api.post<ApiResponse<Person>>('/manual-register', data);
+    // Se o usuário estiver autenticado (token presente), cria via rota protegida /person
+    const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
+    const endpoint = hasToken ? '/person' : '/manual-register';
+    const response = await api.post<ApiResponse<Person>>(endpoint, data);
     return normalizePersonUrls(response.data.data!);
   },
 
