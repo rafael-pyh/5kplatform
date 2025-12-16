@@ -3,6 +3,7 @@
 import { useEffect, useCallback, useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
+import { composePosterBlob, composePosterDataUrl } from '../../lib/composePoster';
 
 interface SellerQRCodeModalProps {
   isOpen: boolean;
@@ -33,6 +34,8 @@ export default function SellerQRCodeModal({
 }: SellerQRCodeModalProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [showResolutions, setShowResolutions] = useState(false);
+  const [previewMode, setPreviewMode] = useState<'qr' | 'poster'>('qr');
+  const [posterPreview, setPosterPreview] = useState<string | null>(null);
 
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
@@ -117,6 +120,56 @@ export default function SellerQRCodeModal({
     [qrCodeBase64, sellerName]
   );
 
+  const handleDownloadPoster = useCallback(async () => {
+    try {
+      setIsDownloading(true);
+      const blob = await composePosterBlob(qrCodeBase64, {
+        outputWidth: 2048,
+        boxCenterXRatio: 0.5,
+        boxCenterYRatio: 0.28,
+        boxSizeRatio: 0.2,
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `placa-${sellerName.replace(/\s+/g, '-').toLowerCase()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Placa com QR baixada com sucesso');
+    } catch (error) {
+      console.error('Erro ao gerar placa com QR:', error);
+      toast.error('Erro ao gerar placa');
+    } finally {
+      setIsDownloading(false);
+      setShowResolutions(false);
+    }
+  }, [qrCodeBase64, sellerName]);
+
+  // poster composition moved to shared helper `composePosterDataUrl` in lib/composePoster
+
+  // generate poster preview when user toggles
+  useEffect(() => {
+    let mounted = true;
+    if (previewMode === 'poster') {
+      composePosterDataUrl(qrCodeBase64, { outputWidth: 900, boxCenterXRatio: 0.5, boxCenterYRatio: 0.4, boxSizeRatio: 0.22 })
+        .then((dataUrl) => {
+          if (mounted) setPosterPreview(dataUrl);
+        })
+        .catch((err) => {
+          console.error('Erro ao compor preview da placa:', err);
+          if (mounted) setPosterPreview(null);
+        });
+    } else {
+      setPosterPreview(null);
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [previewMode, qrCodeBase64]);
+
   const copyQRCodeLink = useCallback(() => {
     const baseUrl = window.location.origin;
     const link = `${baseUrl}/qr/${qrCode}`;
@@ -137,10 +190,10 @@ export default function SellerQRCodeModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fadeIn"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 animate-slideUp max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-xl w-full p-6 animate-slideUp max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -163,18 +216,47 @@ export default function SellerQRCodeModal({
           </button>
         </div>
 
-        {/* QR Code Image */}
-        <div className="mb-6 flex justify-center">
-          <div className="bg-white p-6 rounded-lg border-2 border-gray-200">
-            <div className="relative w-64 h-64">
-              <Image
-                src={qrCodeBase64}
-                alt={`QR Code de ${sellerName}`}
-                fill
-                className="object-contain"
-                unoptimized
-                priority
-              />
+        {/* QR / Placa Preview */}
+        <div className="mb-6 flex flex-col items-center gap-3">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPreviewMode('qr')}
+              className={`px-3 py-1 rounded ${previewMode === 'qr' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+            >
+              Visualizar QR
+            </button>
+            <button
+              onClick={() => setPreviewMode('poster')}
+              className={`px-3 py-1 rounded ${previewMode === 'poster' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+            >
+              Visualizar Placa
+            </button>
+          </div>
+
+          <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
+            <div className="relative w-64 h-64 flex items-center justify-center">
+              {previewMode === 'qr' && (
+                <Image
+                  src={qrCodeBase64}
+                  alt={`QR Code de ${sellerName}`}
+                  fill
+                  className="object-contain"
+                  unoptimized
+                  priority
+                />
+              )}
+
+              {previewMode === 'poster' && (
+                posterPreview ? (
+                  // show generated poster preview
+                  // fixed size box to fit preview
+                  <div className="w-64 h-64 relative">
+                    <Image src={posterPreview} alt="Preview da placa" fill className="object-contain" unoptimized />
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500">Gerando preview...</div>
+                )
+              )}
             </div>
           </div>
         </div>
@@ -188,9 +270,9 @@ export default function SellerQRCodeModal({
         </div>
 
         {/* Actions */}
-        <div className="space-y-3">
+        <div className="flex gap-4 mb-4">
           {/* Download Button with Dropdown */}
-          <div className="relative">
+          <div className="relative w-1/2">
             <button
               onClick={() => setShowResolutions(!showResolutions)}
               disabled={isDownloading}
@@ -228,7 +310,7 @@ export default function SellerQRCodeModal({
                     key={resolution.label}
                     onClick={() => handleDownload(resolution)}
                     disabled={isDownloading}
-                    className={`w-full px-4 py-3 text-left text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 ${
+                    className={`w-1/2 px-4 py-3 text-left text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 ${
                       index === 0 ? 'rounded-t-lg' : ''
                     } ${index === resolutions.length - 1 ? 'rounded-b-lg' : 'border-b border-gray-100'}`}
                   >
@@ -245,29 +327,15 @@ export default function SellerQRCodeModal({
               </div>
             )}
           </div>
-
-          {/* Copy Link Button */}
           <button
-            onClick={copyQRCodeLink}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            onClick={handleDownloadPoster}
+            disabled={isDownloading}
+            className="w-1/2 flex items-center justify-center gap-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M16 3v4M8 3v4" />
             </svg>
-            <span>Copiar Link</span>
-          </button>
-
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="w-full px-4 py-3 text-gray-600 hover:text-gray-800 transition-colors text-sm font-medium"
-          >
-            Fechar
+            <span>{isDownloading ? 'Gerando...' : 'Baixar placa'}</span>
           </button>
         </div>
 
