@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import api from '@/lib/api';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import SellerQRCodeModal from '@/components/seller/SellerQRCodeModal';
+import QRCodeModal from '@/components/QRCodeModal';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 
@@ -330,11 +330,11 @@ export default function SellerDashboardPage() {
 
       {/* QR Code Modal */}
       {seller?.qrCodeBase64 && (
-        <SellerQRCodeModal
+        <QRCodeModal
           isOpen={isQRModalOpen}
           onClose={() => setIsQRModalOpen(false)}
           qrCodeBase64={seller.qrCodeBase64}
-          sellerName={seller.name}
+          personName={seller.name}
           qrCode={seller.qrCode}
         />
       )}

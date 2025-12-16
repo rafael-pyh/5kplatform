@@ -1,40 +1,73 @@
-'use client';
+ 'use client';
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import { composePosterBlob, composePosterDataUrl } from '../lib/composePoster';
+import { useState, useRef } from 'react';
+import { toast } from 'react-hot-toast';
+import { composePosterBlob } from '../lib/composePoster';
+import SliderControl from './SliderControl';
+import PosterPreview from './PosterPreview';
+import useModalEscape from '@/hooks/useModalEscape';
+import usePosterPreview from '@/hooks/usePosterPreview';
+import useOverlayDrag from '@/hooks/useOverlayDrag';
+import useImagePanZoom from '@/hooks/useImagePanZoom';
+import ModalHeader from '@/components/ModalHeader';
+import ModeSelector from '@/components/ModeSelector';
+import ActionButtons from '@/components/ActionButtons';
 
 interface QRCodeModalProps {
   isOpen: boolean;
   onClose: () => void;
   qrCodeBase64: string; // Base64 data URL
   personName: string;
+  qrCode?: string;
 }
 
-export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName }: QRCodeModalProps) {
+export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName, qrCode }: QRCodeModalProps) {
   const [resolution, setResolution] = useState<number | 'original'>(512);
-  const [previewMode, setPreviewMode] = useState<'qr' | 'poster'>('qr');
-  const [posterPreview, setPosterPreview] = useState<string | null>(null);
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
+  const [previewMode, setPreviewMode] = useState<'qr' | 'poster' | 'create'>('qr');
+  const [customPoster, setCustomPoster] = useState<string | null>(null);
+  const previewRef = useRef<HTMLDivElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const [overlayPos, setOverlayPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [overlaySize, setOverlaySize] = useState<number>(140); // px in preview
+  const [overlayCenter, setOverlayCenter] = useState<{ x: number; y: number }>({ x: 0.5, y: 0.4 }); // relative (0-1)
+  const [overlaySizePercent, setOverlaySizePercent] = useState<number>(22); // percent of preview width
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [panPos, setPanPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [showQROverlay, setShowQROverlay] = useState<boolean>(false);
+  // manage escape key and body overflow
+  useModalEscape(isOpen, onClose);
 
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
+  // poster preview generator hook (handles auto composition when not using customPoster)
+  const posterPreviewHook = usePosterPreview({ previewMode, qrCodeBase64, customPoster });
+  const posterPreviewValue = posterPreviewHook.posterPreview;
+
+  // overlay dragging
+  const { start: startOverlayDrag, draggingRef: overlayDraggingRef } = useOverlayDrag((clientX: number, clientY: number) => {
+    if (!overlayDraggingRef.current || !overlayDraggingRef.current.dragging || !previewRef.current) return;
+    const previewRect = previewRef.current.getBoundingClientRect();
+    const x = clientX - previewRect.left - (overlayDraggingRef.current.offsetX || 0);
+    const y = clientY - previewRect.top - (overlayDraggingRef.current.offsetY || 0);
+    const maxX = previewRect.width - overlaySize;
+    const maxY = previewRect.height - overlaySize;
+    setOverlayPos({ x: Math.max(0, Math.min(x, maxX)), y: Math.max(0, Math.min(y, maxY)) });
+  }, () => {
+    // onEnd: sync center ratios
+    if (previewRef.current && overlayRef.current) {
+      const previewRect = previewRef.current.getBoundingClientRect();
+      const overlayRect = overlayRef.current.getBoundingClientRect();
+      const centerX = (overlayRect.left + overlayRect.width / 2 - previewRect.left) / previewRect.width;
+      const centerY = (overlayRect.top + overlayRect.height / 2 - previewRect.top) / previewRect.height;
+      setOverlayCenter({ x: Math.max(0, Math.min(1, centerX)), y: Math.max(0, Math.min(1, centerY)) });
     }
+  });
 
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, onClose]);
+  // image panning
+  const { start: startImageDrag, imageDragRef } = useImagePanZoom((dx: number, dy: number) => {
+    if (!imageDragRef.current) return;
+    setPanPos({ x: imageDragRef.current.startPanX + dx, y: imageDragRef.current.startPanY + dy });
+  });
 
-  if (!isOpen) return null;
-
+  // Handlers
   const handleDownload = () => {
     try {
       const img = document.createElement('img') as HTMLImageElement;
@@ -73,6 +106,62 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName 
 
   const handleDownloadPoster = async () => {
     try {
+      // if user provided a custom poster, compute ratios from overlay position
+      if (customPoster && previewRef.current && overlayRef.current) {
+        const overlayRect = overlayRef.current.getBoundingClientRect();
+        // find poster image element in preview
+        const imgEl = previewRef.current.querySelector('img[alt="Poster custom"]') as HTMLImageElement | null;
+        const firstImg = previewRef.current.querySelector('img:not([alt="QR overlay"])') as HTMLImageElement | null;
+        const posterImg = imgEl || firstImg;
+        if (!posterImg) {
+          throw new Error('Imagem da placa não encontrada');
+        }
+
+        // If the image is transformed (zoom/pan in create mode), compute the mapping
+        const natW = posterImg.naturalWidth || posterImg.width;
+        const natH = posterImg.naturalHeight || posterImg.height;
+        const previewRect = previewRef.current.getBoundingClientRect();
+
+        // base fit scale used by object-contain
+        const baseScale = Math.min(previewRect.width / natW, previewRect.height / natH);
+        const finalImgW = natW * baseScale * (previewMode === 'create' ? zoomLevel : 1);
+        const finalImgH = natH * baseScale * (previewMode === 'create' ? zoomLevel : 1);
+
+        // image center in page coords (object-contain centers the image in the container)
+        const imgCenterX = previewRect.left + previewRect.width / 2 + (previewMode === 'create' ? panPos.x : 0);
+        const imgCenterY = previewRect.top + previewRect.height / 2 + (previewMode === 'create' ? panPos.y : 0);
+
+        const imgLeft = imgCenterX - finalImgW / 2;
+        const imgTop = imgCenterY - finalImgH / 2;
+
+        const overlayCenterX = overlayRect.left + overlayRect.width / 2;
+        const overlayCenterY = overlayRect.top + overlayRect.height / 2;
+
+        const localX = (overlayCenterX - imgLeft) / finalImgW;
+        const localY = (overlayCenterY - imgTop) / finalImgH;
+        const boxSizeRatio = overlayRect.width / finalImgW;
+
+        const boxCenterXRatio = Math.max(0, Math.min(1, localX));
+        const boxCenterYRatio = Math.max(0, Math.min(1, localY));
+
+        const blob = await composePosterBlob(qrCodeBase64, {
+          outputWidth: 2048,
+          posterUrl: customPoster,
+          boxCenterXRatio,
+          boxCenterYRatio,
+          boxSizeRatio,
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `placa-${personName.replace(/\s+/g, '-').toLowerCase()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        return;
+      }
+
       const blob = await composePosterBlob(qrCodeBase64, { outputWidth: 2048 });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -87,167 +176,201 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName 
     }
   };
 
-  // poster composition moved to shared helper `composePosterDataUrl` in lib/composePoster
+  const handleSaveAndDownload = async () => {
+    try {
+      if (!customPoster || !previewRef.current) {
+        toast.error('Faça upload da placa antes de salvar.');
+        return;
+      }
 
-  useEffect(() => {
-    let mounted = true;
-    if (previewMode === 'poster') {
-      composePosterDataUrl(qrCodeBase64, { outputWidth: 900, boxCenterXRatio: 0.5, boxCenterYRatio: 0.40, boxSizeRatio: 0.22 })
-        .then((dataUrl) => {
-          if (mounted) setPosterPreview(dataUrl);
-        })
-        .catch((err) => {
-          console.error('Erro ao compor preview da placa:', err);
-          if (mounted) setPosterPreview(null);
-        });
-    } else {
-      if (mounted) setPosterPreview(null);
+      if (!showQROverlay || !overlayRef.current) {
+        toast.error('Adicione e posicione o QR Code antes de salvar.');
+        return;
+      }
+
+      const previewRect = previewRef.current.getBoundingClientRect();
+      const overlayRect = overlayRef.current.getBoundingClientRect();
+
+      // Find the poster image element inside preview (exclude the QR overlay image)
+      const imgEl = previewRef.current.querySelector('img[alt="Poster custom"]') as HTMLImageElement | null;
+      // fallback: use first img that's not the overlay
+      const firstImg = previewRef.current.querySelector('img:not([alt="QR overlay"])') as HTMLImageElement | null;
+      const posterImg = imgEl || firstImg;
+      if (!posterImg) {
+        toast.error('Imagem da placa não encontrada para compor.');
+        return;
+      }
+
+      // Use natural size and container fit to compute accurate mapping (accounts for object-contain + pan/zoom)
+      const natW = posterImg.naturalWidth || posterImg.width;
+      const natH = posterImg.naturalHeight || posterImg.height;
+      const baseScale = Math.min(previewRect.width / natW, previewRect.height / natH);
+      const finalImgW = natW * baseScale * (previewMode === 'create' ? zoomLevel : 1);
+      const finalImgH = natH * baseScale * (previewMode === 'create' ? zoomLevel : 1);
+      const imgCenterX = previewRect.left + previewRect.width / 2 + (previewMode === 'create' ? panPos.x : 0);
+      const imgCenterY = previewRect.top + previewRect.height / 2 + (previewMode === 'create' ? panPos.y : 0);
+      const imgLeft = imgCenterX - finalImgW / 2;
+      const imgTop = imgCenterY - finalImgH / 2;
+
+      const overlayCenterX = overlayRect.left + overlayRect.width / 2;
+      const overlayCenterY = overlayRect.top + overlayRect.height / 2;
+      const localX = (overlayCenterX - imgLeft) / finalImgW;
+      const localY = (overlayCenterY - imgTop) / finalImgH;
+      const boxSizeRatio = overlayRect.width / finalImgW;
+
+      const boxCenterXRatio = Math.max(0, Math.min(1, localX));
+      const boxCenterYRatio = Math.max(0, Math.min(1, localY));
+
+      const blob = await composePosterBlob(qrCodeBase64, {
+        outputWidth: 2048,
+        posterUrl: customPoster,
+        boxCenterXRatio,
+        boxCenterYRatio,
+        boxSizeRatio,
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `placa-${personName.replace(/\s+/g, '-').toLowerCase()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Placa salva e baixada com sucesso');
+    } catch (err) {
+      console.error('Erro ao salvar placa:', err);
+      toast.error('Erro ao salvar placa');
     }
+  };
 
-    return () => {
-      mounted = false;
+  const onOverlayPointerDown = (e: React.PointerEvent) => {
+    if (!previewRef.current || !overlayRef.current) return;
+    const overlayRect = overlayRef.current.getBoundingClientRect();
+    const offsetX = e.clientX - overlayRect.left;
+    const offsetY = e.clientY - overlayRect.top;
+    startOverlayDrag(e.clientX, e.clientY, offsetX, offsetY);
+    (e.target as Element).setPointerCapture(e.pointerId);
+  };
+
+  const onPosterUpload = (file: File | null) => {
+    if (!file) return setCustomPoster(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result);
+      setCustomPoster(dataUrl);
+      setZoomLevel(1);
+      setPanPos({ x: 0, y: 0 });
+      setShowQROverlay(false);
     };
-  }, [previewMode, qrCodeBase64]);
+    reader.readAsDataURL(file);
+  };
+
+  // wheel zoom disabled in creation mode; zoom controlled via slider
+
+  const handleImagePointerDown = (e: React.PointerEvent<HTMLImageElement>) => {
+    if (zoomLevel <= 1) return;
+    startImageDrag(e.clientX, e.clientY, panPos.x, panPos.y);
+    (e.target as Element).setPointerCapture(e.pointerId);
+  };
+
+  const toggleQROverlay = () => {
+    if (!showQROverlay) {
+      // Reset QR overlay position when adding
+      if (!previewRef.current) return;
+      const rect = previewRef.current.getBoundingClientRect();
+      setOverlaySize(Math.round(rect.width * 0.22));
+      setOverlayPos({ x: Math.round((rect.width - rect.width * 0.22) / 2), y: Math.round((rect.height - rect.width * 0.22) / 2) });
+    }
+    setShowQROverlay(!showQROverlay);
+  };
+
+  if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-lg shadow-xl max-w-xl w-full p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">QR Code</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-lg max-h-full shadow-xl max-w-xl w-full p-6 overflow-auto" onClick={(e) => e.stopPropagation()}>
+        <ModalHeader personName={personName} onClose={onClose} />
 
-        {/* Preview selector */}
-        <div className="mb-4 flex items-center justify-center gap-3">
-          <button
-            onClick={() => setPreviewMode('qr')}
-            className={`px-3 py-2 rounded-lg ${previewMode === 'qr' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-          >
-            Visualizar QR
-          </button>
-          <button
-            onClick={() => setPreviewMode('poster')}
-            className={`px-3 py-2 rounded-lg ${previewMode === 'poster' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-          >
-            Visualizar Placa
-          </button>
-        </div>
+        <ModeSelector previewMode={previewMode} setPreviewMode={setPreviewMode} />
 
-        {/* Preview Area */}
         <div className="mb-4 flex justify-center">
-          <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
-            <div className="relative w-64 h-64 flex items-center justify-center">
-              {previewMode === 'qr' && (
-                <div className="relative w-64 h-64">
-                  <Image
-                    src={qrCodeBase64}
-                    alt={`QR Code de ${personName}`}
-                    fill
-                    className="object-contain"
-                    unoptimized
-                  />
+          <div className="bg-white p-4 rounded-lg border-2 border-gray-200 w-full">
+            <PosterPreview
+              previewMode={previewMode}
+              previewRef={previewRef}
+              overlayRef={overlayRef}
+              customPoster={customPoster}
+              posterPreview={posterPreviewValue}
+              overlayPos={overlayPos}
+              overlaySize={overlaySize}
+              qrCodeBase64={qrCodeBase64}
+              showQROverlay={showQROverlay}
+              onOverlayPointerDown={onOverlayPointerDown}
+              handleImagePointerDown={handleImagePointerDown}
+              panPos={panPos}
+              zoomLevel={zoomLevel}
+            />
+
+            {/* Upload + size control when in create mode */}
+            {previewMode === 'create' && (
+              <div className="mt-3 flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <input id="posterUploadInput" type="file" accept="image/*" onChange={(e) => onPosterUpload(e.target.files ? e.target.files[0] : null)} className="hidden" />
+                  <label htmlFor="posterUploadInput" className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium text-center cursor-pointer">📁 Escolher imagem</label>
                 </div>
-              )}
 
-              {previewMode === 'poster' && (
-                posterPreview ? (
-                  // show poster preview (scaled)
-                  <img src={posterPreview} alt="Preview da placa" className="w-full h-full object-contain" />
-                ) : (
-                  <div className="w-48 h-48 flex items-center justify-center text-sm text-gray-500">Gerando preview...</div>
-                )
-              )}
-            </div>
+                {customPoster && (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm text-gray-600 whitespace-nowrap">Zoom</label>
+                      <input type="range" min={1} max={3} step={0.1} value={zoomLevel} onChange={(e) => setZoomLevel(Number(e.target.value))} className="flex-1" />
+                      <span className="text-xs text-gray-500 w-8 text-right">{zoomLevel.toFixed(1)}x</span>
+                    </div>
+
+                    <button onClick={toggleQROverlay} className={`px-4 py-2 rounded-lg font-medium transition-colors ${showQROverlay ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
+                      {showQROverlay ? '✕ Remover QR Code' : '+ Adicionar QR Code'}
+                    </button>
+
+                    {showQROverlay && (
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm text-gray-600 whitespace-nowrap">Tamanho QR</label>
+                        <input type="range" min={40} max={220} value={overlaySize} onChange={(e) => setOverlaySize(Number(e.target.value))} className="flex-1" />
+                        <span className="text-xs text-gray-500 w-8 text-right">{overlaySize}px</span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Controls for poster preview: X, Y, Size sliders */}
+            {previewMode === 'poster' && (posterPreviewValue || customPoster) && (
+              <>
+                Ajustar Qr Code
+                <div className="mt-3 flex flex-col gap-3">
+                  <SliderControl label="Mover X" min={0} max={100} step={0.5} value={Math.round(overlayCenter.x * 100 * 2) / 2} onChange={(v) => setOverlayCenter((c) => ({ ...c, x: v / 100 }))} display={`${Math.round(overlayCenter.x * 100)}%`} />
+                  <SliderControl label="Mover Y" min={0} max={100} step={0.5} value={Math.round(overlayCenter.y * 100 * 2) / 2} onChange={(v) => setOverlayCenter((c) => ({ ...c, y: v / 100 }))} display={`${Math.round(overlayCenter.y * 100)}%`} />
+                  <SliderControl label="Tamanho QR" min={5} max={50} step={0.5} value={overlaySizePercent} onChange={(v) => setOverlaySizePercent(v)} display={`${overlaySizePercent}%`} />
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Person Name */}
-        <div className="mb-4 text-center">
-          <p className="text-sm text-gray-600">Vendedor</p>
-          <p className="text-lg font-medium text-gray-900">{personName}</p>
-        </div>
-
-        {/* Actions */}
         <div className='flex flex-col gap-2'>
-          <div className="flex-1">
-            <label className="block text-sm text-gray-600 mb-1">Resolução</label>
-            <select
-              value={resolution === 'original' ? 'original' : String(resolution)}
-              onChange={(e) => {
-                const v = e.target.value;
-                setResolution(v === 'original' ? 'original' : Number(v));
-              }}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 bg-white cursor-pointer"
-            >
-              <option value="256">256</option>
-              <option value="512">512</option>
-              <option value="1024">1024</option>
-              <option value="original">Original</option>
-            </select>
-          </div>
-          <div className="mb-4 flex items-center gap-3">
-
-            <div className="flex-1 flex gap-3">
-              <button
-                onClick={handleDownload}
-                className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-                Baixar QR Code
-              </button>
-              <button
-                onClick={handleDownloadPoster}
-                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M16 3v4M8 3v4" />
-                </svg>
-                Baixar placa
-              </button>
-              <button
-                onClick={onClose}
-                className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-gray-50 transition-colors font-medium cursor-pointer"
-              >
-                Fechar
-              </button>
+          {previewMode === 'qr' && (
+            <div className="flex-1">
+              <label className="block text-sm text-gray-600 mb-1">Resolução</label>
+              <select value={resolution === 'original' ? 'original' : String(resolution)} onChange={(e) => { const v = e.target.value; setResolution(v === 'original' ? 'original' : Number(v)); }} className="w-full border border-gray-200 rounded-lg px-3 py-2 bg-white cursor-pointer">
+                <option value="256">256</option>
+                <option value="512">512</option>
+                <option value="1024">1024</option>
+                <option value="original">Original</option>
+              </select>
             </div>
-          </div>
+          )}
+          <ActionButtons onDownloadQR={handleDownload} onDownloadPoster={handleDownloadPoster} onSaveAndDownload={handleSaveAndDownload} previewMode={previewMode} />
         </div>
       </div>
     </div>

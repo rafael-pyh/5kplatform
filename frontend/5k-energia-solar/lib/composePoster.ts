@@ -4,6 +4,7 @@ type ComposeOptions = {
   boxCenterXRatio?: number; // relative to width (0-1)
   boxCenterYRatio?: number; // relative to height (0-1)
   boxSizeRatio?: number; // relative to width (0-1)
+  maxBoxSizePx?: number; // optional cap for final QR size in pixels
 };
 
 export async function composePosterDataUrl(qrBase64: string, opts?: ComposeOptions): Promise<string> {
@@ -41,7 +42,8 @@ export async function composePosterDataUrl(qrBase64: string, opts?: ComposeOptio
 
   const boxCenterX = canvas.width * boxCenterXRatio;
   const boxCenterY = canvas.height * boxCenterYRatio;
-  const boxSize = canvas.width * boxSizeRatio;
+  const maxBoxSize = opts?.maxBoxSizePx ?? 800;
+  const boxSize = Math.min(canvas.width * boxSizeRatio, maxBoxSize);
   const boxX = Math.round(boxCenterX - boxSize / 2);
   const boxY = Math.round(boxCenterY - boxSize / 2);
 
