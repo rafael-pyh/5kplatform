@@ -12,6 +12,7 @@ import useImagePanZoom from '@/hooks/useImagePanZoom';
 import ModalHeader from '@/components/ModalHeader';
 import ModeSelector from '@/components/ModeSelector';
 import ActionButtons from '@/components/ActionButtons';
+import { Button } from './ui';
 
 interface QRCodeModalProps {
   isOpen: boolean;
@@ -351,9 +352,9 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
                       <span className="text-xs text-gray-500 w-8 text-right">{zoomLevel.toFixed(1)}x</span>
                     </div>
 
-                    <button onClick={toggleQROverlay} className={`px-4 py-2 rounded-lg font-medium transition-colors ${showQROverlay ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
+                    <Button onClick={toggleQROverlay} className={`px-4 py-2 rounded-lg font-medium transition-colors ${showQROverlay ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
                       {showQROverlay ? '✕ Remover QR Code' : '+ Adicionar QR Code'}
-                    </button>
+                    </Button>
 
                     {showQROverlay && (
                       <div className="flex items-center gap-3">
