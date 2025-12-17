@@ -297,6 +297,14 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
   const shareQRCode = async () => {
     try {
       setSharing(true);
+      
+
+      if (!qrCode) {
+        toast.error('QR Code não disponível para compartilhamento');
+        setSharing(false);
+        return;
+      }
+      
       const nav: any = navigator;
       const shareUrl = `${window.location.origin}/lead/new?qr=${qrCode}`;
 
@@ -333,7 +341,14 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
   const shareViaWhatsApp = async () => {
     try {
       setSharing(true);
-      const shareUrl = `${window.location.origin}/lead/new?qr=${qrCode}`;
+      
+      if (!qrCode) {
+        toast.error('QR Code não disponível para compartilhamento');
+        setSharing(false);
+        return;
+      }
+      
+      const shareUrl = `${window.location.origin}/lead/new?qr=${encodeURIComponent(qrCode)}`;
       const text = `Confira o QR Code de ${personName}: ${shareUrl}`;
       const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
       window.open(waUrl, '_blank');

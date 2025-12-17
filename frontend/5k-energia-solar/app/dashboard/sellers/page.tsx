@@ -238,6 +238,7 @@ export default function SellersPage() {
               onClose={handleCloseQRModal}
               qrCodeBase64={selectedPerson.qrCodeBase64 || ''}
               personName={selectedPerson.name}
+              qrCode={selectedPerson.qrCode}
             />
           </Suspense>
         )}
