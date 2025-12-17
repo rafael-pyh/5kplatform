@@ -13,6 +13,7 @@ import ModalHeader from '@/components/ModalHeader';
 import ModeSelector from '@/components/ModeSelector';
 import ActionButtons from '@/components/ActionButtons';
 import { Button } from './ui';
+import { Icon } from '@/components/ui/Icon';
 
 interface QRCodeModalProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [panPos, setPanPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [showQROverlay, setShowQROverlay] = useState<boolean>(false);
+  const disableDragRef = useRef<boolean>(false);
   // manage escape key and body overflow
   useModalEscape(isOpen, onClose);
 
@@ -268,7 +270,124 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
     }
   };
 
+  // Share QR Code or Poster using Web Share API when possible
+  const [sharing, setSharing] = useState(false);
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Link copiado para a área de transferência');
+    } catch (err) {
+      toast.error('Erro ao copiar para a área de transferência');
+    }
+  };
+
+  const base64ToFile = (dataUrl: string, filename: string) => {
+    const arr = dataUrl.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+  };
+
+  const shareQRCode = async () => {
+    try {
+      setSharing(true);
+      const nav: any = navigator;
+      const shareUrl = `${window.location.origin}/lead/new?qr=${qrCode}`;
+
+      // try to share as file if supported
+      if (nav.canShare) {
+        try {
+          const file = base64ToFile(qrCodeBase64, `qrcode-${personName.replace(/\s+/g, '-')}.png`);
+          if (nav.canShare({ files: [file] })) {
+            await nav.share({ files: [file], title: `QR Code - ${personName}`, text: `QR Code de ${personName}` });
+            setSharing(false);
+            return;
+          }
+        } catch (err) {
+          // fallthrough to share link
+        }
+      }
+
+      if (nav.share) {
+        await nav.share({ title: `QR Code - ${personName}`, text: `Acesse: ${shareUrl}`, url: shareUrl });
+        setSharing(false);
+        return;
+      }
+
+      // fallback: copy link
+      await copyToClipboard(shareUrl);
+    } catch (err) {
+      console.error('Erro ao compartilhar QR Code', err);
+      toast.error('Erro ao compartilhar QR Code');
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const shareViaWhatsApp = async () => {
+    try {
+      setSharing(true);
+      const shareUrl = `${window.location.origin}/lead/new?qr=${qrCode}`;
+      const text = `Confira o QR Code de ${personName}: ${shareUrl}`;
+      const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+      window.open(waUrl, '_blank');
+    } catch (err) {
+      console.error('Erro ao compartilhar via WhatsApp', err);
+      toast.error('Erro ao compartilhar via WhatsApp');
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const sharePoster = async () => {
+    try {
+      setSharing(true);
+      const nav: any = navigator;
+      const options: any = {
+        outputWidth: 2048,
+      };
+      if (customPoster) {
+        options.posterUrl = customPoster;
+        options.boxCenterXRatio = overlayCenter.x;
+        options.boxCenterYRatio = overlayCenter.y;
+        options.boxSizeRatio = overlaySizePercent / 100;
+      }
+
+      const blob = await composePosterBlob(qrCodeBase64, options as any);
+      const file = new File([blob], `placa-${personName.replace(/\s+/g, '-')}.png`, { type: 'image/png' });
+
+      if (nav.canShare && nav.canShare({ files: [file] })) {
+        await nav.share({ files: [file], title: `Placa - ${personName}`, text: `Placa com QR Code de ${personName}` });
+        setSharing(false);
+        return;
+      }
+
+      // fallback: trigger download and copy a message with instructions
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `placa-${personName.replace(/\s+/g, '-').toLowerCase()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Placa baixada. Compartilhe manualmente se desejar.');
+    } catch (err) {
+      console.error('Erro ao compartilhar placa', err);
+      toast.error('Erro ao compartilhar placa');
+    } finally {
+      setSharing(false);
+    }
+  };
+
   const onOverlayPointerDown = (e: React.PointerEvent) => {
+    if (disableDragRef.current) return;
     if (!previewRef.current || !overlayRef.current) return;
     const overlayRect = overlayRef.current.getBoundingClientRect();
     const offsetX = e.clientX - overlayRect.left;
@@ -348,21 +467,54 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
                   <>
                     <div className="flex items-center gap-3">
                       <label className="text-sm text-gray-600 whitespace-nowrap">Zoom</label>
-                      <input type="range" min={1} max={3} step={0.1} value={zoomLevel} onChange={(e) => setZoomLevel(Number(e.target.value))} className="flex-1" />
+                      <input
+                        type="range"
+                        min={1}
+                        max={3}
+                        step={0.1}
+                        value={zoomLevel}
+                        aria-label="Zoom da imagem"
+                        onChange={(e) => setZoomLevel(Number(e.target.value))}
+                        onInput={(e) => setZoomLevel(Number((e.target as HTMLInputElement).value))}
+                        onPointerDown={(e) => { disableDragRef.current = true; e.stopPropagation(); }}
+                        onPointerMove={(e) => e.stopPropagation()}
+                        onPointerUp={(e) => { disableDragRef.current = false; e.stopPropagation(); }}
+                        onMouseDown={(e) => { disableDragRef.current = true; e.stopPropagation(); }}
+                        onMouseUp={(e) => { disableDragRef.current = false; e.stopPropagation(); }}
+                        onTouchStart={(e) => { disableDragRef.current = true; e.stopPropagation(); }}
+                        onTouchEnd={(e) => { disableDragRef.current = false; e.stopPropagation(); }}
+                        className="flex-1 z-10"
+                      />
                       <span className="text-xs text-gray-500 w-8 text-right">{zoomLevel.toFixed(1)}x</span>
                     </div>
+
+                    {showQROverlay && (
+                      <div className="flex items-center gap-3 mt-2">
+                        <label className="text-sm text-gray-600 whitespace-nowrap">Tamanho QR</label>
+                        <input
+                          type="range"
+                          min={40}
+                          max={220}
+                          value={overlaySize}
+                          onChange={(e) => setOverlaySize(Number(e.target.value))}
+                          onPointerDown={(e) => { disableDragRef.current = true; e.stopPropagation(); }}
+                          onPointerMove={(e) => e.stopPropagation()}
+                          onPointerUp={(e) => { disableDragRef.current = false; e.stopPropagation(); }}
+                          onMouseDown={(e) => { disableDragRef.current = true; e.stopPropagation(); }}
+                          onMouseUp={(e) => { disableDragRef.current = false; e.stopPropagation(); }}
+                          onTouchStart={(e) => { disableDragRef.current = true; e.stopPropagation(); }}
+                          onTouchEnd={(e) => { disableDragRef.current = false; e.stopPropagation(); }}
+                          className="flex-1 z-10"
+                        />
+                        <span className="text-xs text-gray-500 w-8 text-right">{overlaySize}px</span>
+                      </div>
+                    )}
 
                     <Button onClick={toggleQROverlay} className={`px-4 py-2 rounded-lg font-medium transition-colors ${showQROverlay ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
                       {showQROverlay ? '✕ Remover QR Code' : '+ Adicionar QR Code'}
                     </Button>
 
-                    {showQROverlay && (
-                      <div className="flex items-center gap-3">
-                        <label className="text-sm text-gray-600 whitespace-nowrap">Tamanho QR</label>
-                        <input type="range" min={40} max={220} value={overlaySize} onChange={(e) => setOverlaySize(Number(e.target.value))} className="flex-1" />
-                        <span className="text-xs text-gray-500 w-8 text-right">{overlaySize}px</span>
-                      </div>
-                    )}
+                    {/* Share buttons removed from here to avoid duplication; shown in lower controls */}
                   </>
                 )}
               </div>
@@ -395,6 +547,46 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
             </div>
           )}
           <ActionButtons onDownloadQR={handleDownload} onDownloadPoster={handleDownloadPoster} onSaveAndDownload={handleSaveAndDownload} previewMode={previewMode} />
+
+          {/* Share buttons visible in QR and Poster modes */}
+          {previewMode === 'qr' && (
+            <div className="flex items-center gap-2">
+              <Button onClick={shareViaWhatsApp} variant="outline-green" className="w-1/2 px-3 py-2 flex items-center gap-2">
+                <Icon icon="mdi:whatsapp" className="w-5 h-5" />
+                <span>WhatsApp</span>
+              </Button>
+              <Button onClick={shareQRCode} variant="outline-blue" className="w-1/2 px-3 py-2 flex items-center gap-2">
+                <Icon icon="bi-share" className="w-4 h-4" />
+                <span>Compartilhar QR</span>
+              </Button>
+            </div>
+          )}
+
+          {previewMode === 'poster' && (
+            <div className="flex items-center gap-2">
+              <Button onClick={shareViaWhatsApp} variant="outline-green" className="w-1/2 px-3 py-2 flex items-center gap-2">
+                <Icon icon="mdi:whatsapp" className="w-5 h-5" />
+                <span>WhatsApp</span>
+              </Button>
+              <Button onClick={sharePoster} variant="outline-blue" className="w-1/2 px-3 py-2 flex items-center gap-2">
+                <Icon icon="bi-clipboard" className="w-4 h-4" />
+                <span>Compartilhar Placa</span>
+              </Button>
+            </div>
+          )}
+
+          {previewMode === 'create' && customPoster && (
+            <div className="flex items-center gap-2">
+              <Button onClick={shareViaWhatsApp} variant="outline-green" className="w-1/2 px-3 py-2 flex items-center gap-2">
+                <Icon icon="mdi:whatsapp" className="w-5 h-5" />
+                <span>WhatsApp</span>
+              </Button>
+              <Button onClick={sharePoster} variant="outline-blue" className="w-1/2 px-3 py-2 flex items-center gap-2">
+                <Icon icon="bi-clipboard" className="w-4 h-4" />
+                <span>Compartilhar Placa</span>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
