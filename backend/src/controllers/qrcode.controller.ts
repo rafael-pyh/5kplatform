@@ -71,6 +71,20 @@ export const getScansByPerson = async (req: Request, res: Response, next: NextFu
   }
 };
 
+// Buscar scans do vendedor autenticado
+export const getMyScans = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const personId = req.user?.userId;
+    if (!personId) throw new Error('Usuário não autenticado');
+
+    const data = await qrcodeService.getScansByPerson(personId);
+    const jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    return ResponseBuilder.success(res, jsonData);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Estatísticas de scans (protegido)
 export const getScansStats = async (req: Request, res: Response, next: NextFunction) => {
   try {

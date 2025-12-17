@@ -6,6 +6,7 @@ import { generateQRCode, generateQRCodeBase64 } from "../utils/qr";
 import { sendEmailConfirmation, sendVerificationEmail } from "../utils/email";
 import { hashPassword } from "../utils/bcrypt";
 import crypto from "crypto";
+import { Validator } from "../shared/Validator";
 
 export interface CreatePersonDto {
   name: string;
@@ -64,6 +65,13 @@ export const createPerson = async (data: CreatePersonDto) => {
   let hashedPassword: string | undefined = undefined;
   if (data.password) {
     hashedPassword = await hashPassword(data.password);
+  }
+
+  // Valida foto de perfil (base64) se fornecida
+  const MAX_PROFILE_BYTES = 2 * 1024 * 1024; // 2MB
+  if (data.photoBase64) {
+    Validator.isBase64DataUrl(data.photoBase64, 'Foto de perfil');
+    Validator.maxBase64Size(data.photoBase64, MAX_PROFILE_BYTES, 'Foto de perfil');
   }
 
   // Cria a pessoa no banco (sempre como SELLER)

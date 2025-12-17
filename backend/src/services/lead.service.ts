@@ -4,6 +4,7 @@ import { Person } from "../models/Person";
 import { Op } from "sequelize";
 import { sendApprovalOrRejectionEmail } from "../utils/email";
 import { env } from "../config/env";
+import { Validator } from "../shared/Validator";
 
 export interface CreateLeadDto {
   name: string;
@@ -24,8 +25,17 @@ export interface UpdateLeadDto {
   notes?: string;
 }
 
-// Criar um novo lead (usado pelo formulário público)
 export const createLead = async (data: CreateLeadDto) => {
+  const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
+  if (data.energyBill) {
+    Validator.isBase64DataUrl(data.energyBill, 'Conta de energia');
+    Validator.maxBase64Size(data.energyBill, MAX_IMAGE_BYTES, 'Conta de energia');
+  }
+  if (data.roofPhoto) {
+    Validator.isBase64DataUrl(data.roofPhoto, 'Foto do telhado');
+    Validator.maxBase64Size(data.roofPhoto, MAX_IMAGE_BYTES, 'Foto do telhado');
+  }
+
   const lead = await Lead.create(data as any);
   await lead.reload({
     include: [{

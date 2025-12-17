@@ -24,4 +24,10 @@ export const qrcodeService = {
     );
     return response.data.data;
   },
+
+  // Obter scans do vendedor autenticado
+  async getMyScans(): Promise<any[]> {
+    const response = await api.get<ApiResponse<any[]>>('/qrcode/my-scans');
+    return response.data.data || [];
+  },
 };

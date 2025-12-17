@@ -21,4 +21,37 @@ export class Validator {
       );
     }
   }
+
+  static isBase64DataUrl(value: string, fieldName: string): void {
+    if (!value || typeof value !== 'string') {
+      throw new ValidationError(`${fieldName} inválido`);
+    }
+
+    // data:[<mediatype>][;base64],<data>
+    const match = value.match(/^data:([\w/+.-]+);base64,([A-Za-z0-9+/=\n\r]+)$/);
+    if (!match) {
+      throw new ValidationError(`${fieldName} deve ser um Data URL em base64 válido`);
+    }
+  }
+
+  static maxBase64Size(value: string, maxBytes: number, fieldName: string): void {
+    if (!value) return;
+
+    // Extrai a parte base64 depois da vírgula
+    const commaIndex = value.indexOf(',');
+    const base64Part = commaIndex >= 0 ? value.slice(commaIndex + 1) : value;
+
+    // Calcula o tamanho real em bytes
+    let bufferLength = 0;
+    try {
+      const buf = Buffer.from(base64Part, 'base64');
+      bufferLength = buf.length;
+    } catch (err) {
+      throw new ValidationError(`${fieldName} não é um base64 válido`);
+    }
+
+    if (bufferLength > maxBytes) {
+      throw new ValidationError(`${fieldName} excede o tamanho máximo de ${Math.round(maxBytes / 1024)} KB`);
+    }
+  }
 }

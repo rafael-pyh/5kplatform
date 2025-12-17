@@ -1,12 +1,15 @@
 import { Router } from "express";
 import * as controller from "../controllers/qrcode.controller";
-import { authenticate, requireAdmin } from "../middlewares/auth.middleware";
+import { authenticate, requireAdmin, requireSeller } from "../middlewares/auth.middleware";
 
 const router = Router();
 
 // Rotas públicas
 router.post("/scan/:qrCode", controller.scanQRCode);
 router.post("/lead/:qrCode", controller.createLeadFromQR);
+
+// Rotas para vendedores autenticados
+router.get("/my-scans", authenticate, requireSeller, controller.getMyScans);
 
 // Rotas protegidas (requerem autenticação de administrador)
 router.get("/scans/:personId", authenticate, requireAdmin, controller.getScansByPerson);
