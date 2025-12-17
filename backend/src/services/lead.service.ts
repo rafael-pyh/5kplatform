@@ -2,6 +2,8 @@ import sequelize from "../database/sequelize";
 import { Lead, LeadStatus } from "../models/Lead";
 import { Person } from "../models/Person";
 import { Op } from "sequelize";
+import { sendApprovalOrRejectionEmail } from "../utils/email";
+import { env } from "../config/env";
 
 export interface CreateLeadDto {
   name: string;
@@ -100,10 +102,45 @@ export const updateLead = async (id: string, data: UpdateLeadDto) => {
 
 // Atualizar apenas o status do lead
 export const updateLeadStatus = async (id: string, status: LeadStatus) => {
-  const lead = await Lead.findByPk(id);
+  const lead = await Lead.findByPk(id, {
+    include: [{
+      model: Person,
+      as: 'owner',
+      attributes: ['id', 'name', 'email'],
+    }],
+  });
   if (!lead) throw new Error("Lead não encontrado");
-  
+
+  const previousStatus = lead.status;
+
   await lead.update({ status });
+
+  // Recarrega para garantir owner atualizado
+  await lead.reload({
+    include: [{
+      model: Person,
+      as: 'owner',
+      attributes: ['id', 'name', 'email'],
+    }],
+  });
+
+  // Se o status mudou para BOUGHT, notifica o vendedor (caso tenha email)
+  try {
+    if (previousStatus !== LeadStatus.BOUGHT && status === LeadStatus.BOUGHT) {
+      const owner = (lead as any).owner as Person | undefined;
+      if (owner && owner.email) {
+        const subject = '🎉 Cliente Finalizou Compra - 5K Energia Solar';
+        const message = `O cliente ${lead.name} finalizou a compra.`;
+        const buttonText = 'Ver no Painel';
+        const buttonUrl = `${env.FRONTEND_URL}/seller/dashboard`;
+
+        await sendApprovalOrRejectionEmail(owner.email, owner.name, subject, message, buttonText, buttonUrl);
+      }
+    }
+  } catch (err) {
+    console.error('Erro ao enviar email de notificação de compra:', err);
+  }
+
   return lead;
 };
 
