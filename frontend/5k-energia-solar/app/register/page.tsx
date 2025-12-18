@@ -64,9 +64,9 @@ const RegisterPage = () => {
       toast.error("Senha é obrigatória");
       return false;
     }
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
     if (!passwordRegex.test(formData.password)) {
-      toast.error("Senha deve ter no mínimo 6 caracteres, incluindo letras e números");
+      toast.error("Senha deve ter no mínimo 8 caracteres, incluindo letras e números");
       return false;
     }
 
