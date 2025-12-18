@@ -27,7 +27,8 @@ const RegisterPage = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    const newValue = name === "phone" ? value.replace(/\D/g, "") : value;
+    setFormData({ ...formData, [name]: newValue });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,10 +82,9 @@ const RegisterPage = () => {
       toast.error("Telefone é obrigatório");
       return false;
     }
-    const phoneRegex = /^\(?([0-9]{2})\)?[-. ]?([0-9]{4,5})[-. ]?([0-9]{4})$/;
-    const phoneClean = formData.phone.replace(/\D/g, '');
-    if (!phoneRegex.test(formData.phone) || (phoneClean.length !== 10 && phoneClean.length !== 11)) {
-      toast.error("Telefone inválido. Use o formato (99) 99999-9999 ou (99) 9999-9999");
+    const phoneRegex = /^\d{10,11}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      toast.error("Telefone inválido. Insira apenas 10 ou 11 dígitos numéricos.");
       return false;
     }
 
@@ -246,8 +246,11 @@ const RegisterPage = () => {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={11}
                 className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                placeholder="(99) 99999-9999"
+                placeholder="Somente números (ex: 11999999999)"
                 required
               />
             </div>
