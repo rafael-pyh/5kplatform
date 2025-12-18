@@ -3,7 +3,7 @@
 import React from 'react';
 
 interface PosterPreviewProps {
-  previewMode: 'qr' | 'poster' | 'create';
+  previewMode: 'qr' | 'criativos' | 'poster';
   previewRef: React.RefObject<HTMLDivElement> | React.MutableRefObject<HTMLDivElement | null>;
   overlayRef: React.RefObject<HTMLDivElement> | React.MutableRefObject<HTMLDivElement | null>;
   customPoster: string | null;
@@ -16,6 +16,7 @@ interface PosterPreviewProps {
   handleImagePointerDown: (e: React.PointerEvent<HTMLImageElement>) => void;
   panPos: { x: number; y: number };
   zoomLevel: number;
+  personName?: string;
 }
 
 export default function PosterPreview({
@@ -32,12 +33,23 @@ export default function PosterPreview({
   handleImagePointerDown,
   panPos,
   zoomLevel,
+  personName,
 }: PosterPreviewProps) {
   return (
     <div className="relative w-full h-96 flex items-center justify-center bg-gray-50">
       {previewMode === 'qr' && (
-        <div className="relative w-full h-full flex items-center justify-center">
+        <div className="relative w-full h-full flex flex-col items-center justify-center">
           <img src={qrCodeBase64} alt="QR" className="object-contain m-auto" style={{ width: 256, height: 256 }} />
+        </div>
+      )}
+
+      {previewMode === 'criativos' && (
+        <div className="relative w-full h-full flex items-center justify-center">
+          {customPoster ? (
+            <img src={customPoster} alt="Criativo selecionado" className="w-full h-full object-contain" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-sm text-gray-500">Selecione um criativo para visualizar</div>
+          )}
         </div>
       )}
 
@@ -54,42 +66,6 @@ export default function PosterPreview({
           {(customPoster) && (
             <div
               ref={overlayRef}
-              style={{
-                position: 'absolute',
-                left: overlayPos.x,
-                top: overlayPos.y,
-                width: overlaySize,
-                height: overlaySize,
-                pointerEvents: 'none',
-              }}
-            >
-              <img src={qrCodeBase64} alt="QR overlay" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            </div>
-          )}
-        </div>
-      )}
-
-      {previewMode === 'create' && (
-        <div ref={previewRef} className="relative w-full h-full overflow-hidden bg-gray-50" style={{ cursor: showQROverlay ? 'grab' : 'default' }}>
-          {customPoster ? (
-            <img
-              src={customPoster}
-              alt="Poster custom"
-              className="w-full h-full object-contain transition-transform"
-              style={{
-                transform: `translate(${panPos.x}px, ${panPos.y}px) scale(${zoomLevel})`,
-                transformOrigin: 'center center',
-                cursor: showQROverlay ? 'grab' : 'default',
-              }}
-              onPointerDown={handleImagePointerDown}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-sm text-gray-500">Faça upload da sua placa</div>
-          )}
-
-          {customPoster && showQROverlay && (
-            <div
-              ref={overlayRef}
               onPointerDown={onOverlayPointerDown}
               style={{
                 position: 'absolute',
@@ -97,8 +73,8 @@ export default function PosterPreview({
                 top: overlayPos.y,
                 width: overlaySize,
                 height: overlaySize,
-                touchAction: 'none',
                 cursor: 'grab',
+                touchAction: 'none',
               }}
             >
               <img src={qrCodeBase64} alt="QR overlay" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />

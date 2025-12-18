@@ -1,0 +1,131 @@
+import { Router } from 'express';
+import multer from 'multer';
+import {
+  adminUploadCreative,
+  listCreatives,
+  getCreative,
+  getCreativesByTypeController,
+  searchCreatives,
+  adminUpdateCreative,
+  adminDeactivateCreative,
+  adminDeleteCreative,
+  adminGetStats,
+} from '../controllers/creative.controller';
+import { authenticate } from '../middlewares/auth.middleware';
+import { PersonRole } from '../models/Person';
+
+const router = Router();
+
+// Configurar multer para uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Apenas imagens são permitidas'));
+    }
+  },
+});
+
+// Middleware para verificar se é admin
+const checkAdminRole = (req: any, res: any, next: any) => {
+  console.log('[Creative Routes] checkAdminRole - req.user:', req.user);
+  
+  if (!req.user) {
+    console.log('[Creative Routes] ERRO: req.user is null/undefined');
+    return res.status(401).json({
+      success: false,
+      message: 'Não autenticado',
+    });
+  }
+
+  if (![PersonRole.ADMIN, PersonRole.SUPER_ADMIN].includes(req.user.role)) {
+    console.log('[Creative Routes] ERRO: role is not admin -', req.user.role);
+    return res.status(403).json({
+      success: false,
+      message: 'Apenas ADMIN ou SUPER_ADMIN podem realizar esta ação',
+    });
+  }
+
+  next();
+};
+
+// ============== ROTAS PÚBLICAS ==============
+
+/**
+ * GET /api/creatives - Listar todos os criativos ativos
+ * Query params: type, limit, offset
+ */
+router.get('/', listCreatives);
+
+/**
+ * GET /api/creatives/type/:type - Buscar criativos por tipo
+ */
+router.get('/type/:type', getCreativesByTypeController);
+
+/**
+ * GET /api/creatives/search - Buscar criativos por tags
+ * Query params: tags (separadas por vírgula), limit, offset
+ */
+router.get('/search/tags', searchCreatives);
+
+// ============== ROTAS ADMIN ==============
+
+/**
+ * POST /api/creatives - Criar um novo criativo (via API, imagem já no MinIO)
+ * ADMIN/SUPER_ADMIN only
+ * Body: { name, imageUrl, description?, tags?, type? }
+ */
+router.post('/', authenticate, checkAdminRole, adminUploadCreative);
+
+/**
+ * POST /api/creatives/admin/upload - Fazer upload de um novo criativo
+ * ADMIN/SUPER_ADMIN only
+ */
+router.post(
+  '/admin/upload',
+  authenticate,
+  checkAdminRole,
+  upload.single('file'),
+  adminUploadCreative
+);
+
+/**
+ * PUT /api/creatives/admin/:id - Atualizar criativo
+ * ADMIN/SUPER_ADMIN only
+ */
+router.put('/admin/:id', authenticate, checkAdminRole, adminUpdateCreative);
+
+/**
+ * DELETE /api/creatives/admin/:id/deactivate - Desativar criativo
+ * ADMIN/SUPER_ADMIN only
+ */
+router.delete(
+  '/admin/:id/deactivate',
+  authenticate,
+  checkAdminRole,
+  adminDeactivateCreative
+);
+
+/**
+ * DELETE /api/creatives/admin/:id - Deletar criativo permanentemente
+ * ADMIN/SUPER_ADMIN only
+ */
+router.delete('/admin/:id', authenticate, checkAdminRole, adminDeleteCreative);
+
+/**
+ * GET /api/creatives/admin/stats - Obter estatísticas de criativos
+ * ADMIN/SUPER_ADMIN only
+ */
+router.get('/admin/stats', authenticate, checkAdminRole, adminGetStats);
+
+/**
+ * GET /api/creatives/:id - Obter detalhes de um criativo
+ * IMPORTANTE: Deve vir por ÚLTIMO para não conflitar com rotas mais específicas
+ */
+router.get('/:id', getCreative);
+
+export default router;

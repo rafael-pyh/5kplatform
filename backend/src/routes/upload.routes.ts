@@ -52,4 +52,12 @@ router.post(
   controller.uploadRoofPhoto
 );
 
+// Upload de poster para QR Code Modal
+router.post(
+  "/poster",
+  authenticate,
+  upload.single("file"),
+  controller.uploadPoster
+);
+
 export default router;

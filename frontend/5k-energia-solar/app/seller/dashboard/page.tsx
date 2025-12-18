@@ -336,6 +336,7 @@ export default function SellerDashboardPage() {
           qrCodeBase64={seller.qrCodeBase64}
           personName={seller.name}
           qrCode={seller.qrCode}
+          userRole={user?.role as 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | undefined}
         />
       )}
     </div>

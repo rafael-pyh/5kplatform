@@ -10,6 +10,7 @@ import SellerTable from '@/components/sellers/SellerTable';
 import { Card, Button } from '@/components/ui';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { usePersons, useToggle } from '@/hooks';
+import { useAuth } from '@/contexts/AuthContext';
 import { personService } from '@/lib/services';
 import { Person } from '@/types/Person';
 import { exportToCSV } from '@/lib/utils/exportToCSV';
@@ -29,6 +30,7 @@ const QRCodeModal = dynamic(() => import('@/components/QRCodeModal'), {
 });
 
 export default function SellersPage() {
+  const { user } = useAuth();
   const [filter, setFilter] = useState<'all' | 'active'>('all');
   const [isModalOpen, toggleModal, setIsModalOpen] = useToggle(false);
   const [isEditModalOpen, toggleEditModal, setIsEditModalOpen] = useToggle(false);
@@ -239,6 +241,7 @@ export default function SellersPage() {
               qrCodeBase64={selectedPerson.qrCodeBase64 || ''}
               personName={selectedPerson.name}
               qrCode={selectedPerson.qrCode}
+              userRole={user?.role as 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | undefined}
             />
           </Suspense>
         )}

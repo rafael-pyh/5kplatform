@@ -5,13 +5,20 @@ import personRoutes from "./routes/person.routes";
 import leadRoutes from "./routes/lead.routes";
 import qrcodeRoutes from "./routes/qrcode.routes";
 import uploadRoutes from "./routes/upload.routes";
+import creativeRoutes from "./routes/creative.routes";
 import sellerAuthRoutes from "./routes/seller-auth.routes";
 import sellerLeadsRoutes from "./routes/seller-leads.routes";
 import manualRegisterRoutes from "./routes/manualRegister.routes";
 import approvalRoutes from "./routes/approval.routes";
 import { errorHandler } from "./shared/errorHandler";
+import { initializeMinIOBucket } from "./services/storage.service";
 
 const app = express();
+
+// Inicializa o bucket do MinIO
+initializeMinIOBucket().catch(error => {
+  console.error("Erro ao inicializar MinIO:", error);
+});
 
 // Middlewares globais
 app.use(cors());
@@ -34,6 +41,7 @@ app.use("/api/person", personRoutes);
 app.use("/api/lead", leadRoutes);
 app.use("/api/qrcode", qrcodeRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/creatives", creativeRoutes);
 app.use("/api/seller", sellerAuthRoutes);
 app.use("/api/seller", sellerLeadsRoutes);
 app.use("/api", manualRegisterRoutes);

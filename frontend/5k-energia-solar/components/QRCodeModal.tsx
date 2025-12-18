@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
+import api from '@/lib/api';
 import { composePosterBlob } from '../lib/composePoster';
 import SliderControl from './SliderControl';
 import PosterPreview from './PosterPreview';
@@ -9,11 +10,26 @@ import useModalEscape from '@/hooks/useModalEscape';
 import usePosterPreview from '@/hooks/usePosterPreview';
 import useOverlayDrag from '@/hooks/useOverlayDrag';
 import useImagePanZoom from '@/hooks/useImagePanZoom';
+import useQRCodeWithVendor from '@/hooks/useQRCodeWithVendor';
 import ModalHeader from '@/components/ModalHeader';
-import ModeSelector from '@/components/ModeSelector';
 import ActionButtons from '@/components/ActionButtons';
 import { Button } from './ui';
 import { Icon } from '@/components/ui/Icon';
+
+interface Creative {
+  id: string;
+  name: string;
+  description?: string;
+  imageUrl: string;
+  type: string;
+  tags?: string;
+  downloadCount: number;
+  uploadedBy: {
+    id: string;
+    name: string;
+  };
+  createdAt: string;
+}
 
 interface QRCodeModalProps {
   isOpen: boolean;
@@ -21,12 +37,16 @@ interface QRCodeModalProps {
   qrCodeBase64: string; // Base64 data URL
   personName: string;
   qrCode?: string;
+  userRole?: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN';
 }
 
-export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName, qrCode }: QRCodeModalProps) {
+export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName, qrCode, userRole = 'SELLER' }: QRCodeModalProps) {
   const [resolution, setResolution] = useState<number | 'original'>(512);
-  const [previewMode, setPreviewMode] = useState<'qr' | 'poster' | 'create'>('qr');
+  const [previewMode, setPreviewMode] = useState<'qr' | 'criativos' | 'poster'>('qr');
   const [customPoster, setCustomPoster] = useState<string | null>(null);
+  const [criativos, setCriativos] = useState<Creative[]>([]);
+  const [loadingCriativos, setLoadingCriativos] = useState(false);
+  const [selectedCriativoId, setSelectedCriativoId] = useState<string | null>(null);
   const previewRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const [overlayPos, setOverlayPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -37,17 +57,54 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
   const [panPos, setPanPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [showQROverlay, setShowQROverlay] = useState<boolean>(false);
   const disableDragRef = useRef<boolean>(false);
+  
+  // Generate QR code with vendor name embedded
+  const { qrCodeWithVendor } = useQRCodeWithVendor(qrCodeBase64, personName);
+  
   // manage escape key and body overflow
   useModalEscape(isOpen, onClose);
+
+  // Carregar criativos ao abrir o modal
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const fetchCriativos = async () => {
+      try {
+        setLoadingCriativos(true);
+        const response = await api.get<any>('/creatives?limit=50');
+        setCriativos(response.data.data.criativos || []);
+      } catch (error) {
+        console.error('Erro ao carregar criativos:', error);
+        toast.error('Erro ao carregar criativos');
+      } finally {
+        setLoadingCriativos(false);
+      }
+    };
+    
+    fetchCriativos();
+  }, [isOpen]);
+
+  // Handler para selecionar um criativo
+  const handleSelectCriativo = (criativo: Creative) => {
+    setCustomPoster(criativo.imageUrl);
+    setSelectedCriativoId(criativo.id);
+    setPreviewMode('poster');
+    // Resetar posicionamento do QR code
+    setOverlayCenter({ x: 0.7, y: 0.7 });
+    setOverlaySizePercent(15);
+    setZoomLevel(1);
+    setPanPos({ x: 0, y: 0 });
+  };
 
   // poster preview generator hook (handles auto composition when not using customPoster)
   const posterPreviewHook = usePosterPreview({
     previewMode,
-    qrCodeBase64,
+    qrCodeBase64: qrCodeWithVendor,
     customPoster,
     boxCenterXRatio: overlayCenter.x,
     boxCenterYRatio: overlayCenter.y,
     boxSizeRatio: overlaySizePercent / 100,
+    vendorName: personName,
   });
   const posterPreviewValue = posterPreviewHook.posterPreview;
 
@@ -124,7 +181,7 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
       img.onerror = (err: Event | string | any) => {
         console.error('Erro ao carregar imagem do QR Code', err);
       };
-      img.src = qrCodeBase64;
+      img.src = qrCodeWithVendor;
     } catch (error) {
       console.error('Erro ao baixar QR Code:', error);
     }
@@ -143,19 +200,19 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
           throw new Error('Imagem da placa não encontrada');
         }
 
-        // If the image is transformed (zoom/pan in create mode), compute the mapping
+        // Compute the mapping
         const natW = posterImg.naturalWidth || posterImg.width;
         const natH = posterImg.naturalHeight || posterImg.height;
         const previewRect = previewRef.current.getBoundingClientRect();
 
         // base fit scale used by object-contain
         const baseScale = Math.min(previewRect.width / natW, previewRect.height / natH);
-        const finalImgW = natW * baseScale * (previewMode === 'create' ? zoomLevel : 1);
-        const finalImgH = natH * baseScale * (previewMode === 'create' ? zoomLevel : 1);
+        const finalImgW = natW * baseScale;
+        const finalImgH = natH * baseScale;
 
         // image center in page coords (object-contain centers the image in the container)
-        const imgCenterX = previewRect.left + previewRect.width / 2 + (previewMode === 'create' ? panPos.x : 0);
-        const imgCenterY = previewRect.top + previewRect.height / 2 + (previewMode === 'create' ? panPos.y : 0);
+        const imgCenterX = previewRect.left + previewRect.width / 2;
+        const imgCenterY = previewRect.top + previewRect.height / 2;
 
         const imgLeft = imgCenterX - finalImgW / 2;
         const imgTop = imgCenterY - finalImgH / 2;
@@ -170,12 +227,13 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
         const boxCenterXRatio = Math.max(0, Math.min(1, localX));
         const boxCenterYRatio = Math.max(0, Math.min(1, localY));
 
-        const blob = await composePosterBlob(qrCodeBase64, {
+        const blob = await composePosterBlob(qrCodeWithVendor, {
           outputWidth: 2048,
           posterUrl: customPoster,
           boxCenterXRatio,
           boxCenterYRatio,
           boxSizeRatio,
+          vendorName: personName,
         });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -188,7 +246,7 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
         return;
       }
 
-      const blob = await composePosterBlob(qrCodeBase64, { outputWidth: 2048 });
+      const blob = await composePosterBlob(qrCodeWithVendor, { outputWidth: 2048 });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -205,17 +263,17 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
   const handleSaveAndDownload = async () => {
     try {
       if (!customPoster || !previewRef.current) {
-        toast.error('Faça upload da placa antes de salvar.');
-        return;
-      }
-
-      if (!showQROverlay || !overlayRef.current) {
-        toast.error('Adicione e posicione o QR Code antes de salvar.');
+        toast.error('Selecione um criativo antes de salvar.');
         return;
       }
 
       const previewRect = previewRef.current.getBoundingClientRect();
-      const overlayRect = overlayRef.current.getBoundingClientRect();
+      const overlayRect = overlayRef.current?.getBoundingClientRect();
+
+      if (!overlayRect) {
+        toast.error('Posicione o QR Code antes de salvar.');
+        return;
+      }
 
       // Find the poster image element inside preview (exclude the QR overlay image)
       const imgEl = previewRef.current.querySelector('img[alt="Poster custom"]') as HTMLImageElement | null;
@@ -227,14 +285,14 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
         return;
       }
 
-      // Use natural size and container fit to compute accurate mapping (accounts for object-contain + pan/zoom)
+      // Use natural size and container fit to compute accurate mapping
       const natW = posterImg.naturalWidth || posterImg.width;
       const natH = posterImg.naturalHeight || posterImg.height;
       const baseScale = Math.min(previewRect.width / natW, previewRect.height / natH);
-      const finalImgW = natW * baseScale * (previewMode === 'create' ? zoomLevel : 1);
-      const finalImgH = natH * baseScale * (previewMode === 'create' ? zoomLevel : 1);
-      const imgCenterX = previewRect.left + previewRect.width / 2 + (previewMode === 'create' ? panPos.x : 0);
-      const imgCenterY = previewRect.top + previewRect.height / 2 + (previewMode === 'create' ? panPos.y : 0);
+      const finalImgW = natW * baseScale;
+      const finalImgH = natH * baseScale;
+      const imgCenterX = previewRect.left + previewRect.width / 2;
+      const imgCenterY = previewRect.top + previewRect.height / 2;
       const imgLeft = imgCenterX - finalImgW / 2;
       const imgTop = imgCenterY - finalImgH / 2;
 
@@ -247,12 +305,13 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
       const boxCenterXRatio = Math.max(0, Math.min(1, localX));
       const boxCenterYRatio = Math.max(0, Math.min(1, localY));
 
-      const blob = await composePosterBlob(qrCodeBase64, {
+      const blob = await composePosterBlob(qrCodeWithVendor, {
         outputWidth: 2048,
         posterUrl: customPoster,
         boxCenterXRatio,
         boxCenterYRatio,
         boxSizeRatio,
+        vendorName: personName,
       });
 
       const url = URL.createObjectURL(blob);
@@ -294,6 +353,10 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
     return new File([u8arr], filename, { type: mime });
   };
 
+  const getQRShareUrl = () => {
+    return `${window.location.origin}/lead/new?qr=${qrCode}`;
+  };
+
   const shareQRCode = async () => {
     try {
       setSharing(true);
@@ -306,12 +369,12 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
       }
       
       const nav: any = navigator;
-      const shareUrl = `${window.location.origin}/lead/new?qr=${qrCode}`;
+      const shareUrl = getQRShareUrl();
 
       // try to share as file if supported
       if (nav.canShare) {
         try {
-          const file = base64ToFile(qrCodeBase64, `qrcode-${personName.replace(/\s+/g, '-')}.png`);
+          const file = base64ToFile(qrCodeWithVendor, `qrcode-${personName.replace(/\s+/g, '-')}.png`);
           if (nav.canShare({ files: [file] })) {
             await nav.share({ files: [file], title: `QR Code - ${personName}`, text: `QR Code de ${personName}` });
             setSharing(false);
@@ -372,9 +435,10 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
         options.boxCenterXRatio = overlayCenter.x;
         options.boxCenterYRatio = overlayCenter.y;
         options.boxSizeRatio = overlaySizePercent / 100;
+        options.vendorName = personName;
       }
 
-      const blob = await composePosterBlob(qrCodeBase64, options as any);
+      const blob = await composePosterBlob(qrCodeWithVendor, options as any);
       const file = new File([blob], `placa-${personName.replace(/\s+/g, '-')}.png`, { type: 'image/png' });
 
       if (nav.canShare && nav.canShare({ files: [file] })) {
@@ -411,21 +475,6 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
     (e.target as Element).setPointerCapture(e.pointerId);
   };
 
-  const onPosterUpload = (file: File | null) => {
-    if (!file) return setCustomPoster(null);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = String(reader.result);
-      setCustomPoster(dataUrl);
-      setZoomLevel(1);
-      setPanPos({ x: 0, y: 0 });
-      setShowQROverlay(false);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // wheel zoom disabled in creation mode; zoom controlled via slider
-
   const handleImagePointerDown = (e: React.PointerEvent<HTMLImageElement>) => {
     if (zoomLevel <= 1) return;
     startImageDrag(e.clientX, e.clientY, panPos.x, panPos.y);
@@ -450,10 +499,90 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
       <div className="bg-white rounded-lg max-h-full shadow-xl max-w-xl w-full p-6 overflow-auto" onClick={(e) => e.stopPropagation()}>
         <ModalHeader personName={personName} onClose={onClose} />
 
-        <ModeSelector previewMode={previewMode} setPreviewMode={setPreviewMode} />
+        {/* Tabs to switch between modes */}
+        <div className="mb-4 flex gap-2 border-b border-gray-200">
+          <button
+            onClick={() => setPreviewMode('qr')}
+            className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+              previewMode === 'qr'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            QR Code
+          </button>
+          <button
+            onClick={() => setPreviewMode('criativos')}
+            className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+              previewMode === 'criativos'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Criativos
+          </button>
+          {customPoster && (
+            <button
+              onClick={() => setPreviewMode('poster')}
+              className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                previewMode === 'poster'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Placa com QR
+            </button>
+          )}
+        </div>
 
         <div className="mb-4 flex justify-center">
           <div className="bg-white p-4 rounded-lg border-2 border-gray-200 w-full">
+            {/* Creative Gallery - Available for all users in criativos mode */}
+            {previewMode === 'criativos' && (
+              <div className="mb-4 pb-4 border-b border-gray-200">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Selecione um Criativo</h3>
+                {loadingCriativos ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  </div>
+                ) : criativos.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 text-sm">
+                    <p>📭 Nenhum criativo disponível no momento</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-3 max-h-64 overflow-y-auto pr-2">
+                    {criativos.map((criativo) => (
+                      <div
+                        key={criativo.id}
+                        onClick={() => handleSelectCriativo(criativo)}
+                        className={`relative p-2 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                          selectedCriativoId === criativo.id
+                            ? 'border-green-500 bg-green-50 ring-2 ring-green-300'
+                            : 'border-gray-200 hover:border-gray-400'
+                        }`}
+                      >
+                        <div className="relative w-full h-28 mb-2 rounded overflow-hidden bg-gray-100">
+                          <img
+                            src={criativo.imageUrl}
+                            alt={criativo.name}
+                            className="w-full h-full object-cover"
+                          />
+                          {selectedCriativoId === criativo.id && (
+                            <div className="absolute inset-0 bg-green-500 bg-opacity-20 flex items-center justify-center">
+                              <div className="text-3xl">✓</div>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-xs font-medium text-gray-700 truncate">{criativo.name}</p>
+                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                          <span>👤 {criativo.uploadedBy?.name || 'Admin'}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <PosterPreview
               previewMode={previewMode}
               previewRef={previewRef}
@@ -462,83 +591,19 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
               posterPreview={posterPreviewValue}
               overlayPos={overlayPos}
               overlaySize={overlaySize}
-              qrCodeBase64={qrCodeBase64}
+              qrCodeBase64={qrCodeWithVendor}
               showQROverlay={showQROverlay}
               onOverlayPointerDown={onOverlayPointerDown}
               handleImagePointerDown={handleImagePointerDown}
               panPos={panPos}
               zoomLevel={zoomLevel}
+              personName={personName}
             />
-
-            {/* Upload + size control when in create mode */}
-            {previewMode === 'create' && (
-              <div className="mt-3 flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <input id="posterUploadInput" type="file" accept="image/*" onChange={(e) => onPosterUpload(e.target.files ? e.target.files[0] : null)} className="hidden" />
-                  <label htmlFor="posterUploadInput" className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium text-center cursor-pointer">📁 Escolher imagem</label>
-                </div>
-
-                {customPoster && (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <label className="text-sm text-gray-600 whitespace-nowrap">Zoom</label>
-                      <input
-                        type="range"
-                        min={1}
-                        max={3}
-                        step={0.1}
-                        value={zoomLevel}
-                        aria-label="Zoom da imagem"
-                        onChange={(e) => setZoomLevel(Number(e.target.value))}
-                        onInput={(e) => setZoomLevel(Number((e.target as HTMLInputElement).value))}
-                        onPointerDown={(e) => { disableDragRef.current = true; e.stopPropagation(); }}
-                        onPointerMove={(e) => e.stopPropagation()}
-                        onPointerUp={(e) => { disableDragRef.current = false; e.stopPropagation(); }}
-                        onMouseDown={(e) => { disableDragRef.current = true; e.stopPropagation(); }}
-                        onMouseUp={(e) => { disableDragRef.current = false; e.stopPropagation(); }}
-                        onTouchStart={(e) => { disableDragRef.current = true; e.stopPropagation(); }}
-                        onTouchEnd={(e) => { disableDragRef.current = false; e.stopPropagation(); }}
-                        className="flex-1 z-10"
-                      />
-                      <span className="text-xs text-gray-500 w-8 text-right">{zoomLevel.toFixed(1)}x</span>
-                    </div>
-
-                    {showQROverlay && (
-                      <div className="flex items-center gap-3 mt-2">
-                        <label className="text-sm text-gray-600 whitespace-nowrap">Tamanho QR</label>
-                        <input
-                          type="range"
-                          min={40}
-                          max={220}
-                          value={overlaySize}
-                          onChange={(e) => setOverlaySize(Number(e.target.value))}
-                          onPointerDown={(e) => { disableDragRef.current = true; e.stopPropagation(); }}
-                          onPointerMove={(e) => e.stopPropagation()}
-                          onPointerUp={(e) => { disableDragRef.current = false; e.stopPropagation(); }}
-                          onMouseDown={(e) => { disableDragRef.current = true; e.stopPropagation(); }}
-                          onMouseUp={(e) => { disableDragRef.current = false; e.stopPropagation(); }}
-                          onTouchStart={(e) => { disableDragRef.current = true; e.stopPropagation(); }}
-                          onTouchEnd={(e) => { disableDragRef.current = false; e.stopPropagation(); }}
-                          className="flex-1 z-10"
-                        />
-                        <span className="text-xs text-gray-500 w-8 text-right">{overlaySize}px</span>
-                      </div>
-                    )}
-
-                    <Button onClick={toggleQROverlay} className={`px-4 py-2 rounded-lg font-medium transition-colors ${showQROverlay ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
-                      {showQROverlay ? '✕ Remover QR Code' : '+ Adicionar QR Code'}
-                    </Button>
-
-                    {/* Share buttons removed from here to avoid duplication; shown in lower controls */}
-                  </>
-                )}
-              </div>
-            )}
 
             {/* Controls for poster preview: X, Y, Size sliders */}
             {previewMode === 'poster' && (posterPreviewValue || customPoster) && (
               <>
-                Ajustar Qr Code
+                <div className="text-sm font-medium text-gray-700 mt-4 mb-3">Ajustar QR Code</div>
                 <div className="mt-3 flex flex-col gap-3">
                   <SliderControl label="Mover X" min={0} max={100} step={0.5} value={Math.round(overlayCenter.x * 100 * 2) / 2} onChange={(v) => setOverlayCenter((c) => ({ ...c, x: v / 100 }))} display={`${Math.round(overlayCenter.x * 100)}%`} />
                   <SliderControl label="Mover Y" min={0} max={100} step={0.5} value={Math.round(overlayCenter.y * 100 * 2) / 2} onChange={(v) => setOverlayCenter((c) => ({ ...c, y: v / 100 }))} display={`${Math.round(overlayCenter.y * 100)}%`} />
@@ -565,32 +630,23 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
 
           {/* Share buttons visible in QR and Poster modes */}
           {previewMode === 'qr' && (
-            <div className="flex items-center gap-2">
-              <Button onClick={shareViaWhatsApp} variant="outline-green" className="w-1/2 px-3 py-2 flex items-center gap-2">
+            <div className="grid grid-cols-3 gap-2">
+              <Button onClick={shareViaWhatsApp} variant="outline-green" className="px-3 py-2 flex items-center gap-2 justify-center text-sm">
                 <Icon icon="mdi:whatsapp" className="w-5 h-5" />
                 <span>WhatsApp</span>
               </Button>
-              <Button onClick={shareQRCode} variant="outline-blue" className="w-1/2 px-3 py-2 flex items-center gap-2">
+              <Button onClick={shareQRCode} variant="outline-blue" className="px-3 py-2 flex items-center gap-2 justify-center text-sm">
                 <Icon icon="bi-share" className="w-4 h-4" />
-                <span>Compartilhar QR</span>
+                <span>Compartilhar</span>
+              </Button>
+              <Button onClick={() => copyToClipboard(getQRShareUrl())} variant="outline" className="px-3 py-2 flex items-center gap-2 justify-center text-sm">
+                <Icon icon="bi-link-45deg" className="w-4 h-4" />
+                <span>Copiar Link</span>
               </Button>
             </div>
           )}
 
           {previewMode === 'poster' && (
-            <div className="flex items-center gap-2">
-              <Button onClick={shareViaWhatsApp} variant="outline-green" className="w-1/2 px-3 py-2 flex items-center gap-2">
-                <Icon icon="mdi:whatsapp" className="w-5 h-5" />
-                <span>WhatsApp</span>
-              </Button>
-              <Button onClick={sharePoster} variant="outline-blue" className="w-1/2 px-3 py-2 flex items-center gap-2">
-                <Icon icon="bi-clipboard" className="w-4 h-4" />
-                <span>Compartilhar Placa</span>
-              </Button>
-            </div>
-          )}
-
-          {previewMode === 'create' && customPoster && (
             <div className="flex items-center gap-2">
               <Button onClick={shareViaWhatsApp} variant="outline-green" className="w-1/2 px-3 py-2 flex items-center gap-2">
                 <Icon icon="mdi:whatsapp" className="w-5 h-5" />

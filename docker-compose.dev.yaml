@@ -51,6 +51,27 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: minio/minio:latest
+    container_name: 5kplatform_minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: minio server /data --console-address ":9001"
+    networks:
+      - 5kplatform_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 
 networks:
   5kplatform_network:
@@ -58,4 +79,6 @@ networks:
 
 volumes:
   postgres_data:
+    driver: local
+  minio_data:
     driver: local

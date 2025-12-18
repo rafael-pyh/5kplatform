@@ -1,15 +1,7 @@
 import { Request, Response } from "express";
+import { uploadFileToMinIO } from "../services/storage.service";
 
-/**
- * Converte um arquivo para base64
- */
-const fileToBase64 = (file: Express.Multer.File): string => {
-  const base64Data = file.buffer.toString('base64');
-  const mimeType = file.mimetype;
-  return `data:${mimeType};base64,${base64Data}`;
-};
-
-// Upload de foto de perfil - retorna base64
+// Upload de foto de perfil - salva no MinIO e retorna URL
 export const uploadProfilePhoto = async (req: Request, res: Response) => {
   try {
     if (!req.file) {
@@ -19,11 +11,19 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
       });
     }
 
-    const base64 = fileToBase64(req.file);
+    const fileUrl = await uploadFileToMinIO(
+      req.file,
+      req.file.originalname,
+      "profile-photos"
+    );
 
     res.json({
       success: true,
-      data: { base64 },
+      data: { 
+        url: fileUrl,
+        fileName: req.file.originalname,
+        size: req.file.size,
+      },
     });
   } catch (error: any) {
     res.status(500).json({
@@ -33,7 +33,7 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
   }
 };
 
-// Upload de conta de energia - retorna base64
+// Upload de conta de energia - salva no MinIO e retorna URL
 export const uploadEnergyBill = async (req: Request, res: Response) => {
   try {
     if (!req.file) {
@@ -43,11 +43,19 @@ export const uploadEnergyBill = async (req: Request, res: Response) => {
       });
     }
 
-    const base64 = fileToBase64(req.file);
+    const fileUrl = await uploadFileToMinIO(
+      req.file,
+      req.file.originalname,
+      "energy-bills"
+    );
 
     res.json({
       success: true,
-      data: { base64 },
+      data: { 
+        url: fileUrl,
+        fileName: req.file.originalname,
+        size: req.file.size,
+      },
     });
   } catch (error: any) {
     res.status(500).json({
@@ -57,7 +65,7 @@ export const uploadEnergyBill = async (req: Request, res: Response) => {
   }
 };
 
-// Upload de foto do telhado - retorna base64
+// Upload de foto do telhado - salva no MinIO e retorna URL
 export const uploadRoofPhoto = async (req: Request, res: Response) => {
   try {
     if (!req.file) {
@@ -67,13 +75,75 @@ export const uploadRoofPhoto = async (req: Request, res: Response) => {
       });
     }
 
-    const base64 = fileToBase64(req.file);
+    const fileUrl = await uploadFileToMinIO(
+      req.file,
+      req.file.originalname,
+      "roof-photos"
+    );
 
     res.json({
       success: true,
-      data: { base64 },
+      data: { 
+        url: fileUrl,
+        fileName: req.file.originalname,
+        size: req.file.size,
+      },
     });
   } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Upload de imagem de poster/criativo - salva no MinIO e retorna URL
+export const uploadPoster = async (req: Request, res: Response) => {
+  try {
+    console.log('[Upload Controller] uploadPoster iniciado', {
+      hasFile: !!req.file,
+      fileName: req.file?.originalname,
+      fileSize: req.file?.size,
+      fileType: req.file?.mimetype,
+      userId: (req as any).user?.userId,
+      userRole: (req as any).user?.role,
+      fullUser: (req as any).user,
+      headers: req.headers,
+    });
+
+    if (!req.file) {
+      console.log('[Upload Controller] Erro: nenhum arquivo enviado');
+      return res.status(400).json({
+        success: false,
+        message: "Nenhum arquivo enviado",
+      });
+    }
+
+    console.log('[Upload Controller] Iniciando upload para MinIO');
+    const fileUrl = await uploadFileToMinIO(
+      req.file,
+      `${Date.now()}-${req.file.originalname}`,
+      "posters"
+    );
+
+    console.log('[Upload Controller] Upload bem-sucedido', {
+      fileUrl,
+      originalName: req.file.originalname,
+    });
+
+    res.json({
+      success: true,
+      data: { 
+        url: fileUrl,
+        fileName: req.file.originalname,
+        size: req.file.size,
+      },
+    });
+  } catch (error: any) {
+    console.error('[Upload Controller] Erro no uploadPoster:', {
+      message: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({
       success: false,
       message: error.message,

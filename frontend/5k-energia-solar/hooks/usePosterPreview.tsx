@@ -2,15 +2,16 @@ import { useEffect, useState } from 'react';
 import { composePosterDataUrl } from '../lib/composePoster';
 
 interface UsePosterPreviewProps {
-  previewMode: 'qr' | 'poster' | 'create';
+  previewMode: 'qr' | 'criativos' | 'poster';
   qrCodeBase64: string;
   customPoster: string | null;
   boxCenterXRatio?: number;
   boxCenterYRatio?: number;
   boxSizeRatio?: number;
+  vendorName?: string;
 }
 
-export default function usePosterPreview({ previewMode, qrCodeBase64, customPoster, boxCenterXRatio, boxCenterYRatio, boxSizeRatio }: UsePosterPreviewProps) {
+export default function usePosterPreview({ previewMode, qrCodeBase64, customPoster, boxCenterXRatio, boxCenterYRatio, boxSizeRatio, vendorName }: UsePosterPreviewProps) {
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
 
   useEffect(() => {
@@ -23,6 +24,7 @@ export default function usePosterPreview({ previewMode, qrCodeBase64, customPost
         if (typeof boxCenterXRatio === 'number') opts.boxCenterXRatio = boxCenterXRatio;
         if (typeof boxCenterYRatio === 'number') opts.boxCenterYRatio = boxCenterYRatio;
         if (typeof boxSizeRatio === 'number') opts.boxSizeRatio = boxSizeRatio;
+        if (vendorName) opts.vendorName = vendorName;
         // default ratios if not provided
         if (!opts.boxCenterXRatio) opts.boxCenterXRatio = 0.5;
         if (!opts.boxCenterYRatio) opts.boxCenterYRatio = 0.4;
@@ -44,7 +46,7 @@ export default function usePosterPreview({ previewMode, qrCodeBase64, customPost
     return () => {
       mounted = false;
     };
-  }, [previewMode, qrCodeBase64, customPoster, boxCenterXRatio, boxCenterYRatio, boxSizeRatio]);
+  }, [previewMode, qrCodeBase64, customPoster, boxCenterXRatio, boxCenterYRatio, boxSizeRatio, vendorName]);
 
   return { posterPreview, setPosterPreview };
 }
