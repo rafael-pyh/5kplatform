@@ -1,5 +1,5 @@
 import { s3Client } from './src/utils/minio';
-import { ListBucketsCommand, CreateBucketCommand, BucketExists, HeadBucketCommand, PutObjectCommand, ListObjectsV2Command, GetObjectCommand, DeleteObjectCommand, DeleteBucketCommand } from '@aws-sdk/client-s3';
+import { ListBucketsCommand, CreateBucketCommand, PutObjectCommand, ListObjectsV2Command, GetObjectCommand, DeleteObjectCommand, DeleteBucketCommand } from '@aws-sdk/client-s3';
 
 /**
  * Script para testar a conexão com S3
@@ -107,9 +107,7 @@ async function testS3Connection() {
       console.log('✨ Todos os testes passaram com sucesso!');
       console.log('━'.repeat(50));
       process.exit(0);
-    } catch (error: any) {
-      throw error;
-    }
+
   } catch (error: any) {
     console.error('\n❌ Erro durante os testes:');
     console.error(error.message);
