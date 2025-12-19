@@ -46,7 +46,16 @@ export default function PosterPreview({
       {previewMode === 'criativos' && (
         <div className="relative w-full h-full flex items-center justify-center">
           {customPoster ? (
-            <img src={customPoster} alt="Criativo selecionado" className="w-full h-full object-contain" />
+            <>
+              {console.log('[PosterPreview] Renderizando criativo:', customPoster)}
+              <img 
+                src={customPoster} 
+                alt="Criativo selecionado" 
+                className="w-full h-full object-contain"
+                onLoad={() => console.log('[PosterPreview] Imagem carregada com sucesso')}
+                onError={() => console.error('[PosterPreview] Erro ao carregar imagem:', customPoster)}
+              />
+            </>
           ) : (
             <div className="w-full h-full flex items-center justify-center text-sm text-gray-500">Selecione um criativo para visualizar</div>
           )}
@@ -56,7 +65,16 @@ export default function PosterPreview({
       {previewMode === 'poster' && (
         <div ref={previewRef} className="relative w-full h-full">
           {customPoster ? (
-            <img src={customPoster} alt="Poster custom" className="w-full h-full object-contain" />
+            <>
+              {console.log('[PosterPreview] Renderizando poster custom:', customPoster)}
+              <img 
+                src={customPoster} 
+                alt="Poster custom" 
+                className="w-full h-full object-contain"
+                onLoad={() => console.log('[PosterPreview] Poster carregado com sucesso')}
+                onError={() => console.error('[PosterPreview] Erro ao carregar poster:', customPoster)}
+              />
+            </>
           ) : posterPreview ? (
             <img src={posterPreview} alt="Preview da placa" className="w-full h-full object-contain" />
           ) : (

@@ -83,11 +83,21 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
     
     const fetchCriativos = async () => {
       try {
+        console.log('[QRCodeModal] Carregando criativos...');
         setLoadingCriativos(true);
         const response = await api.get<any>('/creatives?limit=50');
-        setCriativos(response.data.data.criativos || []);
+        const criativos = response.data.data.criativos || [];
+        console.log('[QRCodeModal] Criativos carregados:', criativos.length);
+        criativos.forEach((criativo: any, index: number) => {
+          console.log(`[QRCodeModal] Criativo ${index}: ${criativo.name}`);
+          console.log(`[QRCodeModal]   - imageUrl: ${criativo.imageUrl}`);
+          console.log(`[QRCodeModal]   - tipo: ${typeof criativo.imageUrl}`);
+          console.log(`[QRCodeModal]   - começa com http? ${criativo.imageUrl?.startsWith('http')}`);
+          console.log(`[QRCodeModal]   - começa com data:? ${criativo.imageUrl?.startsWith('data:')}`);
+        });
+        setCriativos(criativos);
       } catch (error) {
-        console.error('Erro ao carregar criativos:', error);
+        console.error('[QRCodeModal] Erro ao carregar criativos:', error);
         toast.error('Erro ao carregar criativos');
       } finally {
         setLoadingCriativos(false);
