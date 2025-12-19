@@ -1,0 +1,17 @@
+FROM minio/minio:latest
+
+WORKDIR /data
+
+# Criar diretórios para os buckets
+RUN mkdir -p /data/images /data/qrcodes
+
+# Expor portas
+EXPOSE 9000 9001
+
+# Entrypoint padrão do MinIO
+ENTRYPOINT ["minio"]
+CMD ["server", "/data", "--console-address", ":9001"]
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=20s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:9000/minio/health/live || exit 1

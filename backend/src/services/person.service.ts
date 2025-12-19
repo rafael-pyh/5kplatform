@@ -2,7 +2,7 @@ import sequelize from "../database/sequelize";
 import { Person, PersonRole } from "../models/Person";
 import { Lead } from "../models/Lead";
 import { QRCodeScan } from "../models/QRCodeScan";
-import { generateQRCode, generateQRCodeBase64 } from "../utils/qr";
+import { generateQRCode, generateQRCodeAndUpload } from "../utils/qr";
 import { sendEmailConfirmation, sendVerificationEmail } from "../utils/email";
 import { hashPassword } from "../utils/bcrypt";
 import crypto from "crypto";
@@ -48,8 +48,8 @@ export const createPerson = async (data: CreatePersonDto) => {
   // Gera o código único do QR
   const qrCode = generateQRCode();
 
-  // Gera o QR code como base64
-  const qrCodeBase64 = await generateQRCodeBase64(qrCode);
+  // Gera o QR code e salva no Minio
+  const qrCodeUrl = await generateQRCodeAndUpload(qrCode);
 
   // Se email foi fornecido, gera token de verificação
   let verificationToken: string | undefined = undefined;
@@ -81,7 +81,7 @@ export const createPerson = async (data: CreatePersonDto) => {
     ...data,
     password: hashedPassword,
     qrCode,
-    qrCodeBase64, // Salva o base64 no banco
+    qrCodeUrl, // Salva a URL do QR code do Minio
     role: PersonRole.SELLER,
     approvalStatus: !hashedPassword ? 'approved' : 'pending',
     verificationToken,

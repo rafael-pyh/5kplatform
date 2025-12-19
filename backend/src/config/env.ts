@@ -17,4 +17,13 @@ export const env = {
   EMAIL_PORT: parseInt(process.env.EMAIL_PORT || "587"),
   EMAIL_USER: process.env.EMAIL_USER || "",
   EMAIL_PASS: process.env.EMAIL_PASS || "",
+  // MinIO Configuration
+  MINIO_ENDPOINT: process.env.MINIO_ENDPOINT || "minio",
+  MINIO_PORT: parseInt(process.env.MINIO_PORT || "9000"),
+  MINIO_USE_SSL: process.env.MINIO_USE_SSL === "true",
+  MINIO_ACCESS_KEY: process.env.MINIO_ACCESS_KEY || "minioadmin",
+  MINIO_SECRET_KEY: process.env.MINIO_SECRET_KEY || "minioadmin123",
+  MINIO_BUCKET: process.env.MINIO_BUCKET || "images",
+  MINIO_QRCODE_BUCKET: process.env.MINIO_QRCODE_BUCKET || "qrcodes",
+  MINIO_URL: process.env.MINIO_URL || "http://localhost:9000",
 };

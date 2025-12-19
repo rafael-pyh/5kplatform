@@ -96,7 +96,7 @@ export const getScansStats = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-// Endpoint para servir QR Code como base64
+// Endpoint para servir QR Code URL
 export const serveQRCode = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { personId } = req.params;
@@ -107,14 +107,11 @@ export const serveQRCode = async (req: Request, res: Response, next: NextFunctio
       throw new NotFoundError("QR Code");
     }
 
-    // Gera QR Code como base64
-    const qrCodeBase64 = await qrcodeService.getQRCodeBase64(person.qrCode);
-
     return ResponseBuilder.success(res, {
       personId: person.id,
       personName: person.name,
       qrCode: person.qrCode,
-      qrCodeImage: qrCodeBase64,
+      qrCodeUrl: person.qrCodeUrl,
     });
   } catch (error) {
     next(error);

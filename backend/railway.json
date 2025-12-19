@@ -7,5 +7,44 @@
   "deploy": {
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
+  },
+  "variables": {
+    "NODE_ENV": {
+      "description": "Environment: production, development, or staging",
+      "value": "production"
+    },
+    "MINIO_ENDPOINT": {
+      "description": "MinIO service endpoint (e.g., your-minio-railway.up.railway.app)",
+      "value": ""
+    },
+    "MINIO_PORT": {
+      "description": "MinIO port (443 for production with SSL)",
+      "value": "443"
+    },
+    "MINIO_USE_SSL": {
+      "description": "Use SSL for MinIO connection",
+      "value": "true"
+    },
+    "MINIO_ACCESS_KEY": {
+      "description": "MinIO access key",
+      "value": ""
+    },
+    "MINIO_SECRET_KEY": {
+      "description": "MinIO secret key",
+      "value": ""
+    },
+    "MINIO_BUCKET": {
+      "description": "MinIO bucket name for images",
+      "value": "images"
+    },
+    "MINIO_QRCODE_BUCKET": {
+      "description": "MinIO bucket name for QR codes",
+      "value": "qrcodes"
+    },
+    "MINIO_URL": {
+      "description": "Public MinIO URL (for accessing uploaded files)",
+      "value": ""
+    }
   }
 }
+

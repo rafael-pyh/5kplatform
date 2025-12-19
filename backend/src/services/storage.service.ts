@@ -1,13 +1,15 @@
 import minioClient from '../utils/minio';
 
 const BUCKET_NAME = process.env.MINIO_BUCKET || 'images';
+const QRCODE_BUCKET_NAME = process.env.MINIO_QRCODE_BUCKET || 'qrcodes';
 const MINIO_URL = process.env.MINIO_URL || 'http://localhost:9000';
 
 /**
- * Inicializa o bucket do MinIO se não existir
+ * Inicializa os buckets do MinIO se não existirem
  */
 export const initializeMinIOBucket = async () => {
   try {
+    // Inicializa bucket de imagens
     const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
     
     if (!bucketExists) {
@@ -34,8 +36,36 @@ export const initializeMinIOBucket = async () => {
     } else {
       console.log(`Bucket '${BUCKET_NAME}' já existe`);
     }
+
+    // Inicializa bucket de QR codes
+    const qrcodeBucketExists = await minioClient.bucketExists(QRCODE_BUCKET_NAME);
+    
+    if (!qrcodeBucketExists) {
+      await minioClient.makeBucket(QRCODE_BUCKET_NAME, 'us-east-1');
+      console.log(`Bucket '${QRCODE_BUCKET_NAME}' criado com sucesso`);
+      
+      // Define a política de acesso público para visualizar QR codes
+      const qrcodePolicy = {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Principal: {
+              AWS: '*',
+            },
+            Action: ['s3:GetObject'],
+            Resource: [`arn:aws:s3:::${QRCODE_BUCKET_NAME}/*`],
+          },
+        ],
+      };
+      
+      await minioClient.setBucketPolicy(QRCODE_BUCKET_NAME, JSON.stringify(qrcodePolicy));
+      console.log(`Política de acesso público configurada para '${QRCODE_BUCKET_NAME}'`);
+    } else {
+      console.log(`Bucket '${QRCODE_BUCKET_NAME}' já existe`);
+    }
   } catch (error) {
-    console.error('Erro ao inicializar bucket do MinIO:', error);
+    console.error('Erro ao inicializar buckets do MinIO:', error);
     throw error;
   }
 };
@@ -145,4 +175,47 @@ const getMimeType = (ext: string): string => {
   };
 
   return mimeTypes[ext.toLowerCase()] || 'application/octet-stream';
+};
+
+/**
+ * Faz upload de QR Code (imagem) para o bucket específico de QR codes
+ */
+export const uploadQRCodeToMinIO = async (
+  buffer: Buffer,
+  qrCodeId: string
+): Promise<string> => {
+  try {
+    const objectName = `qrcodes/${qrCodeId}.png`;
+    const fileSize = buffer.length;
+
+    await minioClient.putObject(
+      QRCODE_BUCKET_NAME,
+      objectName,
+      buffer,
+      fileSize,
+      {
+        'Content-Type': 'image/png',
+      }
+    );
+
+    // Retorna a URL pública do arquivo
+    const fileUrl = `${MINIO_URL}/${QRCODE_BUCKET_NAME}/${objectName}`;
+    return fileUrl;
+  } catch (error: any) {
+    console.error('Erro ao fazer upload do QR Code para MinIO:', error);
+    throw new Error(`Erro ao fazer upload do QR Code: ${error.message}`);
+  }
+};
+
+/**
+ * Deleta QR Code do bucket específico
+ */
+export const deleteQRCodeFromMinIO = async (objectName: string): Promise<void> => {
+  try {
+    await minioClient.removeObject(QRCODE_BUCKET_NAME, objectName);
+    console.log(`QR Code deletado: ${objectName}`);
+  } catch (error: any) {
+    console.error('Erro ao deletar QR Code do MinIO:', error);
+    throw new Error(`Erro ao deletar QR Code: ${error.message}`);
+  }
 };

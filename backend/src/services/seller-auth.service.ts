@@ -80,7 +80,7 @@ export const sellerLogin = async (data: SellerLoginDto) => {
       phone: person.phone,
       photoBase64: person.photoBase64,
       qrCode: person.qrCode,
-      qrCodeBase64: person.qrCodeBase64,
+      qrCodeUrl: person.qrCodeUrl,
     },
     token,
   };
@@ -225,7 +225,7 @@ export const getSellerProfile = async (sellerId: string) => {
       'phone',
       'photoBase64',
       'qrCode',
-      'qrCodeBase64',
+      'qrCodeUrl',
       'scanCount',
       'active',
       'emailVerified',

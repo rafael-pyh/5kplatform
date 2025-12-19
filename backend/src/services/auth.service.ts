@@ -202,7 +202,7 @@ export const updateUser = async (
   if ((data as any).phone !== undefined) updateData.phone = (data as any).phone;
   if ((data as any).pixKey !== undefined) updateData.pixKey = (data as any).pixKey;
   if ((data as any).photoBase64 !== undefined) updateData.photoBase64 = (data as any).photoBase64;
-  if ((data as any).qrCodeBase64 !== undefined) updateData.qrCodeBase64 = (data as any).qrCodeBase64;
+  if ((data as any).qrCodeUrl !== undefined) updateData.qrCodeUrl = (data as any).qrCodeUrl;
   if ((data as any).emailVerified !== undefined) updateData.emailVerified = (data as any).emailVerified;
 
   await user.update(updateData);
@@ -296,7 +296,7 @@ export const confirmEmail = async (token: string) => {
 
 export const getCurrentUser = async (userId: string) => {
   const user = await Person.findByPk(userId, {
-    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt', 'photoBase64', 'phone', 'pixKey', 'emailVerified', 'approvalStatus', 'qrCode', 'qrCodeBase64'],
+    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt', 'photoBase64', 'phone', 'pixKey', 'emailVerified', 'approvalStatus', 'qrCode', 'qrCodeUrl'],
   });
 
   if (!user) {

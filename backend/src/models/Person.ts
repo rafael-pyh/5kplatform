@@ -55,8 +55,8 @@ export class Person extends Model {
   qrCode!: string;
 
   @AllowNull(true)
-  @Column(DataType.TEXT)
-  qrCodeBase64?: string; // Base64 data URL do QR code
+  @Column(DataType.STRING)
+  qrCodeUrl?: string; // URL do QR code armazenado no Minio
 
   @Default(true)
   @Column(DataType.BOOLEAN)
