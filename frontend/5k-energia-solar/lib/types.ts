@@ -11,7 +11,7 @@ export interface User {
   emailVerified?: boolean;
   approvalStatus?: 'pending' | 'approved' | 'rejected';
   qrCode?: string;
-  qrCodeBase64?: string;
+  qrCodeUrl?: string;
   phone?: string;
   pixKey?: string;
 }
@@ -42,7 +42,7 @@ export interface UpdateAdminDto {
   phone?: string;
   pixKey?: string;
   photoBase64?: string;
-  qrCodeBase64?: string;
+  qrCodeUrl?: string;
   emailVerified?: boolean;
 }
 
@@ -55,7 +55,7 @@ export interface Person {
   pixKey?: string;
   photoBase64?: string; // Base64 data URL da foto de perfil
   qrCode: string;
-  qrCodeBase64?: string; // Base64 data URL do QR code
+  qrCodeUrl?: string; // URL S3 do QR code
   scanCount: number;
   active: boolean;
   role: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN';

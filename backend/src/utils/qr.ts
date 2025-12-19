@@ -43,54 +43,5 @@ export const generateQRCodeAndUpload = async (
   }
 };
 
-// Gera QR Code como base64 (para compatibilidade, se necessário)
-export const generateQRCodeBase64 = async (
-  qrCode: string
-): Promise<string> => {
-  try {
-    // URL que o QR code irá redirecionar (formulário público)
-    const qrUrl = `${env.FRONTEND_URL}/lead/new?qr=${qrCode}`;
-
-    // Gera a imagem do QR code como data URL (base64)
-    const qrDataUrl = await QRCode.toDataURL(qrUrl, {
-      width: 500,
-      margin: 2,
-      color: {
-        dark: "#000000",
-        light: "#FFFFFF",
-      },
-    });
-
-    console.log(`[generateQRCodeBase64] QR code gerado: ${qrCode}`);
-    console.log(`[generateQRCodeBase64] Tamanho do base64: ${qrDataUrl.length} bytes`);
-    console.log(`[generateQRCodeBase64] Primeiros 100 chars: ${qrDataUrl.substring(0, 100)}`);
-    
-    return qrDataUrl;
-  } catch (error) {
-    console.error("Erro ao gerar QR Code:", error);
-    throw new Error("Falha ao gerar QR Code");
-  }
-};
-
-// Gera QR Code base64 a partir de um código QR existente
-export const getQRCodeBase64ByCode = async (
-  qrCode: string
-): Promise<string> => {
-  try {
-    const qrUrl = `${env.FRONTEND_URL}/lead/new?qr=${qrCode}`;
-    
-    const qrDataUrl = await QRCode.toDataURL(qrUrl, {
-      width: 500,
-      margin: 2,
-      color: {
-        dark: "#000000",
-        light: "#FFFFFF",
-      },
-    });
-
-    return qrDataUrl;
-  } catch (error) {
-    console.error("Erro ao gerar QR Code:", error);
-    throw new Error("Falha ao gerar QR Code");
-  }
-};
+// Nota: QR codes são salvos exclusivamente como URLs S3
+// Removidos: generateQRCodeBase64, getQRCodeBase64ByCode

@@ -14,14 +14,6 @@ export function usePersons(activeOnly: boolean = false) {
       setError(null);
       const data = await personService.getAll(activeOnly);
       console.log('[usePersons] Dados carregados:', data.length, 'pessoas');
-      data.forEach((person: Person, index: number) => {
-        console.log(`[usePersons] Pessoa ${index}: ${person.name}`);
-        console.log(`[usePersons]   - qrCodeBase64 existe? ${!!person.qrCodeBase64}`);
-        console.log(`[usePersons]   - qrCodeBase64 tamanho: ${person.qrCodeBase64?.length ?? 0}`);
-        if (person.qrCodeBase64) {
-          console.log(`[usePersons]   - começa com data:image/? ${person.qrCodeBase64.startsWith('data:image/')}`);
-        }
-      });
       setPersons(data);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Erro ao carregar vendedores');

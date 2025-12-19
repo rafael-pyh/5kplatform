@@ -2,7 +2,7 @@ import sequelize from "../database/sequelize";
 import { Person, PersonRole } from "../models/Person";
 import { Lead } from "../models/Lead";
 import { QRCodeScan } from "../models/QRCodeScan";
-import { generateQRCode, generateQRCodeAndUpload, generateQRCodeBase64 } from "../utils/qr";
+import { generateQRCode, generateQRCodeAndUpload } from "../utils/qr";
 import { sendEmailConfirmation, sendVerificationEmail } from "../utils/email";
 import { hashPassword } from "../utils/bcrypt";
 import crypto from "crypto";
@@ -48,11 +48,8 @@ export const createPerson = async (data: CreatePersonDto) => {
   // Gera o código único do QR
   const qrCode = generateQRCode();
 
-  // Gera o QR code como base64 e como URL no S3
+  // Gera o QR code e faz upload para S3
   console.log(`[createPerson] Gerando QR code para: ${qrCode}`);
-  const qrCodeBase64 = await generateQRCodeBase64(qrCode);
-  console.log(`[createPerson] QR code base64 gerado: ${qrCodeBase64.substring(0, 50)}...`);
-  
   const qrCodeUrl = await generateQRCodeAndUpload(qrCode);
   console.log(`[createPerson] QR code URL gerado: ${qrCodeUrl}`);
 
@@ -86,7 +83,6 @@ export const createPerson = async (data: CreatePersonDto) => {
     ...data,
     password: hashedPassword,
     qrCode,
-    qrCodeBase64, // Salva o QR code em base64
     qrCodeUrl, // Salva a URL do QR code do S3
     role: PersonRole.SELLER,
     approvalStatus: !hashedPassword ? 'approved' : 'pending',

@@ -32,7 +32,7 @@ interface Seller {
   email: string;
   phone?: string;
   qrCode: string;
-  qrCodeBase64?: string;
+  qrCodeUrl?: string;
   photoBase64?: string;
   scanCount?: number;
   active: boolean;
@@ -234,7 +234,7 @@ export default function SellerDashboardPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {seller?.qrCodeBase64 && (
+              {seller?.qrCodeUrl && (
                 <button
                   onClick={() => setIsQRModalOpen(true)}
                   className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md"
@@ -329,11 +329,11 @@ export default function SellerDashboardPage() {
       </main>
 
       {/* QR Code Modal */}
-      {seller?.qrCodeBase64 && (
+      {seller?.qrCodeUrl && (
         <QRCodeModal
           isOpen={isQRModalOpen}
           onClose={() => setIsQRModalOpen(false)}
-          qrCodeBase64={seller.qrCodeBase64}
+          qrCodeBase64={seller.qrCodeUrl}
           personName={seller.name}
           qrCode={seller.qrCode}
           userRole={user?.role as 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | undefined}

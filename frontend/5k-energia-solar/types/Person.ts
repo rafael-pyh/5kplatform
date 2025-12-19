@@ -6,7 +6,7 @@ export interface Person {
   pixKey?: string;
   photoBase64?: string;
   qrCode: string;
-  qrCodeBase64?: string;
+  qrCodeUrl?: string;
   active: boolean;
   scanCount: number;
   role: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN';

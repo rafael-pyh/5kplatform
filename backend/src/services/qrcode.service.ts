@@ -73,9 +73,5 @@ export const getScansStats = async (personId?: string) => {
     thisMonth,
   };
 };
-
-// Função para gerar QR Code como base64
-export const getQRCodeBase64 = async (qrCode: string): Promise<string> => {
-  const { getQRCodeBase64ByCode } = await import("../utils/qr");
-  return getQRCodeBase64ByCode(qrCode);
-};
+// Nota: QR codes agora são salvos exclusivamente como URLs S3
+// Função removida: getQRCodeBase64 - use qrCodeUrl em vez disso

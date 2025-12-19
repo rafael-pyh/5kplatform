@@ -1,50 +1,42 @@
 /**
  * Normaliza URLs de imagens (base64)
- * Todas as imagens agora vêm como base64 do backend
+ * Todas as imagens agora vêm como URLs S3 do backend
  */
 export function normalizeImageUrl(url: string | null | undefined): string | null {
-  // Backend retorna base64 para todas as imagens:
-  // data:image/png;base64,...
+  // Backend retorna URLs S3:
+  // https://f005.backblazeb2.com/file/5k-storage/...
   return url || null;
 }
 
 /**
- * Verifica se uma string é uma data URL válida
+ * Verifica se uma string é uma URL HTTP/HTTPS válida (S3)
  */
-export function isDataUrl(str: string | null | undefined): boolean {
-  if (!str) return false;
-  return str.startsWith('data:image/');
-}
-
-/**
- * Verifica se uma string é uma URL HTTP/HTTPS válida
- */
-export function isHttpUrl(str: string | null | undefined): boolean {
-  if (!str) return false;
-  return str.startsWith('http://') || str.startsWith('https://');
+export function isValidUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  return url.startsWith('http://') || url.startsWith('https://');
 }
 
 /**
  * Valida se um QR code é válido para uso
- * Pode ser data URL base64 ou URL HTTP/HTTPS
+ * QR codes agora são salvos APENAS como URLs S3 HTTP/HTTPS
  */
 export function isValidQRCode(qrCode: string | null | undefined): boolean {
   if (!qrCode) return false;
-  return isDataUrl(qrCode) || isHttpUrl(qrCode);
+  return isValidUrl(qrCode);
 }
 
 /**
- * Normaliza uma pessoa com imagens base64
- * Todas as imagens agora são base64
+ * Normaliza uma pessoa com URLs S3
+ * QR codes agora são URLs S3 públicas
  */
 export function normalizePersonUrls<T extends { 
   photoBase64?: string | null; 
-  qrCodeBase64?: string | null;
+  qrCodeUrl?: string | null;
 }>(
   person: T
 ): T {
-  // Backend já retorna dados prontos para uso:
-  // - photoBase64: data URL base64 da foto de perfil
-  // - qrCodeBase64: data URL base64 do QR code OU URL S3
+  // Backend retorna dados prontos para uso:
+  // - photoBase64: data URL base64 da foto de perfil (opcional, compatibilidade)
+  // - qrCodeUrl: URL S3 pública do QR code
   return person;
 }
