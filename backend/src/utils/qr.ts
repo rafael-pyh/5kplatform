@@ -14,8 +14,11 @@ export const generateQRCodeAndUpload = async (
   qrCode: string
 ): Promise<string> => {
   try {
+    console.log(`[generateQRCodeAndUpload] Gerando QR code para: ${qrCode}`);
+    
     // URL que o QR code irá redirecionar (formulário público)
     const qrUrl = `${env.FRONTEND_URL}/lead/new?qr=${qrCode}`;
+    console.log(`[generateQRCodeAndUpload] QR URL: ${qrUrl}`);
 
     // Gera a imagem do QR code como buffer PNG
     const qrBuffer = await QRCode.toBuffer(qrUrl, {
@@ -26,13 +29,16 @@ export const generateQRCodeAndUpload = async (
         light: "#FFFFFF",
       },
     });
+    console.log(`[generateQRCodeAndUpload] Buffer gerado: ${qrBuffer.length} bytes`);
 
     // Faz upload do QR code para o Minio
+    console.log(`[generateQRCodeAndUpload] Iniciando upload para S3...`);
     const qrCodeUrl = await uploadQRCodeToMinIO(qrBuffer, qrCode);
+    console.log(`[generateQRCodeAndUpload] URL retornada: ${qrCodeUrl}`);
 
     return qrCodeUrl;
   } catch (error) {
-    console.error("Erro ao gerar e fazer upload do QR Code:", error);
+    console.error("[generateQRCodeAndUpload] Erro ao gerar e fazer upload do QR Code:", error);
     throw new Error("Falha ao gerar QR Code");
   }
 };

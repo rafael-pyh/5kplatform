@@ -18,24 +18,32 @@ const S3_REGION = process.env.S3_REGION || 'us-east-1';
 const buildPublicUrl = (key: string): string => {
   // Se S3_URL está configurado explicitamente, usa ele
   if (process.env.S3_URL && process.env.S3_URL !== S3_ENDPOINT) {
-    return `${process.env.S3_URL}/${key}`;
+    const url = `${process.env.S3_URL}/${key}`;
+    console.log(`[buildPublicUrl] Usando S3_URL configurado: ${url}`);
+    return url;
   }
   
   // Detecta se é Backblaze B2
   if (S3_ENDPOINT.includes('backblazeb2.com')) {
     // Para B2, usa a URL S3 compatível
     // Exemplo: https://5k-storage.s3.us-east-005.backblazeb2.com/key
-    return `https://${BUCKET_NAME}.s3.${S3_REGION}.backblazeb2.com/${key}`;
+    const url = `https://${BUCKET_NAME}.s3.${S3_REGION}.backblazeb2.com/${key}`;
+    console.log(`[buildPublicUrl] B2 detectado: ${url}`);
+    return url;
   }
   
   // Para AWS S3
   if (S3_ENDPOINT.includes('amazonaws.com') || S3_ENDPOINT === 'https://s3.amazonaws.com') {
-    return `https://${BUCKET_NAME}.s3.${S3_REGION}.amazonaws.com/${key}`;
+    const url = `https://${BUCKET_NAME}.s3.${S3_REGION}.amazonaws.com/${key}`;
+    console.log(`[buildPublicUrl] AWS S3 detectado: ${url}`);
+    return url;
   }
   
   // Fallback: tenta construir com o endpoint
   const cleanEndpoint = S3_ENDPOINT.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  return `https://${cleanEndpoint}/${BUCKET_NAME}/${key}`;
+  const url = `https://${cleanEndpoint}/${BUCKET_NAME}/${key}`;
+  console.log(`[buildPublicUrl] Fallback endpoint: ${url}`);
+  return url;
 };
 
 /**
@@ -227,10 +235,15 @@ export const uploadQRCodeToMinIO = async (
   qrCodeId: string
 ): Promise<string> => {
   try {
+    console.log(`[uploadQRCodeToMinIO] Iniciando upload de QR code: ${qrCodeId}`);
+    
     // Garante que o bucket principal existe
     await createBucketIfNotExists(BUCKET_NAME);
     
     const objectName = `qrcodes/${qrCodeId}.png`;
+    console.log(`[uploadQRCodeToMinIO] Object name: ${objectName}`);
+    console.log(`[uploadQRCodeToMinIO] Buffer size: ${buffer.length} bytes`);
+    console.log(`[uploadQRCodeToMinIO] Bucket: ${BUCKET_NAME}`);
 
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
@@ -240,12 +253,14 @@ export const uploadQRCodeToMinIO = async (
     });
 
     await s3Client.send(command);
+    console.log(`[uploadQRCodeToMinIO] Upload concluído com sucesso`);
 
     // Retorna a URL pública do arquivo
     const fileUrl = buildPublicUrl(objectName);
+    console.log(`[uploadQRCodeToMinIO] URL final retornada: ${fileUrl}`);
     return fileUrl;
   } catch (error: any) {
-    console.error('Erro ao fazer upload do QR Code para S3:', error);
+    console.error('[uploadQRCodeToMinIO] Erro ao fazer upload do QR Code para S3:', error);
     throw new Error(`Erro ao fazer upload do QR Code: ${error.message}`);
   }
 };
