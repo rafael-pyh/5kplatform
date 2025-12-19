@@ -15,6 +15,7 @@ import { personService } from '@/lib/services';
 import { Person } from '@/types/Person';
 import { exportToCSV } from '@/lib/utils/exportToCSV';
 import { Icon } from '@/components/ui/Icon';
+import { isValidQRCode, isDataUrl, isHttpUrl } from '@/lib/utils/imageUrl';
 
 // Lazy load modals for better performance
 const NewSellerModal = dynamic(() => import('@/components/NewSellerModal'), {
@@ -70,8 +71,12 @@ export default function SellersPage() {
     console.log('[Sellers Page] person.qrCodeBase64 existe?', !!person.qrCodeBase64);
     console.log('[Sellers Page] person.qrCodeBase64 tamanho:', person.qrCodeBase64?.length ?? 0);
     console.log('[Sellers Page] person.qrCodeBase64 primeiros 100 chars:', person.qrCodeBase64?.substring(0, 100) ?? 'undefined');
-    if (!person.qrCodeBase64) {
-      console.error('[Sellers Page] Falha: person.qrCodeBase64 está vazio/undefined');
+    console.log('[Sellers Page] É data URL?', isDataUrl(person.qrCodeBase64));
+    console.log('[Sellers Page] É HTTP URL?', isHttpUrl(person.qrCodeBase64));
+    console.log('[Sellers Page] É válido?', isValidQRCode(person.qrCodeBase64));
+    
+    if (!isValidQRCode(person.qrCodeBase64)) {
+      console.error('[Sellers Page] Falha: person.qrCodeBase64 está inválido ou vazio');
       toast.error('QR Code não disponível');
       return;
     }

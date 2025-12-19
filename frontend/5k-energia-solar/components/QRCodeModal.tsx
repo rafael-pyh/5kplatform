@@ -15,6 +15,7 @@ import ModalHeader from '@/components/ModalHeader';
 import ActionButtons from '@/components/ActionButtons';
 import { Button } from './ui';
 import { Icon } from '@/components/ui/Icon';
+import { isDataUrl, isHttpUrl, isValidQRCode } from '@/lib/utils/imageUrl';
 
 interface Creative {
   id: string;
@@ -73,6 +74,9 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
       console.log('[QRCodeModal] qrCodeBase64 tamanho:', qrCodeBase64?.length ?? 0);
       console.log('[QRCodeModal] qrCodeBase64 primeiros 100 chars:', qrCodeBase64?.substring(0, 100) ?? 'undefined');
       console.log('[QRCodeModal] qrCodeBase64 tipo:', typeof qrCodeBase64);
+      console.log('[QRCodeModal] É data URL?', isDataUrl(qrCodeBase64));
+      console.log('[QRCodeModal] É HTTP URL?', isHttpUrl(qrCodeBase64));
+      console.log('[QRCodeModal] É válido?', isValidQRCode(qrCodeBase64));
       console.log('[QRCodeModal] começa com data:image/?', qrCodeBase64?.startsWith('data:image/') ?? false);
     }
   }, [isOpen, qrCodeBase64, personName]);
