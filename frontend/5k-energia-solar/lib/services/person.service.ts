@@ -15,7 +15,22 @@ export const personService = {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const response = await api.get<ApiResponse<Person[]>>(`/person${params}`);
     const persons = response.data.data || [];
-    return persons.map(normalizePersonUrls);
+    console.log('[personService.getAll] Resposta da API recebida:', persons.length, 'pessoas');
+    persons.forEach((person: Person, index: number) => {
+      console.log(`[personService.getAll] Pessoa ${index}: ${person.name}`);
+      console.log(`[personService.getAll]   - qrCodeBase64 existe? ${!!person.qrCodeBase64}`);
+      if (person.qrCodeBase64) {
+        console.log(`[personService.getAll]   - qrCodeBase64 tamanho: ${person.qrCodeBase64.length}`);
+        console.log(`[personService.getAll]   - começa com data:image/? ${person.qrCodeBase64.startsWith('data:image/')}`);
+      }
+    });
+    const normalized = persons.map(normalizePersonUrls);
+    console.log('[personService.getAll] Após normalização:');
+    normalized.forEach((person: Person, index: number) => {
+      console.log(`[personService.getAll] Pessoa ${index}: ${person.name}`);
+      console.log(`[personService.getAll]   - qrCodeBase64 existe? ${!!person.qrCodeBase64}`);
+    });
+    return normalized;
   },
 
   // Buscar vendedor por ID

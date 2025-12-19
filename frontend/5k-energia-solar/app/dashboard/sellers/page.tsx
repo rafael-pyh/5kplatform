@@ -66,7 +66,12 @@ export default function SellersPage() {
 
   // Memoized handlers
   const handleOpenQRModal = useCallback((person: Person) => {
+    console.log('[Sellers Page] Abrindo QR Modal para:', person.name);
+    console.log('[Sellers Page] person.qrCodeBase64 existe?', !!person.qrCodeBase64);
+    console.log('[Sellers Page] person.qrCodeBase64 tamanho:', person.qrCodeBase64?.length ?? 0);
+    console.log('[Sellers Page] person.qrCodeBase64 primeiros 100 chars:', person.qrCodeBase64?.substring(0, 100) ?? 'undefined');
     if (!person.qrCodeBase64) {
+      console.error('[Sellers Page] Falha: person.qrCodeBase64 está vazio/undefined');
       toast.error('QR Code não disponível');
       return;
     }

@@ -64,6 +64,19 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
   // manage escape key and body overflow
   useModalEscape(isOpen, onClose);
 
+  // Log para debug do QR code
+  useEffect(() => {
+    if (isOpen) {
+      console.log('[QRCodeModal] Modal aberto');
+      console.log('[QRCodeModal] personName:', personName);
+      console.log('[QRCodeModal] qrCodeBase64 existe?', !!qrCodeBase64);
+      console.log('[QRCodeModal] qrCodeBase64 tamanho:', qrCodeBase64?.length ?? 0);
+      console.log('[QRCodeModal] qrCodeBase64 primeiros 100 chars:', qrCodeBase64?.substring(0, 100) ?? 'undefined');
+      console.log('[QRCodeModal] qrCodeBase64 tipo:', typeof qrCodeBase64);
+      console.log('[QRCodeModal] começa com data:image/?', qrCodeBase64?.startsWith('data:image/') ?? false);
+    }
+  }, [isOpen, qrCodeBase64, personName]);
+
   // Carregar criativos ao abrir o modal
   useEffect(() => {
     if (!isOpen) return;
