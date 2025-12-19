@@ -21,9 +21,11 @@ const bucketExists = async (bucketName: string): Promise<boolean> => {
     await s3Client.send(command);
     return true;
   } catch (error: any) {
-    if (error.name === 'NoSuchBucket') {
+    // Se o bucket não existe, retorna false (404 = NotFound)
+    if (error.$metadata?.httpStatusCode === 404 || error.name === 'NoSuchBucket' || error.Code === 'NotFound') {
       return false;
     }
+    // Para outros erros, relança a exceção
     throw error;
   }
 };
@@ -43,8 +45,10 @@ const createBucketIfNotExists = async (bucketName: string): Promise<void> => {
       console.log(`✅ Bucket '${bucketName}' já existe`);
     }
   } catch (error: any) {
-    console.error(`Erro ao criar bucket '${bucketName}':`, error.message);
-    throw error;
+    console.warn(`⚠️  Não foi possível criar bucket '${bucketName}': ${error.message}`);
+    console.warn(`   Verifique se o bucket existe e se as permissões estão corretas`);
+    // Não relança o erro - permite que a app continue
+    // O bucket pode já existir ou as permissões podem estar limitadas
   }
 };
 
@@ -63,8 +67,8 @@ export const initializeMinIOBucket = async () => {
     console.log(`📁 Bucket de imagens: ${BUCKET_NAME}`);
     console.log(`📁 Bucket de QR codes: ${QRCODE_BUCKET_NAME}`);
   } catch (error) {
-    console.error('Erro ao inicializar S3:', error);
-    throw error;
+    console.warn('⚠️  Erro ao inicializar S3:', error);
+    // Não relança - continua mesmo que a criação de buckets falhe
   }
 };
 
