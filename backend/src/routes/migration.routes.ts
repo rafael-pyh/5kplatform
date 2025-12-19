@@ -140,4 +140,105 @@ router.post(
   }
 );
 
+/**
+ * POST /admin/regenerate-qrcode-base64
+ * Regenera qrCodeBase64 para pessoas antigas que têm qrCode mas não têm qrCodeBase64
+ */
+router.post(
+  "/regenerate-qrcode-base64",
+  requireSuperAdmin,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      console.log("🔄 Iniciando regeneração de QR codes base64...\n");
+
+      // Busca todas as pessoas que têm qrCode mas qrCodeBase64 é null
+      const people = await Person.findAll({
+        where: {
+          qrCode: {
+            [Op.ne]: null,
+          },
+          qrCodeBase64: {
+            [Op.is]: null,
+          },
+        },
+        attributes: ["id", "name", "qrCode"],
+        raw: true,
+      });
+
+      console.log(`📊 Encontradas ${people.length} pessoas para regenerar QR codes base64\n`);
+
+      if (people.length === 0) {
+        return ResponseBuilder.success(res, {
+          message: "Nenhum QR code para regenerar",
+          successCount: 0,
+          errorCount: 0,
+          total: 0,
+        });
+      }
+
+      const { getQRCodeBase64ByCode } = await import("../utils/qr");
+
+      let successCount = 0;
+      let errorCount = 0;
+      const results = [];
+
+      for (const person of people) {
+        try {
+          const qrCode = (person as any).qrCode;
+          console.log(`🔄 Regenerando QR code base64 para: ${(person as any).name} (${qrCode})`);
+
+          // Gera o base64 do QR code
+          const qrCodeBase64 = await getQRCodeBase64ByCode(qrCode);
+          console.log(`✅ Base64 gerado: ${qrCodeBase64.substring(0, 50)}...`);
+
+          // Atualiza a pessoa com o novo base64
+          await Person.update(
+            { qrCodeBase64 },
+            { where: { id: (person as any).id } }
+          );
+
+          successCount++;
+          console.log(
+            `✅ ${(person as any).name} (${qrCode}) - Base64 regenerado e salvo`
+          );
+
+          results.push({
+            name: (person as any).name,
+            qrCode,
+            status: "success",
+          });
+        } catch (error: any) {
+          errorCount++;
+          console.error(
+            `❌ Erro ao processar ${(person as any).name}:`,
+            error.message
+          );
+
+          results.push({
+            name: (person as any).name,
+            qrCode: (person as any).qrCode,
+            status: "error",
+            error: error.message,
+          });
+        }
+      }
+
+      console.log(`\n📈 Resumo da Regeneração:`);
+      console.log(`✅ Sucesso: ${successCount}`);
+      console.log(`❌ Erros: ${errorCount}`);
+      console.log(`📊 Total: ${people.length}`);
+
+      return ResponseBuilder.success(res, {
+        message: "Regeneração de QR codes base64 concluída",
+        successCount,
+        errorCount,
+        total: people.length,
+        results,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 export default router;
