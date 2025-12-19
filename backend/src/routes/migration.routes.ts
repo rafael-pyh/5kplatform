@@ -1,14 +1,15 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { Person } from "../models/Person";
-import minioClient from "../utils/minio";
+import { s3Client } from "../utils/minio";
 import { requireSuperAdmin } from "../middlewares/auth.middleware";
 import { ResponseBuilder } from "../shared/ResponseBuilder";
 import { Op } from "sequelize";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 
 const router = Router();
 
-const QRCODE_BUCKET_NAME = process.env.MINIO_QRCODE_BUCKET || "qrcodes";
-const MINIO_URL = process.env.MINIO_URL || "http://localhost:9000";
+const QRCODE_BUCKET_NAME = process.env.S3_QRCODE_BUCKET || "qrcodes";
+const S3_URL = process.env.S3_URL || process.env.S3_ENDPOINT || "https://s3.amazonaws.com";
 
 /**
  * POST /admin/migrate-qrcodes
@@ -20,14 +21,11 @@ router.post(
   requireSuperAdmin,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      console.log("🔄 Iniciando migração de QR codes para Minio...\n");
+      console.log("🔄 Iniciando migração de QR codes para S3...\n");
 
-      // Garante que o bucket existe
-      const bucketExists = await minioClient.bucketExists(QRCODE_BUCKET_NAME);
-      if (!bucketExists) {
-        await minioClient.makeBucket(QRCODE_BUCKET_NAME, "us-east-1");
-        console.log(`✅ Bucket '${QRCODE_BUCKET_NAME}' criado\n`);
-      }
+      // Com S3, os buckets precisam existir antecipadamente
+      // Apenas fazemos o upload
+      console.log(`📁 Usando bucket: ${QRCODE_BUCKET_NAME}\n`);
 
       // Busca todas as pessoas com qrCodeBase64 mas sem qrCodeUrl (ou com qrCodeUrl vazio)
       const people = await Person.findAll({
@@ -79,21 +77,20 @@ router.post(
           );
           const buffer = Buffer.from(base64Data, "base64");
 
-          // Faz upload para Minio
+          // Faz upload para S3
           const objectName = `qrcodes/${qrCode}.png`;
 
-          await minioClient.putObject(
-            QRCODE_BUCKET_NAME,
-            objectName,
-            buffer,
-            buffer.length,
-            {
-              "Content-Type": "image/png",
-            }
-          );
+          const command = new PutObjectCommand({
+            Bucket: QRCODE_BUCKET_NAME,
+            Key: objectName,
+            Body: buffer,
+            ContentType: "image/png",
+          });
+
+          await s3Client.send(command);
 
           // Gera URL pública
-          const qrCodeUrl = `${MINIO_URL}/${QRCODE_BUCKET_NAME}/${objectName}`;
+          const qrCodeUrl = `${S3_URL}/${QRCODE_BUCKET_NAME}/${objectName}`;
 
           // Atualiza a pessoa no banco
           await Person.update({ qrCodeUrl }, { where: { id: (person as any).id } });

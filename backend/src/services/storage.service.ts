@@ -1,77 +1,27 @@
-import minioClient from '../utils/minio';
+import { s3Client } from '../utils/minio';
+import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadBucketCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const BUCKET_NAME = process.env.MINIO_BUCKET || 'images';
-const QRCODE_BUCKET_NAME = process.env.MINIO_QRCODE_BUCKET || 'qrcodes';
-const MINIO_URL = process.env.MINIO_URL || 'http://localhost:9000';
+const BUCKET_NAME = process.env.S3_BUCKET || 'images';
+const QRCODE_BUCKET_NAME = process.env.S3_QRCODE_BUCKET || 'qrcodes';
+const S3_URL = process.env.S3_URL || process.env.S3_ENDPOINT || 'https://s3.amazonaws.com';
 
 /**
- * Inicializa os buckets do MinIO se não existirem
+ * Inicializa os buckets do S3 se não existirem
  */
 export const initializeMinIOBucket = async () => {
   try {
-    // Inicializa bucket de imagens
-    const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
-    
-    if (!bucketExists) {
-      await minioClient.makeBucket(BUCKET_NAME, 'us-east-1');
-      console.log(`Bucket '${BUCKET_NAME}' criado com sucesso`);
-      
-      // Define a política de acesso público para visualizar imagens
-      const policy = {
-        Version: '2012-10-17',
-        Statement: [
-          {
-            Effect: 'Allow',
-            Principal: {
-              AWS: '*',
-            },
-            Action: ['s3:GetObject'],
-            Resource: [`arn:aws:s3:::${BUCKET_NAME}/*`],
-          },
-        ],
-      };
-      
-      await minioClient.setBucketPolicy(BUCKET_NAME, JSON.stringify(policy));
-      console.log(`Política de acesso público configurada para '${BUCKET_NAME}'`);
-    } else {
-      console.log(`Bucket '${BUCKET_NAME}' já existe`);
-    }
-
-    // Inicializa bucket de QR codes
-    const qrcodeBucketExists = await minioClient.bucketExists(QRCODE_BUCKET_NAME);
-    
-    if (!qrcodeBucketExists) {
-      await minioClient.makeBucket(QRCODE_BUCKET_NAME, 'us-east-1');
-      console.log(`Bucket '${QRCODE_BUCKET_NAME}' criado com sucesso`);
-      
-      // Define a política de acesso público para visualizar QR codes
-      const qrcodePolicy = {
-        Version: '2012-10-17',
-        Statement: [
-          {
-            Effect: 'Allow',
-            Principal: {
-              AWS: '*',
-            },
-            Action: ['s3:GetObject'],
-            Resource: [`arn:aws:s3:::${QRCODE_BUCKET_NAME}/*`],
-          },
-        ],
-      };
-      
-      await minioClient.setBucketPolicy(QRCODE_BUCKET_NAME, JSON.stringify(qrcodePolicy));
-      console.log(`Política de acesso público configurada para '${QRCODE_BUCKET_NAME}'`);
-    } else {
-      console.log(`Bucket '${QRCODE_BUCKET_NAME}' já existe`);
-    }
+    console.log('✅ S3 está configurado e pronto para uso');
+    console.log(`📁 Bucket de imagens: ${BUCKET_NAME}`);
+    console.log(`📁 Bucket de QR codes: ${QRCODE_BUCKET_NAME}`);
   } catch (error) {
-    console.error('Erro ao inicializar buckets do MinIO:', error);
+    console.error('Erro ao inicializar S3:', error);
     throw error;
   }
 };
 
 /**
- * Faz upload de arquivo para MinIO
+ * Faz upload de arquivo para S3
  */
 export const uploadFileToMinIO = async (
   file: Express.Multer.File,
@@ -80,61 +30,68 @@ export const uploadFileToMinIO = async (
 ): Promise<string> => {
   try {
     const objectName = `${folderName}/${Date.now()}-${fileName}`;
-    const fileSize = file.buffer.length;
+    
+    const command = new PutObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: objectName,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    });
 
-    await minioClient.putObject(
-      BUCKET_NAME,
-      objectName,
-      file.buffer,
-      fileSize,
-      {
-        'Content-Type': file.mimetype,
-      }
-    );
+    await s3Client.send(command);
 
     // Retorna a URL pública do arquivo
-    const fileUrl = `${MINIO_URL}/${BUCKET_NAME}/${objectName}`;
+    const fileUrl = `${S3_URL}/${BUCKET_NAME}/${objectName}`;
     return fileUrl;
   } catch (error: any) {
-    console.error('Erro ao fazer upload para MinIO:', error);
+    console.error('Erro ao fazer upload para S3:', error);
     throw new Error(`Erro ao fazer upload do arquivo: ${error.message}`);
   }
 };
 
 /**
- * Faz download de arquivo do MinIO e retorna como Base64
+ * Faz download de arquivo do S3 e retorna como Base64
  */
 export const downloadFileAsBase64 = async (objectName: string): Promise<string> => {
   try {
-    const buffer = await new Promise<Buffer>(async (resolve, reject) => {
-      const chunks: Buffer[] = [];
-      const stream = await minioClient.getObject(BUCKET_NAME, objectName);
-
-      stream.on('data', (chunk) => chunks.push(chunk));
-      stream.on('end', () => resolve(Buffer.concat(chunks)));
-      stream.on('error', reject);
+    const command = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: objectName,
     });
 
+    const response = await s3Client.send(command);
+    const chunks: Uint8Array[] = [];
+
+    for await (const chunk of response.Body as any) {
+      chunks.push(chunk);
+    }
+
+    const buffer = Buffer.concat(chunks);
     const base64Data = buffer.toString('base64');
     const ext = objectName.split('.').pop() || 'bin';
     const mimeType = getMimeType(ext);
 
     return `data:${mimeType};base64,${base64Data}`;
   } catch (error: any) {
-    console.error('Erro ao baixar arquivo do MinIO:', error);
+    console.error('Erro ao baixar arquivo do S3:', error);
     throw new Error(`Erro ao recuperar arquivo: ${error.message}`);
   }
 };
 
 /**
- * Deleta arquivo do MinIO
+ * Deleta arquivo do S3
  */
 export const deleteFileFromMinIO = async (objectName: string): Promise<void> => {
   try {
-    await minioClient.removeObject(BUCKET_NAME, objectName);
+    const command = new DeleteObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: objectName,
+    });
+
+    await s3Client.send(command);
     console.log(`Arquivo deletado: ${objectName}`);
   } catch (error: any) {
-    console.error('Erro ao deletar arquivo do MinIO:', error);
+    console.error('Erro ao deletar arquivo do S3:', error);
     throw new Error(`Erro ao deletar arquivo: ${error.message}`);
   }
 };
@@ -147,11 +104,15 @@ export const generatePresignedUrl = async (
   expirySeconds: number = 86400
 ): Promise<string> => {
   try {
-    const url = await minioClient.presignedGetObject(
-      BUCKET_NAME,
-      objectName,
-      expirySeconds
-    );
+    const command = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: objectName,
+    });
+
+    const url = await getSignedUrl(s3Client, command, {
+      expiresIn: expirySeconds,
+    });
+    
     return url;
   } catch (error: any) {
     console.error('Erro ao gerar URL presigned:', error);
@@ -186,23 +147,21 @@ export const uploadQRCodeToMinIO = async (
 ): Promise<string> => {
   try {
     const objectName = `qrcodes/${qrCodeId}.png`;
-    const fileSize = buffer.length;
 
-    await minioClient.putObject(
-      QRCODE_BUCKET_NAME,
-      objectName,
-      buffer,
-      fileSize,
-      {
-        'Content-Type': 'image/png',
-      }
-    );
+    const command = new PutObjectCommand({
+      Bucket: QRCODE_BUCKET_NAME,
+      Key: objectName,
+      Body: buffer,
+      ContentType: 'image/png',
+    });
+
+    await s3Client.send(command);
 
     // Retorna a URL pública do arquivo
-    const fileUrl = `${MINIO_URL}/${QRCODE_BUCKET_NAME}/${objectName}`;
+    const fileUrl = `${S3_URL}/${QRCODE_BUCKET_NAME}/${objectName}`;
     return fileUrl;
   } catch (error: any) {
-    console.error('Erro ao fazer upload do QR Code para MinIO:', error);
+    console.error('Erro ao fazer upload do QR Code para S3:', error);
     throw new Error(`Erro ao fazer upload do QR Code: ${error.message}`);
   }
 };
@@ -212,10 +171,15 @@ export const uploadQRCodeToMinIO = async (
  */
 export const deleteQRCodeFromMinIO = async (objectName: string): Promise<void> => {
   try {
-    await minioClient.removeObject(QRCODE_BUCKET_NAME, objectName);
+    const command = new DeleteObjectCommand({
+      Bucket: QRCODE_BUCKET_NAME,
+      Key: objectName,
+    });
+
+    await s3Client.send(command);
     console.log(`QR Code deletado: ${objectName}`);
   } catch (error: any) {
-    console.error('Erro ao deletar QR Code do MinIO:', error);
+    console.error('Erro ao deletar QR Code do S3:', error);
     throw new Error(`Erro ao deletar QR Code: ${error.message}`);
   }
 };
