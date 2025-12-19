@@ -9,7 +9,7 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const BUCKET_NAME = process.env.S3_BUCKET || 'images';
-const QRCODE_BUCKET_NAME = process.env.S3_QRCODE_BUCKET || 'qrcodes';
+const QRCODE_BUCKET_NAME = process.env.S3_QRCODE_BUCKET || process.env.S3_BUCKET || 'images';
 const S3_URL = process.env.S3_URL || process.env.S3_ENDPOINT || 'https://s3.amazonaws.com';
 
 /**
@@ -53,19 +53,19 @@ const createBucketIfNotExists = async (bucketName: string): Promise<void> => {
 };
 
 /**
- * Inicializa os buckets do S3 se não existirem
+ * Inicializa o bucket do S3 se não existir
  */
 export const initializeMinIOBucket = async () => {
   try {
-    console.log('🔄 Verificando e criando buckets do S3...\n');
+    console.log('🔄 Verificando bucket do S3...\n');
     
-    // Cria buckets se não existirem
+    // Cria o bucket principal se não existir
     await createBucketIfNotExists(BUCKET_NAME);
-    await createBucketIfNotExists(QRCODE_BUCKET_NAME);
     
     console.log(`\n✅ S3 está configurado e pronto para uso`);
-    console.log(`📁 Bucket de imagens: ${BUCKET_NAME}`);
-    console.log(`📁 Bucket de QR codes: ${QRCODE_BUCKET_NAME}`);
+    console.log(`📁 Bucket principal: ${BUCKET_NAME}`);
+    console.log(`   ├─ /uploads/* (imagens e documentos)`);
+    console.log(`   └─ /qrcodes/* (QR codes)`);
   } catch (error) {
     console.warn('⚠️  Erro ao inicializar S3:', error);
     // Não relança - continua mesmo que a criação de buckets falhe
@@ -194,20 +194,20 @@ const getMimeType = (ext: string): string => {
 };
 
 /**
- * Faz upload de QR Code (imagem) para o bucket específico de QR codes
+ * Faz upload de QR Code (imagem) para a pasta qrcodes do bucket principal
  */
 export const uploadQRCodeToMinIO = async (
   buffer: Buffer,
   qrCodeId: string
 ): Promise<string> => {
   try {
-    // Garante que o bucket de QR codes existe
-    await createBucketIfNotExists(QRCODE_BUCKET_NAME);
+    // Garante que o bucket principal existe
+    await createBucketIfNotExists(BUCKET_NAME);
     
     const objectName = `qrcodes/${qrCodeId}.png`;
 
     const command = new PutObjectCommand({
-      Bucket: QRCODE_BUCKET_NAME,
+      Bucket: BUCKET_NAME,
       Key: objectName,
       Body: buffer,
       ContentType: 'image/png',
@@ -216,7 +216,7 @@ export const uploadQRCodeToMinIO = async (
     await s3Client.send(command);
 
     // Retorna a URL pública do arquivo
-    const fileUrl = `${S3_URL}/${QRCODE_BUCKET_NAME}/${objectName}`;
+    const fileUrl = `${S3_URL}/${BUCKET_NAME}/${objectName}`;
     return fileUrl;
   } catch (error: any) {
     console.error('Erro ao fazer upload do QR Code para S3:', error);
@@ -225,12 +225,12 @@ export const uploadQRCodeToMinIO = async (
 };
 
 /**
- * Deleta QR Code do bucket específico
+ * Deleta QR Code da pasta qrcodes do bucket principal
  */
 export const deleteQRCodeFromMinIO = async (objectName: string): Promise<void> => {
   try {
     const command = new DeleteObjectCommand({
-      Bucket: QRCODE_BUCKET_NAME,
+      Bucket: BUCKET_NAME,
       Key: objectName,
     });
 
