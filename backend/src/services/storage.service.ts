@@ -18,17 +18,28 @@ const S3_REGION = process.env.S3_REGION || 'us-east-1';
 const buildPublicUrl = (key: string): string => {
   // Se S3_URL está configurado explicitamente, usa ele
   if (process.env.S3_URL && process.env.S3_URL !== S3_ENDPOINT) {
-    const url = `${process.env.S3_URL}/${key}`;
+    const baseUrl = process.env.S3_URL.replace(/\/$/, ''); // Remove trailing slash se houver
+    const url = `${baseUrl}/${BUCKET_NAME}/${key}`;
     console.log(`[buildPublicUrl] Usando S3_URL configurado: ${url}`);
     return url;
   }
   
   // Detecta se é Backblaze B2
   if (S3_ENDPOINT.includes('backblazeb2.com')) {
-    // Para B2, usa a URL S3 compatível
-    // Exemplo: https://5k-storage.s3.us-east-005.backblazeb2.com/key
-    const url = `https://${BUCKET_NAME}.s3.${S3_REGION}.backblazeb2.com/${key}`;
-    console.log(`[buildPublicUrl] B2 detectado: ${url}`);
+    // Para B2, extrai o endpoint base e constrói a URL correta
+    // Exemplo endpoint: https://s3.us-east-005.backblazeb2.com
+    // URL final: https://f005.backblazeb2.com/file/5k-storage/key
+    const match = S3_ENDPOINT.match(/https?:\/\/(s3\.[^.]+)\.backblazeb2\.com/);
+    if (match) {
+      const region = S3_ENDPOINT.match(/s3\.([^.]+)\.backblazeb2/)?.[1] || 'us-east-005';
+      const fileHost = `f${region.match(/(\d+)/)?.[1] || '005'}.backblazeb2.com`;
+      const url = `https://${fileHost}/file/${BUCKET_NAME}/${key}`;
+      console.log(`[buildPublicUrl] B2 detectado: ${url}`);
+      return url;
+    }
+    // Fallback se não conseguir fazer parse do região
+    const url = `${S3_ENDPOINT.replace(/\/+$/, '')}/file/${BUCKET_NAME}/${key}`;
+    console.log(`[buildPublicUrl] B2 fallback: ${url}`);
     return url;
   }
   
