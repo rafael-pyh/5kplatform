@@ -50,6 +50,10 @@ export class Person extends Model {
   @Column(DataType.TEXT)
   photoBase64?: string; // Base64 data URL da foto de perfil
 
+  @AllowNull(true)
+  @Column(DataType.TEXT)
+  qrCodeBase64?: string; // Base64 data URL do QR code
+
   @Unique
   @Column(DataType.STRING)
   qrCode!: string;
