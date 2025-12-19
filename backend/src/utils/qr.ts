@@ -61,6 +61,10 @@ export const generateQRCodeBase64 = async (
       },
     });
 
+    console.log(`[generateQRCodeBase64] QR code gerado: ${qrCode}`);
+    console.log(`[generateQRCodeBase64] Tamanho do base64: ${qrDataUrl.length} bytes`);
+    console.log(`[generateQRCodeBase64] Primeiros 100 chars: ${qrDataUrl.substring(0, 100)}`);
+    
     return qrDataUrl;
   } catch (error) {
     console.error("Erro ao gerar QR Code:", error);
