@@ -13,6 +13,7 @@ import approvalRoutes from "./routes/approval.routes";
 import migrationRoutes from "./routes/migration.routes";
 import { errorHandler } from "./shared/errorHandler";
 import { initializeMinIOBucket } from "./services/storage.service";
+import { authenticate } from "./middlewares/auth.middleware";
 
 const app = express();
 
