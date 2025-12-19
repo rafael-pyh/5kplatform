@@ -119,6 +119,9 @@ export const uploadFileToMinIO = async (
     await createBucketIfNotExists(BUCKET_NAME);
     
     const objectName = `${folderName}/${Date.now()}-${fileName}`;
+    console.log(`[uploadFileToMinIO] Iniciando upload: ${fileName}`);
+    console.log(`[uploadFileToMinIO] Pasta: ${folderName}`);
+    console.log(`[uploadFileToMinIO] Nome do objeto: ${objectName}`);
     
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
@@ -128,9 +131,11 @@ export const uploadFileToMinIO = async (
     });
 
     await s3Client.send(command);
+    console.log(`[uploadFileToMinIO] Upload concluído para: ${objectName}`);
 
     // Retorna a URL pública do arquivo
     const fileUrl = buildPublicUrl(objectName);
+    console.log(`[uploadFileToMinIO] URL final retornada: ${fileUrl}`);
     return fileUrl;
   } catch (error: any) {
     console.error('Erro ao fazer upload para S3:', error);
