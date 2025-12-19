@@ -9,8 +9,34 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const BUCKET_NAME = process.env.S3_BUCKET || '5k-storage';
-const QRCODE_BUCKET_NAME = process.env.S3_QRCODE_BUCKET || process.env.S3_BUCKET || '5k-storage';
-const S3_URL = process.env.S3_URL || process.env.S3_ENDPOINT || 'https://s3.amazonaws.com';
+const S3_ENDPOINT = process.env.S3_ENDPOINT || 'https://s3.amazonaws.com';
+const S3_REGION = process.env.S3_REGION || 'us-east-1';
+
+/**
+ * Constrói a URL pública do arquivo baseado no endpoint e bucket
+ */
+const buildPublicUrl = (key: string): string => {
+  // Se S3_URL está configurado explicitamente, usa ele
+  if (process.env.S3_URL && process.env.S3_URL !== S3_ENDPOINT) {
+    return `${process.env.S3_URL}/${key}`;
+  }
+  
+  // Detecta se é Backblaze B2
+  if (S3_ENDPOINT.includes('backblazeb2.com')) {
+    // Para B2, usa a URL S3 compatível
+    // Exemplo: https://5k-storage.s3.us-east-005.backblazeb2.com/key
+    return `https://${BUCKET_NAME}.s3.${S3_REGION}.backblazeb2.com/${key}`;
+  }
+  
+  // Para AWS S3
+  if (S3_ENDPOINT.includes('amazonaws.com') || S3_ENDPOINT === 'https://s3.amazonaws.com') {
+    return `https://${BUCKET_NAME}.s3.${S3_REGION}.amazonaws.com/${key}`;
+  }
+  
+  // Fallback: tenta construir com o endpoint
+  const cleanEndpoint = S3_ENDPOINT.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  return `https://${cleanEndpoint}/${BUCKET_NAME}/${key}`;
+};
 
 /**
  * Verifica se um bucket existe
@@ -96,7 +122,7 @@ export const uploadFileToMinIO = async (
     await s3Client.send(command);
 
     // Retorna a URL pública do arquivo
-    const fileUrl = `${S3_URL}/${BUCKET_NAME}/${objectName}`;
+    const fileUrl = buildPublicUrl(objectName);
     return fileUrl;
   } catch (error: any) {
     console.error('Erro ao fazer upload para S3:', error);
@@ -216,7 +242,7 @@ export const uploadQRCodeToMinIO = async (
     await s3Client.send(command);
 
     // Retorna a URL pública do arquivo
-    const fileUrl = `${S3_URL}/${BUCKET_NAME}/${objectName}`;
+    const fileUrl = buildPublicUrl(objectName);
     return fileUrl;
   } catch (error: any) {
     console.error('Erro ao fazer upload do QR Code para S3:', error);
