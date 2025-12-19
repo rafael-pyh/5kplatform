@@ -1,5 +1,11 @@
 import { s3Client } from '../utils/minio';
-import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadBucketCommand } from "@aws-sdk/client-s3";
+import { 
+  PutObjectCommand, 
+  GetObjectCommand, 
+  DeleteObjectCommand, 
+  HeadBucketCommand,
+  CreateBucketCommand 
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const BUCKET_NAME = process.env.S3_BUCKET || 'images';
@@ -7,11 +13,53 @@ const QRCODE_BUCKET_NAME = process.env.S3_QRCODE_BUCKET || 'qrcodes';
 const S3_URL = process.env.S3_URL || process.env.S3_ENDPOINT || 'https://s3.amazonaws.com';
 
 /**
+ * Verifica se um bucket existe
+ */
+const bucketExists = async (bucketName: string): Promise<boolean> => {
+  try {
+    const command = new HeadBucketCommand({ Bucket: bucketName });
+    await s3Client.send(command);
+    return true;
+  } catch (error: any) {
+    if (error.name === 'NoSuchBucket') {
+      return false;
+    }
+    throw error;
+  }
+};
+
+/**
+ * Cria um bucket se não existir
+ */
+const createBucketIfNotExists = async (bucketName: string): Promise<void> => {
+  try {
+    const exists = await bucketExists(bucketName);
+    
+    if (!exists) {
+      const command = new CreateBucketCommand({ Bucket: bucketName });
+      await s3Client.send(command);
+      console.log(`✅ Bucket '${bucketName}' criado com sucesso`);
+    } else {
+      console.log(`✅ Bucket '${bucketName}' já existe`);
+    }
+  } catch (error: any) {
+    console.error(`Erro ao criar bucket '${bucketName}':`, error.message);
+    throw error;
+  }
+};
+
+/**
  * Inicializa os buckets do S3 se não existirem
  */
 export const initializeMinIOBucket = async () => {
   try {
-    console.log('✅ S3 está configurado e pronto para uso');
+    console.log('🔄 Verificando e criando buckets do S3...\n');
+    
+    // Cria buckets se não existirem
+    await createBucketIfNotExists(BUCKET_NAME);
+    await createBucketIfNotExists(QRCODE_BUCKET_NAME);
+    
+    console.log(`\n✅ S3 está configurado e pronto para uso`);
     console.log(`📁 Bucket de imagens: ${BUCKET_NAME}`);
     console.log(`📁 Bucket de QR codes: ${QRCODE_BUCKET_NAME}`);
   } catch (error) {
@@ -29,6 +77,9 @@ export const uploadFileToMinIO = async (
   folderName: string = 'uploads'
 ): Promise<string> => {
   try {
+    // Garante que o bucket existe
+    await createBucketIfNotExists(BUCKET_NAME);
+    
     const objectName = `${folderName}/${Date.now()}-${fileName}`;
     
     const command = new PutObjectCommand({
@@ -146,6 +197,9 @@ export const uploadQRCodeToMinIO = async (
   qrCodeId: string
 ): Promise<string> => {
   try {
+    // Garante que o bucket de QR codes existe
+    await createBucketIfNotExists(QRCODE_BUCKET_NAME);
+    
     const objectName = `qrcodes/${qrCodeId}.png`;
 
     const command = new PutObjectCommand({
