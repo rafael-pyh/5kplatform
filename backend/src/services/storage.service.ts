@@ -8,8 +8,8 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const BUCKET_NAME = process.env.S3_BUCKET || 'images';
-const QRCODE_BUCKET_NAME = process.env.S3_QRCODE_BUCKET || process.env.S3_BUCKET || 'images';
+const BUCKET_NAME = process.env.S3_BUCKET || '5k-storage';
+const QRCODE_BUCKET_NAME = process.env.S3_QRCODE_BUCKET || process.env.S3_BUCKET || '5k-storage';
 const S3_URL = process.env.S3_URL || process.env.S3_ENDPOINT || 'https://s3.amazonaws.com';
 
 /**
