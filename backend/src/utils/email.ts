@@ -2,7 +2,7 @@ import { Resend } from 'resend';
 import { env } from '../config/env';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM = process.env.RESEND_FROM || process.env.EMAIL_FROM || 'noreply@5kplatform.com.br';
+const RESEND_FROM = process.env.RESEND_FROM || process.env.EMAIL_FROM || 'noreply@5kenergiasolar.com.br';
 
 export interface EmailOptions {
   to: string;
