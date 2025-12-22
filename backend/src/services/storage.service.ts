@@ -16,55 +16,53 @@ const S3_REGION = process.env.S3_REGION || 'us-east-1';
  * Constrói a URL pública do arquivo baseado no endpoint e bucket
  */
 const buildPublicUrl = (key: string): string => {
-  console.log(`[buildPublicUrl] Construindo URL para key: ${key}`);
+  console.log(`[buildPublicUrl] ========== INICIANDO ==========`);
+  console.log(`[buildPublicUrl] key: ${key}`);
+  console.log(`[buildPublicUrl] S3_URL (env): ${process.env.S3_URL}`);
   console.log(`[buildPublicUrl] S3_ENDPOINT: ${S3_ENDPOINT}`);
   console.log(`[buildPublicUrl] S3_REGION: ${S3_REGION}`);
-  console.log(`[buildPublicUrl] S3_URL (env): ${process.env.S3_URL}`);
   console.log(`[buildPublicUrl] BUCKET_NAME: ${BUCKET_NAME}`);
   
-  // PRIORITY 1: Se S3_URL está configurado explicitamente para B2, usa ele
-  // S3_URL deve ser: https://f005.backblazeb2.com/file/5k-storage
-  if (process.env.S3_URL && process.env.S3_URL.includes('backblazeb2.com')) {
-    const baseUrl = process.env.S3_URL.replace(/\/$/, ''); // Remove trailing slash
-    // Se S3_URL já inclui /file/{bucket}, apenas concatenar a key
+  // PRIORIDADE MÁXIMA: S3_URL deve ser usado SEMPRE se configurado
+  // Verifica de forma explícita se a variável está definida
+  const s3Url = process.env.S3_URL;
+  console.log(`[buildPublicUrl] S3_URL definido? ${!!s3Url}`);
+  
+  if (s3Url && s3Url.trim().length > 0) {
+    console.log(`[buildPublicUrl] ✅ Usando S3_URL (PRIORITY 1)`);
+    const baseUrl = s3Url.replace(/\/$/, ''); // Remove trailing slash
+    
+    // Se já inclui /file/{bucket}, apenas concatenar a key
     if (baseUrl.includes('/file/')) {
       const url = `${baseUrl}/${key}`;
-      console.log(`[buildPublicUrl] URL final (S3_URL com file): ${url}`);
+      console.log(`[buildPublicUrl] URL final: ${url}`);
       return url;
     } else {
-      // Se S3_URL é apenas a base (https://f005.backblazeb2.com), adicionar /file/{bucket}
+      // Se é apenas a base, adicionar /file/{bucket}
       const url = `${baseUrl}/file/${BUCKET_NAME}/${key}`;
-      console.log(`[buildPublicUrl] URL final (S3_URL sem file): ${url}`);
+      console.log(`[buildPublicUrl] URL final: ${url}`);
       return url;
     }
   }
   
+  console.log(`[buildPublicUrl] ⚠️  S3_URL NÃO definido, usando fallback (PRIORITY 2+)`);
+  
   // PRIORITY 2: Detecta se é Backblaze B2 via endpoint
   if (S3_ENDPOINT.includes('backblazeb2.com')) {
-    // Extrai o padrão do endpoint para descobrir o número do f
-    // Endpoint pode ser: https://s3.us-east-004.backblazeb2.com
-    // ou: https://s3.us-east-005.backblazeb2.com
-    const endpointMatch = S3_ENDPOINT.match(/s3\.([^.]+)\.backblazeb2\.com/);
+    console.log(`[buildPublicUrl] ✅ Backblaze B2 detectado via endpoint`);
+    
+    // Extrai o número da região do S3_REGION (que é ex: us-east-005)
     let regionNumber = '005'; // default
+    const regionMatch = S3_REGION.match(/(\d{3})$/);
     
-    if (endpointMatch) {
-      const region = endpointMatch[1]; // ex: us-east-004
-      // Tenta extrair número: us-east-004 -> 004
-      const numMatch = region.match(/(\d+)$/);
-      if (numMatch) {
-        regionNumber = numMatch[1];
-      }
-    }
-    
-    // Alternativamente, se S3_REGION está configurado, usa ele
-    const regionFromVar = S3_REGION.match(/(\d+)$/)?.[1];
-    if (regionFromVar) {
-      regionNumber = regionFromVar;
+    if (regionMatch) {
+      regionNumber = regionMatch[1];
+      console.log(`[buildPublicUrl] Extraiu regionNumber do S3_REGION: ${regionNumber}`);
     }
     
     const fileHost = `f${regionNumber}.backblazeb2.com`;
     const url = `https://${fileHost}/file/${BUCKET_NAME}/${key}`;
-    console.log(`[buildPublicUrl] URL final (B2): ${url} (regionNumber: ${regionNumber})`);
+    console.log(`[buildPublicUrl] URL final (B2): ${url}`);
     return url;
   }
   
