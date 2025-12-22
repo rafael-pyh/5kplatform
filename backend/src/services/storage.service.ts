@@ -182,6 +182,9 @@ export const uploadFileToMinIO = async (
       try {
         let sharpInstance = sharp(file.buffer);
         
+        // Auto-rotaciona baseado em EXIF metadata
+        sharpInstance = sharpInstance.rotate();
+        
         // Redimensiona para máximo de 1200x1200px
         sharpInstance = sharpInstance.resize(1200, 1200, {
           fit: 'inside',
