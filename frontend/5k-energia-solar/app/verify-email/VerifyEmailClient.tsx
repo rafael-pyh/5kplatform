@@ -10,6 +10,8 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 interface SetPasswordForm {
   password: string;
   confirmPassword: string;
+  city: string;
+  state: string;
 }
 
 export default function VerifyEmailClient() {
@@ -67,6 +69,8 @@ export default function VerifyEmailClient() {
       const response = await api.post('/seller/set-password', {
         token,
         password: data.password,
+        city: data.city,
+        state: data.state,
       });
 
       // Salvar token JWT e dados do usuário
@@ -164,6 +168,49 @@ export default function VerifyEmailClient() {
             />
             {errors.confirmPassword && (
               <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
+            )}
+          </div>
+
+          {/* Cidade */}
+          <div>
+            <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+              Cidade *
+            </label>
+            <input
+              id="city"
+              type="text"
+              {...register('city', {
+                required: 'Cidade é obrigatória',
+              })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="São Paulo"
+            />
+            {errors.city && (
+              <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>
+            )}
+          </div>
+
+          {/* Estado */}
+          <div>
+            <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
+              Estado *
+            </label>
+            <input
+              id="state"
+              type="text"
+              {...register('state', {
+                required: 'Estado é obrigatório',
+                maxLength: {
+                  value: 2,
+                  message: 'Estado deve ter 2 caracteres (ex: SP)',
+                },
+              })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+              placeholder="SP"
+              maxLength={2}
+            />
+            {errors.state && (
+              <p className="mt-1 text-sm text-red-600">{errors.state.message}</p>
             )}
           </div>
 

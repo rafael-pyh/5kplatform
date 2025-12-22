@@ -17,6 +17,8 @@ export interface SellerLoginDto {
 export interface SetPasswordDto {
   token: string;
   password: string;
+  city?: string;
+  state?: string;
 }
 
 export interface VerifyEmailDto {
@@ -132,13 +134,26 @@ export const setPassword = async (data: SetPasswordDto) => {
   // Hash da senha
   const hashedPassword = await hashPassword(data.password);
 
-  // Atualiza pessoa: define senha, verifica email, remove token
-  await person.update({
+  // Prepara dados para atualizar
+  const updateData: any = {
     password: hashedPassword,
     emailVerified: true,
     verificationToken: null,
     tokenExpiry: null,
-  });
+  };
+
+  // Adiciona cidade se fornecida
+  if (data.city) {
+    updateData.city = data.city;
+  }
+
+  // Adiciona estado se fornecido
+  if (data.state) {
+    updateData.state = data.state?.toUpperCase();
+  }
+
+  // Atualiza pessoa
+  await person.update(updateData);
 
   // Gera token JWT
   const token = generateToken({
@@ -153,6 +168,8 @@ export const setPassword = async (data: SetPasswordDto) => {
       email: person.email,
       name: person.name,
       emailVerified: person.emailVerified,
+      city: person.city,
+      state: person.state,
     },
     token,
   };
