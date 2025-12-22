@@ -2,12 +2,12 @@ import api from '../api';
 import { ApiResponse } from '../types';
 
 export const uploadService = {
-  // Upload de foto de perfil do vendedor - retorna base64
+  // Upload de foto de perfil do vendedor - retorna URL
   async uploadProfilePhoto(file: File): Promise<string> {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await api.post<ApiResponse<{ base64: string }>>(
+    const response = await api.post<ApiResponse<{ url: string }>>(
       '/upload/profile',
       formData,
       {
@@ -17,15 +17,15 @@ export const uploadService = {
       }
     );
 
-    return response.data.data!.base64;
+    return response.data.data!.url;
   },
 
-  // Upload de conta de energia - retorna base64
+  // Upload de conta de energia - retorna URL
   async uploadEnergyBill(file: File): Promise<string> {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await api.post<ApiResponse<{ base64: string }>>(
+    const response = await api.post<ApiResponse<{ url: string }>>(
       '/upload/energy-bill',
       formData,
       {
@@ -35,15 +35,15 @@ export const uploadService = {
       }
     );
 
-    return response.data.data!.base64;
+    return response.data.data!.url;
   },
 
-  // Upload de foto do telhado - retorna base64
+  // Upload de foto do telhado - retorna URL
   async uploadRoofPhoto(file: File): Promise<string> {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await api.post<ApiResponse<{ base64: string }>>(
+    const response = await api.post<ApiResponse<{ url: string }>>(
       '/upload/roof',
       formData,
       {
@@ -53,6 +53,6 @@ export const uploadService = {
       }
     );
 
-    return response.data.data!.base64;
+    return response.data.data!.url;
   },
 };

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { uploadFileToMinIO } from "../services/storage.service";
 
-// Upload de foto de perfil - salva no MinIO e retorna URL
+// Upload de foto de perfil - salva no S3 e retorna URL
 export const uploadProfilePhoto = async (req: Request, res: Response) => {
   try {
     if (!req.file) {
@@ -33,7 +33,7 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
   }
 };
 
-// Upload de conta de energia - salva no MinIO e retorna URL
+// Upload de conta de energia - salva no S3 e retorna URL
 export const uploadEnergyBill = async (req: Request, res: Response) => {
   try {
     if (!req.file) {
@@ -65,7 +65,7 @@ export const uploadEnergyBill = async (req: Request, res: Response) => {
   }
 };
 
-// Upload de foto do telhado - salva no MinIO e retorna URL
+// Upload de foto do telhado - salva no S3 e retorna URL
 export const uploadRoofPhoto = async (req: Request, res: Response) => {
   try {
     if (!req.file) {
