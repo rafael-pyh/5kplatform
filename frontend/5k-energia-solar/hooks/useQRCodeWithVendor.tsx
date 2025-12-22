@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { addVendorNameToQRCode } from '../lib/composePoster';
+import { proxyImageUrl } from '../lib/utils/imageUrl';
 
 export default function useQRCodeWithVendor(qrCodeBase64: string, vendorName?: string) {
   const [qrCodeWithVendor, setQrCodeWithVendor] = useState<string>(qrCodeBase64);
@@ -22,7 +23,12 @@ export default function useQRCodeWithVendor(qrCodeBase64: string, vendorName?: s
       try {
         setLoading(true);
         console.log('[useQRCodeWithVendor] Adicionando vendor name ao QR code...');
-        const qrWithName = await addVendorNameToQRCode(qrCodeBase64, vendorName);
+        
+        // Usar proxy para resolver CORS issues no Canvas
+        const proxiedQRUrl = proxyImageUrl(qrCodeBase64);
+        console.log('[useQRCodeWithVendor] URL do QR code (proxied):', proxiedQRUrl);
+        
+        const qrWithName = await addVendorNameToQRCode(proxiedQRUrl || qrCodeBase64, vendorName);
         console.log('[useQRCodeWithVendor] QR code com vendor name criado');
         if (mounted) {
           setQrCodeWithVendor(qrWithName);

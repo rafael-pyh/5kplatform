@@ -40,3 +40,35 @@ export function normalizePersonUrls<T extends {
   // - qrCodeUrl: URL S3 pública do QR code
   return person;
 }
+
+/**
+ * Converte uma URL S3/B2 para usar o proxy de imagem
+ * 
+ * Isso resolve problemas de CORS quando imagens são usadas em Canvas
+ * 
+ * Antes: https://f005.backblazeb2.com/file/5k-storage/qrcodes/...
+ * Depois: /api/image-proxy?url=https://f005.backblazeb2.com/file/5k-storage/qrcodes/...
+ */
+export function proxyImageUrl(imageUrl: string | null | undefined): string | null {
+  if (!imageUrl) return null;
+  
+  // Se já é uma URL de proxy, retorna como está
+  if (imageUrl.includes('/api/image-proxy')) {
+    return imageUrl;
+  }
+  
+  // Se é uma URL S3/B2, converte para proxy
+  if (imageUrl.includes('backblazeb2.com') || imageUrl.includes('amazonaws.com')) {
+    const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
+    console.log('[proxyImageUrl] Convertendo para proxy:', proxyUrl);
+    return proxyUrl;
+  }
+  
+  // Se é data URL, retorna como está (não precisa proxy)
+  if (imageUrl.startsWith('data:')) {
+    return imageUrl;
+  }
+  
+  // Fallback: retorna URL original
+  return imageUrl;
+}
