@@ -52,17 +52,26 @@ const buildPublicUrl = (key: string): string => {
     console.log(`[buildPublicUrl] ✅ Backblaze B2 detectado via endpoint`);
     
     // Extrai o número da região do S3_REGION (que é ex: us-east-005)
-    let regionNumber = '005'; // default
+    let regionNumber = '005'; // default SEMPRE 005 para Backblaze B2
     const regionMatch = S3_REGION.match(/(\d{3})$/);
     
     if (regionMatch) {
       regionNumber = regionMatch[1];
       console.log(`[buildPublicUrl] Extraiu regionNumber do S3_REGION: ${regionNumber}`);
+    } else {
+      // Se não conseguir extrair, força 005
+      console.log(`[buildPublicUrl] ⚠️  Não conseguiu extrair region do S3_REGION, usando padrão: 005`);
+      regionNumber = '005';
     }
+    
+    // IMPORTANTE: Para B2, SEMPRE usa f005, não importa o region
+    // Backblaze usa f00X onde X é baseado na região
+    // us-east-005 = f005
+    regionNumber = '005'; // FORÇA 005 como padrão seguro
     
     const fileHost = `f${regionNumber}.backblazeb2.com`;
     const url = `https://${fileHost}/file/${BUCKET_NAME}/${key}`;
-    console.log(`[buildPublicUrl] URL final (B2): ${url}`);
+    console.log(`[buildPublicUrl] URL final (B2): ${url} (regionNumber forçado: ${regionNumber})`);
     return url;
   }
   
