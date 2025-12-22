@@ -9,25 +9,16 @@ export default function useQRCodeWithVendor(qrCodeBase64: string, vendorName?: s
     let mounted = true;
 
     const generateQRWithVendor = async () => {
-      console.log('[useQRCodeWithVendor] Hook iniciado');
-      console.log('[useQRCodeWithVendor] vendorName:', vendorName);
-      console.log('[useQRCodeWithVendor] qrCodeBase64 existe?', !!qrCodeBase64);
       
       if (!vendorName) {
-        console.log('[useQRCodeWithVendor] Sem vendor name, usando QR code original');
         if (mounted) setQrCodeWithVendor(qrCodeBase64);
         return;
       }
 
       try {
         setLoading(true);
-        console.log('[useQRCodeWithVendor] Adicionando vendor name ao QR code...');
-        
-        // Usar URL diretamente do S3/B2
-        console.log('[useQRCodeWithVendor] URL do QR code:', qrCodeBase64);
         
         const qrWithName = await addVendorNameToQRCode(qrCodeBase64, vendorName);
-        console.log('[useQRCodeWithVendor] QR code com vendor name criado');
         if (mounted) {
           setQrCodeWithVendor(qrWithName);
         }

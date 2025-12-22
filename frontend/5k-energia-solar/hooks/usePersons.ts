@@ -13,7 +13,6 @@ export function usePersons(activeOnly: boolean = false) {
       setLoading(true);
       setError(null);
       const data = await personService.getAll(activeOnly);
-      console.log('[usePersons] Dados carregados:', data.length, 'pessoas');
       setPersons(data);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Erro ao carregar vendedores');

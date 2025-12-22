@@ -54,7 +54,6 @@ export function proxyImageUrl(imageUrl: string | null | undefined): string | nul
   
   // Retorna URL diretamente do S3/B2 sem proxy
   if (imageUrl.includes('backblazeb2.com') || imageUrl.includes('amazonaws.com')) {
-    console.log('[proxyImageUrl] Usando URL direta:', imageUrl);
     return imageUrl;
   }
   

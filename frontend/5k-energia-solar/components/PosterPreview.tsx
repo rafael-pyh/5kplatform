@@ -47,12 +47,10 @@ export default function PosterPreview({
         <div className="relative w-full h-full flex items-center justify-center">
           {customPoster ? (
             <>
-              {console.log('[PosterPreview] Renderizando criativo:', customPoster)}
               <img 
                 src={customPoster} 
                 alt="Criativo selecionado" 
                 className="w-full h-full object-contain"
-                onLoad={() => console.log('[PosterPreview] Imagem carregada com sucesso')}
                 onError={() => console.error('[PosterPreview] Erro ao carregar imagem:', customPoster)}
               />
             </>
@@ -66,12 +64,10 @@ export default function PosterPreview({
         <div ref={previewRef} className="relative w-full h-full">
           {customPoster ? (
             <>
-              {console.log('[PosterPreview] Renderizando poster custom:', customPoster)}
               <img 
                 src={customPoster} 
                 alt="Poster custom" 
                 className="w-full h-full object-contain"
-                onLoad={() => console.log('[PosterPreview] Poster carregado com sucesso')}
                 onError={() => console.error('[PosterPreview] Erro ao carregar poster:', customPoster)}
               />
             </>

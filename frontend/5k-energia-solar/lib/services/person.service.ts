@@ -14,7 +14,6 @@ export const personService = {
     const params = activeOnly ? '?active=true' : '';
     const response = await api.get<ApiResponse<Person[]>>(`/person${params}`);
     const persons = response.data.data || [];
-    console.log('[personService.getAll] Resposta da API recebida:', persons.length, 'pessoas');
     const normalized = persons.map(normalizePersonUrls);
     return normalized;
   },

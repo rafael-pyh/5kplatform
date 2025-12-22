@@ -67,8 +67,6 @@ export default function SellersPage() {
 
   // Memoized handlers
   const handleOpenQRModal = useCallback((person: Person) => {
-    console.log('[Sellers Page] Abrindo QR Modal para:', person.name);
-    console.log('[Sellers Page] person.qrCodeUrl existe?', !!person.qrCodeUrl);
     
     if (!isValidQRCode(person.qrCodeUrl)) {
       console.error('[Sellers Page] Falha: person.qrCodeUrl está inválido ou vazio');

@@ -65,34 +65,15 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
   // manage escape key and body overflow
   useModalEscape(isOpen, onClose);
 
-  // Log para debug do QR code
-  useEffect(() => {
-    if (isOpen) {
-      console.log('[QRCodeModal] Modal aberto');
-      console.log('[QRCodeModal] personName:', personName);
-      console.log('[QRCodeModal] qrCodeBase64 existe?', !!qrCodeBase64);
-      console.log('[QRCodeModal] qrCodeBase64 é válido?', isValidQRCode(qrCodeBase64));
-    }
-  }, [isOpen, qrCodeBase64, personName]);
-
   // Carregar criativos ao abrir o modal
   useEffect(() => {
     if (!isOpen) return;
     
     const fetchCriativos = async () => {
       try {
-        console.log('[QRCodeModal] Carregando criativos...');
         setLoadingCriativos(true);
         const response = await api.get<any>('/creatives?limit=50');
         const criativos = response.data.data.criativos || [];
-        console.log('[QRCodeModal] Criativos carregados:', criativos.length);
-        criativos.forEach((criativo: any, index: number) => {
-          console.log(`[QRCodeModal] Criativo ${index}: ${criativo.name}`);
-          console.log(`[QRCodeModal]   - imageUrl: ${criativo.imageUrl}`);
-          console.log(`[QRCodeModal]   - tipo: ${typeof criativo.imageUrl}`);
-          console.log(`[QRCodeModal]   - começa com http? ${criativo.imageUrl?.startsWith('http')}`);
-          console.log(`[QRCodeModal]   - começa com data:? ${criativo.imageUrl?.startsWith('data:')}`);
-        });
         setCriativos(criativos);
       } catch (error) {
         console.error('[QRCodeModal] Erro ao carregar criativos:', error);
