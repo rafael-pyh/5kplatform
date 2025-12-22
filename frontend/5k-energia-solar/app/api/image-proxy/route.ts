@@ -6,13 +6,17 @@ import { NextRequest, NextResponse } from 'next/server';
  * Resolve problemas de CORS quando imagens são usadas em Canvas
  * 
  * Uso:
- * /api/image-proxy?url=https://f005.backblazeb2.com/file/5k-storage/...
+ * GET /api/image-proxy?url=https://f005.backblazeb2.com/file/5k-storage/...
  */
+
+export const dynamic = 'force-dynamic'; // Não cachear em build time
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const imageUrl = searchParams.get('url');
+    const url = new URL(request.url);
+    const imageUrl = url.searchParams.get('url');
+
+    console.log('[image-proxy] Recebido request para:', request.url);
 
     if (!imageUrl) {
       console.error('[image-proxy] URL não fornecida');
@@ -22,16 +26,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    console.log('[image-proxy] Buscando imagem:', imageUrl);
+
     // Validar que é uma URL de S3/B2
-    if (!imageUrl.includes('backblazeb2.com') && !imageUrl.includes('amazonaws.com')) {
+    if (!imageUrl.includes('backblazeb2.com') && !imageUrl.includes('amazonaws.com') && !imageUrl.includes('s3.')) {
       console.error('[image-proxy] URL não é de S3/B2:', imageUrl);
       return NextResponse.json(
         { error: 'Invalid image source' },
         { status: 403 }
       );
     }
-
-    console.log('[image-proxy] Buscando imagem:', imageUrl);
 
     // Fazer fetch da imagem no servidor (sem problemas de CORS)
     const response = await fetch(imageUrl, {
@@ -42,6 +46,7 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       console.error('[image-proxy] Erro ao buscar imagem:', response.status, response.statusText);
+      console.error('[image-proxy] URL:', imageUrl);
       return NextResponse.json(
         { error: `Failed to fetch image: ${response.statusText}` },
         { status: response.status }
@@ -75,8 +80,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('[image-proxy] Erro:', error.message);
+    console.error('[image-proxy] Stack:', error.stack);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     );
   }
@@ -84,6 +90,7 @@ export async function GET(request: NextRequest) {
 
 // Suportar preflight CORS requests
 export async function OPTIONS(request: NextRequest) {
+  console.log('[image-proxy] Recebido OPTIONS request');
   return new NextResponse(null, {
     status: 200,
     headers: {
