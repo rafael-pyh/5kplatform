@@ -69,11 +69,11 @@ export const createPerson = async (data: CreatePersonDto) => {
     hashedPassword = await hashPassword(data.password);
   }
 
-  // Valida foto de perfil (base64) se fornecida
-  const MAX_PROFILE_BYTES = 2 * 1024 * 1024; // 2MB
+  // Valida foto de perfil (URL) se fornecida
   if (data.photoBase64) {
-    Validator.isBase64DataUrl(data.photoBase64, 'Foto de perfil');
-    Validator.maxBase64Size(data.photoBase64, MAX_PROFILE_BYTES, 'Foto de perfil');
+    if (typeof data.photoBase64 !== 'string' || data.photoBase64.trim() === '') {
+      throw new Error('Foto de perfil deve ser uma URL válida');
+    }
   }
 
   // Cria a pessoa no banco (sempre como SELLER)

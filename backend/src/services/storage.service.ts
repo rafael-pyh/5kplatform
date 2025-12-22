@@ -7,6 +7,7 @@ import {
   CreateBucketCommand 
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import sharp from 'sharp';
 
 const BUCKET_NAME = process.env.S3_BUCKET || '5k-storage';
 const S3_ENDPOINT = process.env.S3_ENDPOINT || 'https://s3.amazonaws.com';
@@ -150,7 +151,7 @@ export const initializeMinIOBucket = async () => {
 };
 
 /**
- * Faz upload de arquivo para S3
+ * Faz upload de arquivo para S3 com compressão de imagens
  */
 export const uploadFileToMinIO = async (
   file: Express.Multer.File,
@@ -166,11 +167,55 @@ export const uploadFileToMinIO = async (
     console.log(`[uploadFileToMinIO] Pasta: ${folderName}`);
     console.log(`[uploadFileToMinIO] Nome do objeto: ${objectName}`);
     
+    // Detecta se é uma imagem
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+    const fileExtension = fileName.split('.').pop()?.toLowerCase() || '';
+    const isImage = imageExtensions.includes(fileExtension);
+    
+    let fileBuffer = file.buffer;
+    let contentType = file.mimetype;
+    
+    // Comprime imagem se for arquivo de imagem
+    if (isImage) {
+      console.log(`[uploadFileToMinIO] Comprimindo imagem: ${fileName}`);
+      
+      try {
+        let sharpInstance = sharp(file.buffer);
+        
+        // Redimensiona para máximo de 1200x1200px
+        sharpInstance = sharpInstance.resize(1200, 1200, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        });
+        
+        // Aplica compressão específica por tipo
+        if (fileExtension === 'png') {
+          // PNG: 8-bit color
+          sharpInstance = sharpInstance.png({ 
+            compressionLevel: 9,
+            palette: true,
+          });
+        } else if (fileExtension === 'webp') {
+          // WebP: quality 80
+          sharpInstance = sharpInstance.webp({ quality: 80 });
+        } else {
+          // JPEG/JPG: quality 80
+          sharpInstance = sharpInstance.jpeg({ quality: 80 });
+        }
+        
+        fileBuffer = await sharpInstance.toBuffer();
+        console.log(`[uploadFileToMinIO] ✅ Imagem comprimida com sucesso`);
+      } catch (compressionError) {
+        console.warn(`[uploadFileToMinIO] ⚠️  Erro ao comprimir imagem, usando original:`, compressionError);
+        // Continua com o arquivo original se a compressão falhar
+      }
+    }
+    
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
       Key: objectName,
-      Body: file.buffer,
-      ContentType: file.mimetype,
+      Body: fileBuffer,
+      ContentType: contentType,
     });
 
     await s3Client.send(command);
