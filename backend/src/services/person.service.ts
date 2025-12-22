@@ -34,6 +34,15 @@ export interface UpdatePersonDto {
 }
 
 export const createPerson = async (data: CreatePersonDto) => {
+  console.log(`[createPerson] Iniciando criação de pessoa com dados:`, {
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    photoBase64: data.photoBase64 ? `[URL com ${data.photoBase64.length} chars]` : 'SEM FOTO',
+    city: data.city,
+    state: data.state,
+  });
+
   // Verifica se email já existe
   if (data.email) {
     const existingPerson = await Person.findOne({
@@ -71,9 +80,17 @@ export const createPerson = async (data: CreatePersonDto) => {
 
   // Valida foto de perfil (URL) se fornecida
   if (data.photoBase64) {
+    console.log(`[createPerson] Validando photoBase64:`, {
+      tipo: typeof data.photoBase64,
+      length: data.photoBase64.length,
+      trimmed: data.photoBase64.trim().length,
+    });
     if (typeof data.photoBase64 !== 'string' || data.photoBase64.trim() === '') {
       throw new Error('Foto de perfil deve ser uma URL válida');
     }
+    console.log(`[createPerson] ✅ photoBase64 válido`);
+  } else {
+    console.log(`[createPerson] ⚠️  Nenhuma foto de perfil fornecida`);
   }
 
   // Cria a pessoa no banco (sempre como SELLER)
