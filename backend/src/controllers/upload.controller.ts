@@ -4,6 +4,14 @@ import { uploadFileToMinIO } from "../services/storage.service";
 // Upload de foto de perfil - salva no S3 e retorna URL
 export const uploadProfilePhoto = async (req: Request, res: Response) => {
   try {
+    console.log('[uploadProfilePhoto] Iniciando upload de foto de perfil');
+    console.log('[uploadProfilePhoto] Arquivo recebido:', req.file ? {
+      fieldname: req.file.fieldname,
+      originalname: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype,
+    } : 'NENHUM ARQUIVO');
+
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -17,6 +25,9 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
       "profile-photos"
     );
 
+    console.log('[uploadProfilePhoto] ✅ Upload concluído');
+    console.log('[uploadProfilePhoto] URL gerada:', fileUrl);
+
     res.json({
       success: true,
       data: { 
@@ -26,6 +37,7 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
+    console.error('[uploadProfilePhoto] ❌ Erro:', error.message);
     res.status(500).json({
       success: false,
       message: error.message,
