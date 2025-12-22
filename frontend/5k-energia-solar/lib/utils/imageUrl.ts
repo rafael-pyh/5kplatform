@@ -52,19 +52,13 @@ export function normalizePersonUrls<T extends {
 export function proxyImageUrl(imageUrl: string | null | undefined): string | null {
   if (!imageUrl) return null;
   
-  // Se já é uma URL de proxy, retorna como está
-  if (imageUrl.includes('/api/image-proxy')) {
+  // Retorna URL diretamente do S3/B2 sem proxy
+  if (imageUrl.includes('backblazeb2.com') || imageUrl.includes('amazonaws.com')) {
+    console.log('[proxyImageUrl] Usando URL direta:', imageUrl);
     return imageUrl;
   }
   
-  // Se é uma URL S3/B2, converte para proxy
-  if (imageUrl.includes('backblazeb2.com') || imageUrl.includes('amazonaws.com')) {
-    const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
-    console.log('[proxyImageUrl] Convertendo para proxy:', proxyUrl);
-    return proxyUrl;
-  }
-  
-  // Se é data URL, retorna como está (não precisa proxy)
+  // Se é data URL, retorna como está
   if (imageUrl.startsWith('data:')) {
     return imageUrl;
   }
