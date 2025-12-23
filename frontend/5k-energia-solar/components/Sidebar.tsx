@@ -90,7 +90,7 @@ export default function Sidebar({ className }: { className?: string }) {
   }
 
   return (
-    <div className={`w-64 bg-white border-r border-gray-200 flex flex-col h-screen fixed left-0 top-0 ${className || ''}`}>
+    <div className={`w-64 bg-linear-to-b from-blue-50 to-green-50 border-r border-gray-200 flex flex-col h-screen fixed left-0 top-0 ${className || ''}`}>
       {/* Logo */}
       <div className="pt-6 pl-6 flex flex-col gap-4 pb-4 border-b w-full border-gray-200">
         <div className="flex items-center gap-3 mb-4">
