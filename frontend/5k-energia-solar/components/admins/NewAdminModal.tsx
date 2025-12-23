@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { adminService } from '@/lib/services';
 import { CreateAdminDto } from '@/lib/types';
+import PasswordField from '@/components/ui/PasswordField';
 
 interface NewAdminModalProps {
   isOpen: boolean;
@@ -162,18 +163,15 @@ export default function NewAdminModal({ isOpen, onClose, onSuccess }: NewAdminMo
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                   Senha *
                 </label>
-                <input
-                  id="password"
-                  type="password"
-                  {...register('password', {
+                <PasswordField
+                  name="password"
+                  register={register as any}
+                  registerOptions={{
                     required: 'Senha é obrigatória',
-                    minLength: {
-                      value: 6,
-                      message: 'Senha deve ter no mínimo 6 caracteres',
-                    },
-                  })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    minLength: { value: 6, message: 'Senha deve ter no mínimo 6 caracteres' },
+                  }}
                   placeholder="******"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
 import Link from "next/link";
+import PasswordField from '@/components/ui/PasswordField';
 import { registerAction } from "../actions/register";
 
 const RegisterPage = () => {
@@ -202,15 +203,12 @@ const RegisterPage = () => {
               >
                 Senha
               </label>
-              <input
-                id="password"
-                type="password"
+              <PasswordField
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 placeholder="••••••••"
-                required
+                className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
               />
             </div>
             {/* Repeat Password */}
@@ -221,15 +219,12 @@ const RegisterPage = () => {
               >
                 Repita a Senha
               </label>
-              <input
-                id="repeatPassword"
-                type="password"
+              <PasswordField
                 name="repeatPassword"
                 value={formData.repeatPassword}
                 onChange={handleChange}
-                className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 placeholder="••••••••"
-                required
+                className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
               />
             </div>
             {/* Phone */}

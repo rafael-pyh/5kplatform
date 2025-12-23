@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoginCredentials } from '@/lib/types';
 import Link from 'next/link';
+import PasswordField from '@/components/ui/PasswordField';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -70,18 +71,15 @@ export default function LoginPage() {
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Senha
               </label>
-              <input
-                id="password"
-                type="password"
-                {...register('password', {
+              <PasswordField
+                name="password"
+                register={register as any}
+                registerOptions={{
                   required: 'Senha é obrigatória',
-                  minLength: {
-                    value: 8,
-                    message: 'Senha deve ter no mínimo 8 caracteres',
-                  },
-                })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  minLength: { value: 8, message: 'Senha deve ter no mínimo 8 caracteres' },
+                }}
                 placeholder="••••••••"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
               />
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
