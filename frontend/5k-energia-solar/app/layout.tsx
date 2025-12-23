@@ -16,9 +16,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <div className="page-gradient">
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </div>
         <Toaster position="top-right" />
       </body>
     </html>
