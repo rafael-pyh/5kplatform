@@ -75,20 +75,22 @@ export default function SellerDashboardPage() {
         return;
       }
 
-      // Atualiza dados do usuário do backend e carrega os dados
-      await refreshUser();
-      loadData();
+      // Atualiza dados do usuário no backend e carrega os dados usando o usuário atualizado
+      const updatedUser = await refreshUser();
+      await loadData(updatedUser);
     };
 
     initDashboard();
   }, [authLoading]);
 
-  const loadData = async () => {
+  const loadData = async (latestUser?: any) => {
     try {
       setLoading(true);
 
       // Usa os dados do usuário do Context API
-      if (!user) {
+      const currentUser = latestUser || user;
+
+      if (!currentUser) {
         router.push('/login');
         return;
       }
@@ -99,19 +101,19 @@ export default function SellerDashboardPage() {
       setSeller(loadedSeller);
 
       // Validações usando dados do Context API (mais atualizados)
-      if (!user.emailVerified) {
+      if (!currentUser.emailVerified) {
         setBlockedReason('unverified');
         setLoading(false);
         return;
       }
 
-      if (user.approvalStatus !== 'approved') {
+      if (currentUser.approvalStatus !== 'approved') {
         setBlockedReason('pendingApproval');
         setLoading(false);
         return;
       }
 
-      if (user.active === false) {
+      if (currentUser.active === false) {
         setBlockedReason('inactive');
         setLoading(false);
         return;
@@ -219,14 +221,15 @@ export default function SellerDashboardPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-8">
               <Image src="/5klogo.png" alt="Logo 5K Energia Solar" width={100} height={100} />
-              <div className="flex gap-2">
-                <Image
-                  src={seller?.photoBase64 || '/default-avatar.png'}
-                  alt="Foto do Vendedor"
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover"
-                />
+              <div className="flex items-center gap-2">
+                <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0">
+                  <Image
+                    src={seller?.photoBase64 || '/default-avatar.png'}
+                    alt="Foto do Vendedor"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
                 <div>
                   <p className="text-sm text-gray-600">{seller?.name}</p>
                   <p className="text-xs text-gray-500">{seller?.email}</p>

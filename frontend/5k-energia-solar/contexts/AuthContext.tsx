@@ -13,7 +13,7 @@ interface AuthContextType {
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
   updateUser: (user: User) => void;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<User | void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -109,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userData = response.data.data;
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
+      return userData;
     } catch (error) {
       console.error('Erro ao atualizar usuário:', error);
       // Se falhar, faz logout
