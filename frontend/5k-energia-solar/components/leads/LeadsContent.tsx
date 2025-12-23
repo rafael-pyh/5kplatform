@@ -32,10 +32,17 @@ const LeadsContent = ({
       <LeadFilters
         additionalFilters={additionalFilters}
         onAdditionalFiltersChange={setAdditionalFilters}
-        cities={Array.from(new Set(leads.map((lead: any) => lead.city).filter((city: any) => Boolean(city)))).sort()}
-        states={Array.from(new Set(leads.map((lead: any) => lead.state).filter((s: any) => Boolean(s)))).sort()}
-        years={Array.from(new Set(leads.map((l: any) => new Date(l.createdAt).getFullYear().toString()))).sort((a: any,b: any) => Number(b) - Number(a))}
-        sellers={Array.from(new Map(leads.map((lead: any) => [lead.owner?.id ?? lead.owner?.name, { id: lead.owner?.id ?? lead.owner?.name, name: lead.owner?.name ?? lead.owner?.email ?? lead.owner?.id }])).values()).filter((s: any) => Boolean(s.id && s.name))}
+        cities={Array.from(new Set(leads.map((lead: any) => lead.city).filter((city: any) => Boolean(city)))).map(String).sort() as string[]}
+        states={Array.from(new Set(leads.map((lead: any) => lead.state).filter((s: any) => Boolean(s)))).map(String).sort() as string[]}
+        years={Array.from(new Set(leads.map((l: any) => new Date(l.createdAt).getFullYear().toString()))).map(String).sort((a: string,b: string) => Number(b) - Number(a)) as string[]}
+        sellers={(() => {
+          const sellersArr = Array.from(
+            new Map(
+              leads.map((lead: any) => [lead.owner?.id ?? lead.owner?.name, { id: lead.owner?.id ?? lead.owner?.name, name: lead.owner?.name ?? lead.owner?.email ?? lead.owner?.id }])
+            ).values()
+          ).filter((s: any) => Boolean(s?.id && s?.name));
+          return sellersArr as { id: string; name: string }[];
+        })()}
       />
 
       <Card className="overflow-hidden w-full min-w-0 mt-4" padding="xs">
