@@ -41,7 +41,7 @@ function ConfirmEmailContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-500 to-green-500 text-white">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50 text-white">
         <p className="text-lg">Confirmando seu email...</p>
       </div>
     );
