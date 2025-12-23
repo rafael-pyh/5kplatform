@@ -1,114 +1,36 @@
 'use client';
 
-import { useState, useCallback, useMemo, Suspense, lazy } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
-import Card from '@/components/ui/Card';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import LeadTable from '@/components/leads/LeadTable';
-import LeadTabs from '@/components/leads/LeadTabs';
-import LeadFilters from '@/components/leads/LeadFilters';
-import { useLeads } from '@/lib/hooks/useLeads';
-import { Lead, LeadStatus } from '@/lib/types';
-import { useToggle } from '@/hooks/useToggle';
 import { exportToCSV } from '@/lib/utils/exportToCSV';
-import Button from '@/components/ui/Button';
-import { Icon } from '@/components/ui/Icon';
-
-const LeadDetailsModal = lazy(() => import('@/components/leads/LeadDetailsModal'));
-const UpdateStatusModal = lazy(() => import('@/components/leads/UpdateStatusModal'));
-
-type TabType = 'all' | 'bought' | 'negotiation' | 'cancelled';
+import LeadsPageHeader from '@/components/leads/LeadsPageHeader';
+import LeadsContent from '@/components/leads/LeadsContent';
+import useLeadsPage from '@/hooks/useLeadsPage';
 
 export default function LeadsPage() {
-  const { leads, loading, error, refetch, filterByStatus, getCounts } = useLeads();
-  const [activeTab, setActiveTab] = useState<TabType>('all');
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [additionalFilters, setAdditionalFilters] = useState<{
-    name: string;
-    city: string;
-    state: string;
-    status: string;
-    owner?: string;
-    month?: string;
-    year?: string;
-  }>({
-    name: '',
-    city: '',
-    state: '',
-    status: 'all',
-    owner: '',
-    month: '',
-    year: '',
-  });
-
-  const [isDetailsModalOpen, toggleDetailsModal, setIsDetailsModalOpen] = useToggle(false);
-  const [isStatusModalOpen, toggleStatusModal, setIsStatusModalOpen] = useToggle(false);
-
-  // Filtra leads baseado na aba ativa
-  const filteredLeads = useMemo(() => {
-    if (activeTab === 'all') return leads;
-
-    const statusMap: Record<Exclude<TabType, 'all'>, LeadStatus> = {
-      bought: LeadStatus.BOUGHT,
-      negotiation: LeadStatus.NEGOTIATION,
-      cancelled: LeadStatus.CANCELLED,
-    };
-
-    return filterByStatus(statusMap[activeTab as Exclude<TabType, 'all'>]);
-  }, [leads, activeTab, filterByStatus]);
-
-  const finalFilteredLeads = useMemo(() => {
-    return filteredLeads.filter((lead) => {
-      const matchesName = additionalFilters.name ? lead.name.toLowerCase().includes(additionalFilters.name.toLowerCase()) : true;
-      const matchesCity = additionalFilters.city ? lead.city?.toLowerCase() === additionalFilters.city.toLowerCase() : true;
-      const matchesState = additionalFilters.state ? lead.state?.toLowerCase() === additionalFilters.state.toLowerCase() : true;
-      const matchesOwner = additionalFilters.owner
-        ? (lead.owner?.id ? lead.owner.id === additionalFilters.owner : (lead.owner?.name || '').toLowerCase() === additionalFilters.owner.toLowerCase())
-        : true;
-
-      const matchesMonth = additionalFilters.month
-        ? new Date(lead.createdAt).getMonth() + 1 === Number(additionalFilters.month)
-        : true;
-
-      const matchesYear = additionalFilters.year
-        ? new Date(lead.createdAt).getFullYear() === Number(additionalFilters.year)
-        : true;
-
-      return matchesName && matchesCity && matchesState && matchesOwner && matchesMonth && matchesYear;
-    });
-  }, [filteredLeads, additionalFilters]);
-
-  // Handlers
-  const handleViewDetails = useCallback((lead: Lead) => {
-    setSelectedLead(lead);
-    setIsDetailsModalOpen(true);
-  }, [setIsDetailsModalOpen]);
-
-  const handleUpdateStatus = useCallback((lead: Lead) => {
-    setSelectedLead(lead);
-    setIsStatusModalOpen(true);
-  }, [setIsStatusModalOpen]);
-
-  const handleStatusUpdateSuccess = useCallback(() => {
-    refetch();
-    setIsStatusModalOpen(false);
-    setSelectedLead(null);
-  }, [refetch, setIsStatusModalOpen]);
-
-  const handleDetailsModalClose = useCallback(() => {
-    setIsDetailsModalOpen(false);
-    setSelectedLead(null);
-  }, [setIsDetailsModalOpen]);
-
-  const counts = useMemo(() => getCounts(), [getCounts]);
+  const {
+    leads,
+    loading,
+    error,
+    activeTab,
+    setActiveTab,
+    additionalFilters,
+    setAdditionalFilters,
+    counts,
+    finalFilteredLeads,
+    handleViewDetails,
+    handleUpdateStatus,
+    isDetailsModalOpen,
+    isStatusModalOpen,
+    selectedLead,
+    handleDetailsModalClose,
+    handleStatusUpdateSuccess,
+  } = useLeadsPage();
 
   if (error) {
     return (
       <DashboardLayout>
         <div className="flex-1 p-8">
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-            {error}
-          </div>
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">{error}</div>
         </div>
       </DashboardLayout>
     );
@@ -117,89 +39,25 @@ export default function LeadsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-4 w-full min-w-0">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-700">Leads</h1>
-              <p className="text-gray-600 mt-1">Gerencie os leads capturados através dos QR codes</p>
-            </div>
-          </div>
-          <div className="flex gap-4 h-full items-start self-start">
-            <Button
-              onClick={() => exportToCSV(finalFilteredLeads, 'leads.csv')}
-              variant='outline-blue'
-              disabled={finalFilteredLeads.length === 0}
-              className="w-full md:w-auto"
-            >
-              <Icon icon="bi-filetype-csv" className="w-5 h-5 mr-2" />
-              Exportar CSV
-            </Button>
-          </div>
-        </div>
+        <LeadsPageHeader onExport={() => exportToCSV(finalFilteredLeads, 'leads.csv')} disabled={finalFilteredLeads.length === 0} />
 
-        {/* Filters Section */}
-        <LeadFilters
+        <LeadsContent
+          leads={leads}
+          loading={loading}
+          finalFilteredLeads={finalFilteredLeads}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
           additionalFilters={additionalFilters}
-          onAdditionalFiltersChange={setAdditionalFilters}
-          cities={Array.from(new Set(leads.map((lead) => lead.city).filter((city): city is string => Boolean(city)))).sort()}
-          states={Array.from(new Set(leads.map((lead) => lead.state).filter((state): state is string => Boolean(state)))).sort()}
-          years={Array.from(new Set(leads.map((l) => new Date(l.createdAt).getFullYear().toString()))).sort((a,b) => Number(b) - Number(a))}
-          sellers={Array.from(new Map(leads.map((lead) => [lead.owner?.id ?? lead.owner?.name, { id: lead.owner?.id ?? lead.owner?.name, name: lead.owner?.name ?? lead.owner?.email ?? lead.owner?.id }])).values()).filter((s): s is { id: string; name: string } => Boolean(s.id && s.name))}
-          
+          setAdditionalFilters={setAdditionalFilters}
+          counts={counts}
+          onViewDetails={handleViewDetails}
+          onUpdateStatus={handleUpdateStatus}
+          isDetailsModalOpen={isDetailsModalOpen}
+          isStatusModalOpen={isStatusModalOpen}
+          selectedLead={selectedLead}
+          onDetailsClose={handleDetailsModalClose}
+          onStatusSuccess={handleStatusUpdateSuccess}
         />
-
-        {/* Content Card */}
-        <Card className="overflow-hidden w-full min-w-0 mt-4" padding="xs">
-          {/* Tabs */}
-          <LeadTabs
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            counts={counts}
-          />
-
-          {/* Table */}
-          <div className="overflow-x-auto w-full">
-            {loading ? (
-              <div className="flex justify-center py-1">
-                <LoadingSpinner size="lg" />
-              </div>
-            ) : (
-              <LeadTable
-                leads={finalFilteredLeads}
-                onViewDetails={handleViewDetails}
-                onUpdateStatus={handleUpdateStatus}
-              />
-            )}
-          </div>
-        </Card>
-
-        {/* Modals */}
-        {isDetailsModalOpen && selectedLead && (
-          <Suspense fallback={null}>
-            <LeadDetailsModal
-              isOpen={isDetailsModalOpen}
-              onClose={handleDetailsModalClose}
-              lead={selectedLead}
-              className="max-w-full sm:max-w-lg mx-auto"
-            />
-          </Suspense>
-        )}
-
-        {isStatusModalOpen && selectedLead && (
-          <Suspense fallback={null}>
-            <UpdateStatusModal
-              isOpen={isStatusModalOpen}
-              onClose={() => {
-                setIsStatusModalOpen(false);
-                setSelectedLead(null);
-              }}
-              onSuccess={handleStatusUpdateSuccess}
-              lead={selectedLead}
-              className="max-w-full sm:max-w-lg mx-auto"
-            />
-          </Suspense>
-        )}
       </div>
     </DashboardLayout>
   );
