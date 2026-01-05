@@ -222,7 +222,7 @@ export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: Ed
                 <PasswordField
                   name="password"
                   register={register as any}
-                  registerOptions={{ minLength: { value: 6, message: 'Senha deve ter no mínimo 6 caracteres' } }}
+                  registerOptions={{ minLength: { value: 8, message: 'Senha deve ter no mínimo 8 caracteres, incluindo letras e números' } }}
                   placeholder="******"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />

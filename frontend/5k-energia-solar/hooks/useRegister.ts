@@ -82,14 +82,28 @@ export function useRegister(initial: Partial<FormData> = {}) {
     try {
       await registerAction(formData as any);
       toast.success('Registro criado com sucesso! QR Code gerado.');
-      // router.push('/login'); // keep optional
+      
+      // Limpar o formulário
+      setFormData({
+        name: '',
+        email: '',
+        password: '',
+        repeatPassword: '',
+        phone: '',
+        pixKey: '',
+        photoBase64: '',
+        city: '',
+        state: '',
+      });
+      
+      router.push('/login');
     } catch (error) {
       console.error('Erro ao criar registro:', error);
       toast.error('Erro ao criar registro.');
     } finally {
       setIsLoading(false);
     }
-  }, [formData, validateForm]);
+  }, [formData, validateForm, router]);
 
   return {
     states,

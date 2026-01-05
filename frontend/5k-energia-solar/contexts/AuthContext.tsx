@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('[AuthContext] Erro no login:', error.response?.status, error.response?.data);
       const message = error.response?.data?.message || 'Erro ao fazer login';
-      toasw error;
+      toast.error(message);
     }
   };
 

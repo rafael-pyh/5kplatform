@@ -59,7 +59,7 @@ export default function LoginForm({ form, onSubmit, isLoading }: Props) {
                 register={register as any}
                 registerOptions={{
                   required: 'Senha é obrigatória',
-                  minLength: { value: 8, message: 'Senha deve ter no mínimo 8 caracteres' },
+                  minLength: { value: 8, message: 'Senha deve ter no mínimo 8 caracteres, incluindo letras e números' },
                 }}
                 placeholder="••••••••"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
