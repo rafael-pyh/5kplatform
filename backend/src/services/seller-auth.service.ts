@@ -6,7 +6,7 @@ import { Validator } from "../shared/Validator";
 import { UnauthorizedError, NotFoundError, BadRequestError } from "../shared/errors";
 import crypto from "crypto";
 import { Op } from "sequelize";
-import { sendPasswordResetEmail } from "../utils/email";
+import { sendPasswordResetEmail, sendVerificationEmail } from "../utils/email";
 
 // ==================== DTOs ====================
 export interface SellerLoginDto {
@@ -255,4 +255,37 @@ export const getSellerProfile = async (sellerId: string) => {
   }
 
   return person;
+};
+export const resendVerificationEmail = async (email: string) => {
+  Validator.required(email, 'Email');
+  Validator.email(email);
+
+  const person = await Person.findOne({
+    where: { email },
+  });
+
+  if (!person || !person.email) {
+    // Não revela se o email existe por segurança
+    return { message: "Se o email existir na plataforma, um novo link de verificação será enviado." };
+  }
+
+  // Se o email já foi verificado, avisa
+  if (person.emailVerified) {
+    return { message: "Este email já foi verificado. Você pode fazer login normalmente." };
+  }
+
+  // Gera novo token
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiry = new Date();
+  expiry.setHours(expiry.getHours() + 24); // 24 horas
+
+  await person.update({
+    verificationToken: token,
+    tokenExpiry: expiry,
+  });
+
+  // Envia email com novo token
+  await sendVerificationEmail(person.email, person.name, token);
+
+  return { message: "Um novo link de verificação foi enviado para seu email." };
 };

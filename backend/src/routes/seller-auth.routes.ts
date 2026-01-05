@@ -10,6 +10,7 @@ router.get("/verify/:token", sellerAuthController.verifyEmailToken);
 router.post("/set-password", sellerAuthController.setPassword);
 router.post("/forgot-password", sellerAuthController.requestPasswordReset);
 router.post("/reset-password", sellerAuthController.resetPassword);
+router.post("/resend-verification-email", sellerAuthController.resendVerificationEmail);
 
 // Rotas protegidas (requerem autenticação de vendedor)
 router.get("/profile", authenticate, requireSeller, sellerAuthController.getSellerProfile);

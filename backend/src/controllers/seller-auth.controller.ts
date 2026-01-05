@@ -70,3 +70,12 @@ export const getSellerProfile = async (req: Request, res: Response, next: NextFu
     next(error);
   }
 };
+export const resendVerificationEmail = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email } = req.body;
+    const result = await sellerAuthService.resendVerificationEmail(email);
+    return ResponseBuilder.success(res, result);
+  } catch (error) {
+    next(error);
+  }
+};

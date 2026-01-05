@@ -113,3 +113,27 @@ export async function confirmEmailAction(token: string): Promise<{ message: stri
     throw new Error(error.message || "Erro ao confirmar email");
   }
 }
+export async function resendVerificationEmailAction(email: string): Promise<{ message: string }> {
+  try {
+    const apiUrl = process.env.API_URL || 'http://localhost:4000';
+
+    const response = await fetch(`${apiUrl}/api/seller/resend-verification-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Erro ao resolicitar email de verificação");
+    }
+
+    const result = await response.json();
+    return result.data || result;
+  } catch (error: any) {
+    console.error('Error in resendVerificationEmailAction:', error);
+    throw new Error(error.message || "Erro ao resolicitar email de verificação");
+  }
+}
