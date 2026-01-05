@@ -1,11 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import QRCodeModal from '@/components/QRCodeModal';
 import SellerHeader from '@/components/seller/SellerHeader';
 import StatsCards from '@/components/seller/StatsCards';
 import LeadsTable from '@/components/seller/LeadsTable';
-import BlockedNotice from '@/components/seller/BlockedNotice';
 import useSellerDashboard from '@/hooks/useSellerDashboard';
 
 export default function SellerDashboardPage() {
@@ -22,6 +23,18 @@ export default function SellerDashboardPage() {
     userRole,
   } = useSellerDashboard();
 
+  const [blocked, setBlocked] = useState(false);
+
+  useEffect(() => {
+    if (blockedReason) {
+      const message = blockedReason === 'pendingApproval' ? 'Sua conta está pendente de aprovação.' : blockedReason === 'unverified' ? 'E-mail de verificação necessário para acessar o dashboard.' : 'Sua conta está bloqueada. Entre em contato com o suporte.';
+      toast.error(message, { duration: 1000 });
+      setBlocked(true);
+    } else {
+      setBlocked(false);
+    }
+  }, [blockedReason]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -30,13 +43,9 @@ export default function SellerDashboardPage() {
     );
   }
 
-  if (blockedReason) {
-    return <BlockedNotice reason={blockedReason} onLogout={handleLogout} />;
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <SellerHeader seller={seller} onOpenQR={openQRModal} onLogout={handleLogout} />
+      <SellerHeader seller={seller} onOpenQR={openQRModal} onLogout={handleLogout} blocked={blocked} />
 
       <main className="w-full h-lvh mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-linear-to-br from-blue-50 to-green-50">
         <StatsCards stats={stats} />
