@@ -3,12 +3,12 @@ import { createPerson } from "../services/person.service";
 
 const manualRegisterRouter = Router();
 
-manualRegisterRouter.post("/manual-register", async (req, res) => {
+manualRegisterRouter.post("/manual-register", async (req, res, next) => {
   try {
     const { name, email, password, phone, pixKey, photoBase64, city, state } = req.body;
 
     if (!email) {
-      return res.status(400).json({ message: "Email é obrigatório." });
+      return res.status(400).json({ success: false, message: "Email é obrigatório." });
     }
 
     // createPerson já gera o verificationToken e envia o email automaticamente
@@ -25,11 +25,12 @@ manualRegisterRouter.post("/manual-register", async (req, res) => {
     });
 
     return res.status(201).json({
+      success: true,
       message: "Usuário registrado com sucesso. Verifique seu email para ativação.",
+      data: newUser,
     });
   } catch (error) {
-    console.error("Erro ao registrar usuário manualmente:", error);
-    return res.status(500).json({ message: "Erro interno do servidor." });
+    next(error);
   }
 });
 

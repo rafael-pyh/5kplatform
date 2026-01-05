@@ -7,6 +7,7 @@ import { sendEmailConfirmation, sendVerificationEmail } from "../utils/email";
 import { hashPassword } from "../utils/bcrypt";
 import crypto from "crypto";
 import { Validator } from "../shared/Validator";
+import { ConflictError } from "../shared/errors";
 
 export interface CreatePersonDto {
   name: string;
@@ -50,7 +51,7 @@ export const createPerson = async (data: CreatePersonDto) => {
     });
 
     if (existingPerson) {
-      throw new Error(`Email ${data.email} já está cadastrado no sistema`);
+      throw new ConflictError("Usuário já existe. Faça login para continuar.");
     }
   }
 

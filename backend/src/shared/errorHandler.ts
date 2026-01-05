@@ -7,7 +7,14 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
+  console.error('🔴 [ERROR HANDLER] Erro capturado:', {
+    name: err.name,
+    message: err.message,
+    type: err.constructor.name,
+  });
+
   if (err instanceof AppError) {
+    console.log(`✅ [ERROR HANDLER] AppError detectado - Status: ${err.statusCode}, Mensagem: ${err.message}`);
     return res.status(err.statusCode).json({
       success: false,
       message: err.message,
@@ -40,7 +47,7 @@ export const errorHandler = (
     });
   }
 
-  console.error('Erro não tratado:', err);
+  console.error('❌ [ERROR HANDLER] Erro não tratado:', err);
   return res.status(500).json({
     success: false,
     message: 'Erro interno do servidor',

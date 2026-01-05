@@ -97,9 +97,28 @@ export function useRegister(initial: Partial<FormData> = {}) {
       });
       
       router.push('/login');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar registro:', error);
-      toast.error('Erro ao criar registro.');
+      
+      // Extrai a mensagem de erro de várias formas possíveis
+      let errorMessage = 'Erro ao criar registro.';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      console.log('Mensagem de erro extraída:', errorMessage);
+      
+      // Exibe a mensagem apropriada baseada no tipo de erro
+      if (errorMessage.includes('já existe') || errorMessage.includes('cadastrado') || errorMessage.includes('Email')) {
+        toast.error('Usuário já existe. Faça login para continuar.');
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
