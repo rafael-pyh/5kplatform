@@ -38,17 +38,8 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
       let photoBase64 = undefined;
 
       if (photoFile) {
-        console.log('[NewSellerModal] Enviando imagem para upload...');
         photoBase64 = await uploadService.uploadProfilePhoto(photoFile);
-        console.log('[NewSellerModal] URL da imagem recebida:', photoBase64);
-      } else {
-        console.log('[NewSellerModal] Nenhuma imagem selecionada');
       }
-
-      console.log('[NewSellerModal] Criando pessoa com dados:', {
-        ...data,
-        photoBase64: photoBase64 ? `[URL com ${photoBase64.length} chars]` : 'SEM FOTO',
-      });
 
       await personService.create({
         ...data,
@@ -62,8 +53,6 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
       onSuccess();
       onClose();
     } catch (error: any) {
-      console.error('Error creating person:', error);
-      console.error('Error response:', error.response?.data);
       toast.error(error.response?.data?.message || 'Erro ao criar vendedor');
     } finally {
       setLoading(false);

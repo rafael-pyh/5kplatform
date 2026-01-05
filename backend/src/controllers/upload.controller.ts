@@ -26,7 +26,6 @@ export const uploadProfilePhoto = async (req: Request, res: Response) => {
     );
 
     console.log('[uploadProfilePhoto] ✅ Upload concluído');
-    console.log('[uploadProfilePhoto] URL gerada:', fileUrl);
 
     res.json({
       success: true,

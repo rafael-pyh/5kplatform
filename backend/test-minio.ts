@@ -44,69 +44,53 @@ async function testS3Connection() {
       Body: testContent,
       ContentType: 'text/plain',
     });
-    
+
     await s3Client.send(putCommand);
-    console.log(`✅ Arquivo "${fileName}" enviado com sucesso!\n`);
 
-    // Testa listagem de objetos
-    console.log('4️⃣  Listando objetos no bucket...');
-    const listObjCommand = new ListObjectsV2Command({
+    const getCommand = new GetObjectCommand({
       Bucket: bucketName,
+      Key: fileName,
     });
-    
-    const objects = await s3Client.send(listObjCommand);
-    const objectNames = objects.Contents?.map((obj) => obj.Key) || [];
-    
-    console.log(`✅ ${objectNames.length} objeto(s) encontrado(s):`);
-    objectNames.forEach((obj) => console.log(`   - ${obj}`));
-    console.log();
 
-      // Testa download
-      console.log('5️⃣  Testando download de arquivo...');
-      const getCommand = new GetObjectCommand({
+    const response = await s3Client.send(getCommand);
+    const chunks: Uint8Array[] = [];
+
+    for await (const chunk of response.Body as any) {
+      chunks.push(chunk);
+    }
+
+    const downloadedContent = Buffer.concat(chunks);
+
+    console.log(`✅ Arquivo baixado com sucesso!`);
+    console.log(`   Conteúdo: ${downloadedContent.toString()}\n`);
+
+    // Testa deleção
+    console.log('6️⃣  Testando deleção de arquivo...');
+    const deleteCommand = new DeleteObjectCommand({
+      Bucket: bucketName,
+      Key: fileName,
+    });
+
+    await s3Client.send(deleteCommand);
+    console.log(`✅ Arquivo deletado com sucesso!\n`);
+
+    // Testa deleção de bucket (pode falhar se houver objetos - isso é ok)
+    console.log('7️⃣  Testando deleção de bucket...');
+    try {
+      const deleteBucketCommand = new DeleteBucketCommand({
         Bucket: bucketName,
-        Key: fileName,
       });
-      
-      const response = await s3Client.send(getCommand);
-      const chunks: Uint8Array[] = [];
 
-      for await (const chunk of response.Body as any) {
-        chunks.push(chunk);
-      }
+      await s3Client.send(deleteBucketCommand);
+      console.log(`✅ Bucket "${bucketName}" deletado com sucesso!\n`);
+    } catch (error: any) {
+      console.log(`⚠️  Bucket não pôde ser deletado (pode haver objetos restantes): ${error.message}\n`);
+    }
 
-      const downloadedContent = Buffer.concat(chunks);
-
-      console.log(`✅ Arquivo baixado com sucesso!`);
-      console.log(`   Conteúdo: ${downloadedContent.toString()}\n`);
-
-      // Testa deleção
-      console.log('6️⃣  Testando deleção de arquivo...');
-      const deleteCommand = new DeleteObjectCommand({
-        Bucket: bucketName,
-        Key: fileName,
-      });
-      
-      await s3Client.send(deleteCommand);
-      console.log(`✅ Arquivo deletado com sucesso!\n`);
-
-      // Testa deleção de bucket (pode falhar se houver objetos - isso é ok)
-      console.log('7️⃣  Testando deleção de bucket...');
-      try {
-        const deleteBucketCommand = new DeleteBucketCommand({
-          Bucket: bucketName,
-        });
-        
-        await s3Client.send(deleteBucketCommand);
-        console.log(`✅ Bucket "${bucketName}" deletado com sucesso!\n`);
-      } catch (error: any) {
-        console.log(`⚠️  Bucket não pôde ser deletado (pode haver objetos restantes): ${error.message}\n`);
-      }
-
-      console.log('━'.repeat(50));
-      console.log('✨ Todos os testes passaram com sucesso!');
-      console.log('━'.repeat(50));
-      process.exit(0);
+    console.log('━'.repeat(50));
+    console.log('✨ Todos os testes passaram com sucesso!');
+    console.log('━'.repeat(50));
+    process.exit(0);
 
   } catch (error: any) {
     console.error('\n❌ Erro durante os testes:');

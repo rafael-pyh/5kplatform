@@ -5,7 +5,6 @@ async function generateHash() {
   const hash = await bcrypt.hash(password, 10);
   
   console.log("\n=== HASH GERADO ===");
-  console.log("Senha:", password);
   console.log("Hash:", hash);
   console.log("\n=== SQL PARA INSERIR ADMIN ===");
   console.log(`

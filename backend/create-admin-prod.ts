@@ -32,12 +32,6 @@ async function createAdmin() {
       });
 
       console.log("✅ Super Admin atualizado!");
-      console.log("📧 Email:", adminEmail);
-      console.log("🔑 Senha:", adminPassword);
-      console.log("👤 ID:", existing.id);
-      console.log("🏷️  Role:", existing.role);
-      console.log("✔️  Active:", existing.active);
-      console.log("✔️  EmailVerified:", existing.emailVerified);
     } else {
       console.log("❌ Admin não encontrado no banco!");
       console.log("💡 Criando novo admin...");
@@ -53,9 +47,6 @@ async function createAdmin() {
       } as any);
 
       console.log("✅ Super Admin criado!");
-      console.log("📧 Email:", adminEmail);
-      console.log("🔑 Senha:", adminPassword);
-      console.log("👤 ID:", admin.id);
     }
   } catch (error) {
     console.error("❌ Erro:", error);

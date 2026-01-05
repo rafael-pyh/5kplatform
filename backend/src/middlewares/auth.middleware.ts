@@ -16,11 +16,8 @@ export const authenticate = async (
   next: NextFunction
 ) => {
   try {
-    console.log('[Auth Middleware] Autenticando...');
-    
     // Pega o token do header
     const authHeader = req.headers.authorization;
-    console.log('[Auth Middleware] Authorization header:', authHeader ? 'presente' : 'ausente');
 
     if (!authHeader) {
       console.log('[Auth Middleware] ERRO: Authorization header não fornecido');
@@ -32,10 +29,8 @@ export const authenticate = async (
 
     // Formato esperado: "Bearer TOKEN"
     const parts = authHeader.split(" ");
-    console.log('[Auth Middleware] Parts length:', parts.length, 'Type:', parts[0]);
 
     if (parts.length !== 2 || parts[0] !== "Bearer") {
-      console.log('[Auth Middleware] ERRO: Formato inválido');
       return res.status(401).json({
         success: false,
         message: "Formato de token inválido",
@@ -45,20 +40,16 @@ export const authenticate = async (
     const token = parts[1];
     console.log('[Auth Middleware] Token extraído, verificando...');
 
+
     // Verifica o token
     const decoded = verifyToken(token);
-    console.log('[Auth Middleware] Token verificado com sucesso:', decoded);
 
     // Adiciona os dados do usuário ao request
-    req.user = decoded;
-    console.log('[Auth Middleware] req.user atribuído:', req.user);
-
-    next();
+    req.user = decoded
   } catch (error: any) {
     console.error('[Auth Middleware] ERRO:', error.message);
     return res.status(401).json({
       success: false,
-      message: error.message || "Token inválido",
     });
   }
 };

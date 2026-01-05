@@ -17,77 +17,35 @@ const S3_REGION = process.env.S3_REGION || 'us-east-1';
  * Constrói a URL pública do arquivo baseado no endpoint e bucket
  */
 const buildPublicUrl = (key: string): string => {
-  console.log(`[buildPublicUrl] ========== INICIANDO ==========`);
-  console.log(`[buildPublicUrl] key: ${key}`);
-  console.log(`[buildPublicUrl] S3_URL (env): ${process.env.S3_URL}`);
-  console.log(`[buildPublicUrl] S3_ENDPOINT: ${S3_ENDPOINT}`);
-  console.log(`[buildPublicUrl] S3_REGION: ${S3_REGION}`);
-  console.log(`[buildPublicUrl] BUCKET_NAME: ${BUCKET_NAME}`);
-  
   // PRIORIDADE MÁXIMA: S3_URL deve ser usado SEMPRE se configurado
-  // Verifica de forma explícita se a variável está definida
   const s3Url = process.env.S3_URL;
-  console.log(`[buildPublicUrl] S3_URL definido? ${!!s3Url}`);
   
   if (s3Url && s3Url.trim().length > 0) {
-    console.log(`[buildPublicUrl] ✅ Usando S3_URL (PRIORITY 1)`);
     const baseUrl = s3Url.replace(/\/$/, ''); // Remove trailing slash
     
     // Se já inclui /file/{bucket}, apenas concatenar a key
     if (baseUrl.includes('/file/')) {
-      const url = `${baseUrl}/${key}`;
-      console.log(`[buildPublicUrl] URL final: ${url}`);
-      return url;
+      return `${baseUrl}/${key}`;
     } else {
       // Se é apenas a base, adicionar /file/{bucket}
-      const url = `${baseUrl}/file/${BUCKET_NAME}/${key}`;
-      console.log(`[buildPublicUrl] URL final: ${url}`);
-      return url;
+      return `${baseUrl}/file/${BUCKET_NAME}/${key}`;
     }
   }
   
-  console.log(`[buildPublicUrl] ⚠️  S3_URL NÃO definido, usando fallback (PRIORITY 2+)`);
-  
   // PRIORITY 2: Detecta se é Backblaze B2 via endpoint
   if (S3_ENDPOINT.includes('backblazeb2.com')) {
-    console.log(`[buildPublicUrl] ✅ Backblaze B2 detectado via endpoint`);
-    
-    // Extrai o número da região do S3_REGION (que é ex: us-east-005)
-    let regionNumber = '005'; // default SEMPRE 005 para Backblaze B2
-    const regionMatch = S3_REGION.match(/(\d{3})$/);
-    
-    if (regionMatch) {
-      regionNumber = regionMatch[1];
-      console.log(`[buildPublicUrl] Extraiu regionNumber do S3_REGION: ${regionNumber}`);
-    } else {
-      // Se não conseguir extrair, força 005
-      console.log(`[buildPublicUrl] ⚠️  Não conseguiu extrair region do S3_REGION, usando padrão: 005`);
-      regionNumber = '005';
-    }
-    
-    // IMPORTANTE: Para B2, SEMPRE usa f005, não importa o region
-    // Backblaze usa f00X onde X é baseado na região
-    // us-east-005 = f005
-    regionNumber = '005'; // FORÇA 005 como padrão seguro
-    
-    const fileHost = `f${regionNumber}.backblazeb2.com`;
-    const url = `https://${fileHost}/file/${BUCKET_NAME}/${key}`;
-    console.log(`[buildPublicUrl] URL final (B2): ${url} (regionNumber forçado: ${regionNumber})`);
-    return url;
+    const fileHost = 'f005.backblazeb2.com';
+    return `https://${fileHost}/file/${BUCKET_NAME}/${key}`;
   }
   
   // PRIORITY 3: Para AWS S3
   if (S3_ENDPOINT.includes('amazonaws.com') || S3_ENDPOINT === 'https://s3.amazonaws.com') {
-    const url = `https://${BUCKET_NAME}.s3.${S3_REGION}.amazonaws.com/${key}`;
-    console.log(`[buildPublicUrl] URL final (AWS): ${url}`);
-    return url;
+    return `https://${BUCKET_NAME}.s3.${S3_REGION}.amazonaws.com/${key}`;
   }
   
   // FALLBACK: tenta construir com o endpoint
   const cleanEndpoint = S3_ENDPOINT.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  const url = `https://${cleanEndpoint}/${BUCKET_NAME}/${key}`;
-  console.log(`[buildPublicUrl] URL final (fallback): ${url}`);
-  return url;
+  return `https://${cleanEndpoint}/${BUCKET_NAME}/${key}`;
 };
 
 /**
@@ -118,13 +76,9 @@ const createBucketIfNotExists = async (bucketName: string): Promise<void> => {
     if (!exists) {
       const command = new CreateBucketCommand({ Bucket: bucketName });
       await s3Client.send(command);
-      console.log(`✅ Bucket '${bucketName}' criado com sucesso`);
-    } else {
-      console.log(`✅ Bucket '${bucketName}' já existe`);
     }
   } catch (error: any) {
     console.warn(`⚠️  Não foi possível criar bucket '${bucketName}': ${error.message}`);
-    console.warn(`   Verifique se o bucket existe e se as permissões estão corretas`);
     // Não relança o erro - permite que a app continue
     // O bucket pode já existir ou as permissões podem estar limitadas
   }
@@ -135,15 +89,8 @@ const createBucketIfNotExists = async (bucketName: string): Promise<void> => {
  */
 export const initializeMinIOBucket = async () => {
   try {
-    console.log('🔄 Verificando bucket do S3...\n');
-    
     // Cria o bucket principal se não existir
     await createBucketIfNotExists(BUCKET_NAME);
-    
-    console.log(`\n✅ S3 está configurado e pronto para uso`);
-    console.log(`📁 Bucket principal: ${BUCKET_NAME}`);
-    console.log(`   ├─ /uploads/* (imagens e documentos)`);
-    console.log(`   └─ /qrcodes/* (QR codes)`);
   } catch (error) {
     console.warn('⚠️  Erro ao inicializar S3:', error);
     // Não relança - continua mesmo que a criação de buckets falhe
@@ -163,22 +110,16 @@ export const uploadFileToMinIO = async (
     await createBucketIfNotExists(BUCKET_NAME);
     
     const objectName = `${folderName}/${Date.now()}-${fileName}`;
-    console.log(`[uploadFileToMinIO] Iniciando upload: ${fileName}`);
-    console.log(`[uploadFileToMinIO] Pasta: ${folderName}`);
-    console.log(`[uploadFileToMinIO] Nome do objeto: ${objectName}`);
     
     // Detecta se é uma imagem
     const imageExtensions = ['jpg', 'jpeg', 'png', 'webp'];
     const fileExtension = fileName.split('.').pop()?.toLowerCase() || '';
     const isImage = imageExtensions.includes(fileExtension);
-    
     let fileBuffer = file.buffer;
     let contentType = file.mimetype;
     
     // Comprime imagem se for arquivo de imagem
     if (isImage) {
-      console.log(`[uploadFileToMinIO] Comprimindo imagem: ${fileName}`);
-      
       try {
         let sharpInstance = sharp(file.buffer);
         
@@ -207,13 +148,12 @@ export const uploadFileToMinIO = async (
         }
         
         fileBuffer = await sharpInstance.toBuffer();
-        console.log(`[uploadFileToMinIO] ✅ Imagem comprimida com sucesso`);
       } catch (compressionError) {
         console.warn(`[uploadFileToMinIO] ⚠️  Erro ao comprimir imagem, usando original:`, compressionError);
         // Continua com o arquivo original se a compressão falhar
       }
     }
-    
+
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
       Key: objectName,
@@ -222,12 +162,9 @@ export const uploadFileToMinIO = async (
     });
 
     await s3Client.send(command);
-    console.log(`[uploadFileToMinIO] Upload concluído para: ${objectName}`);
 
     // Retorna a URL pública do arquivo
-    const fileUrl = buildPublicUrl(objectName);
-    console.log(`[uploadFileToMinIO] URL final retornada: ${fileUrl}`);
-    return fileUrl;
+    return buildPublicUrl(objectName);
   } catch (error: any) {
     console.error('Erro ao fazer upload para S3:', error);
     throw new Error(`Erro ao fazer upload do arquivo: ${error.message}`);
@@ -274,9 +211,7 @@ export const deleteFileFromMinIO = async (objectName: string): Promise<void> => 
     });
 
     await s3Client.send(command);
-    console.log(`Arquivo deletado: ${objectName}`);
   } catch (error: any) {
-    console.error('Erro ao deletar arquivo do S3:', error);
     throw new Error(`Erro ao deletar arquivo: ${error.message}`);
   }
 };
@@ -331,15 +266,10 @@ export const uploadQRCodeToMinIO = async (
   qrCodeId: string
 ): Promise<string> => {
   try {
-    console.log(`[uploadQRCodeToMinIO] Iniciando upload de QR code: ${qrCodeId}`);
-    
     // Garante que o bucket principal existe
     await createBucketIfNotExists(BUCKET_NAME);
     
     const objectName = `qrcodes/${qrCodeId}.png`;
-    console.log(`[uploadQRCodeToMinIO] Object name: ${objectName}`);
-    console.log(`[uploadQRCodeToMinIO] Buffer size: ${buffer.length} bytes`);
-    console.log(`[uploadQRCodeToMinIO] Bucket: ${BUCKET_NAME}`);
 
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
@@ -349,14 +279,10 @@ export const uploadQRCodeToMinIO = async (
     });
 
     await s3Client.send(command);
-    console.log(`[uploadQRCodeToMinIO] Upload concluído com sucesso`);
 
     // Retorna a URL pública do arquivo
-    const fileUrl = buildPublicUrl(objectName);
-    console.log(`[uploadQRCodeToMinIO] URL final retornada: ${fileUrl}`);
-    return fileUrl;
+    return buildPublicUrl(objectName);
   } catch (error: any) {
-    console.error('[uploadQRCodeToMinIO] Erro ao fazer upload do QR Code para S3:', error);
     throw new Error(`Erro ao fazer upload do QR Code: ${error.message}`);
   }
 };

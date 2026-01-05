@@ -46,7 +46,6 @@ async function migrateQRCodesToS3() {
         const qrCode = (person as any).qrCode;
 
         if (!qrCodeBase64 || !qrCode) {
-          console.log(`⚠️  Pulando ${person.name} - qrCodeBase64 ou qrCode vazio`);
           continue;
         }
 
@@ -73,13 +72,8 @@ async function migrateQRCodesToS3() {
         await person.update({ qrCodeUrl });
 
         successCount++;
-        console.log(`✅ ${person.name} (${qrCode}) - URL: ${qrCodeUrl}`);
       } catch (error: any) {
         errorCount++;
-        console.error(
-          `❌ Erro ao processar ${person.name}:`,
-          error.message
-        );
       }
     }
 

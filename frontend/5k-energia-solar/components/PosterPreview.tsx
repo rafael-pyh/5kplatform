@@ -51,7 +51,7 @@ export default function PosterPreview({
                 src={customPoster} 
                 alt="Criativo selecionado" 
                 className="w-full h-full object-contain"
-                onError={() => console.error('[PosterPreview] Erro ao carregar imagem:', customPoster)}
+                onError={() => {}}
               />
             </>
           ) : (
@@ -68,7 +68,7 @@ export default function PosterPreview({
                 src={customPoster} 
                 alt="Poster custom" 
                 className="w-full h-full object-contain"
-                onError={() => console.error('[PosterPreview] Erro ao carregar poster:', customPoster)}
+                onError={() => {}}
               />
             </>
           ) : posterPreview ? (

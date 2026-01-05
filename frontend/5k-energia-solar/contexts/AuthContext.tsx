@@ -38,15 +38,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(userData);
             localStorage.setItem('user', JSON.stringify(userData));
           } catch (validationError: any) {
-            console.error('[AuthContext] Erro ao validar token:', validationError.response?.status, validationError.response?.data?.message);
             throw validationError;
           }
         } else {
           setUser(null);
         }
       } catch (error) {
-        console.error('[AuthContext] Erro na inicialização:', error);
-        // Token inválido, limpa o storage
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
@@ -81,8 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('[AuthContext] Erro no login:', error.response?.status, error.response?.data);
       const message = error.response?.data?.message || 'Erro ao fazer login';
-      toast.error(message);
-      throw error;
+      toasw error;
     }
   };
 

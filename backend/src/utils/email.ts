@@ -18,20 +18,11 @@ if (hasResend) {
   resendClient = new Resend(RESEND_API_KEY as string);
 }
 
-console.log(`📧 Resend configured: ${hasResend ? 'yes' : 'no'}`);
-
 export const sendEmail = async (options: EmailOptions): Promise<void> => {
   // Modo desenvolvimento: apenas loga se não houver configuração
   if (!hasResend) {
-    console.log('\n📧 ========================================');
     console.log('📧 EMAIL (Modo Desenvolvimento - Não Enviado)');
-    console.log('📧 ========================================');
-    console.log(`📧 Para: ${options.to}`);
     console.log(`📧 Assunto: ${options.subject}`);
-    if (options.text) {
-      console.log(`📧 Conteúdo:\n${options.text}`);
-    }
-    console.log('📧 ========================================\n');
     return; // Não tenta enviar email
   }
 
@@ -45,8 +36,6 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
       html: options.html,
       text: options.text,
     });
-
-    console.log(`✅ Email enviado com sucesso para ${options.to} via Resend`);
   } catch (error: any) {
     console.error('❌ Erro ao enviar email:', error);
     throw new Error('Falha ao enviar email');

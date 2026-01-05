@@ -23,7 +23,6 @@ export class Validator {
   }
 
   static isBase64DataUrl(value: string, fieldName: string): void {
-    console.log(`[Validator.isBase64DataUrl] Validando ${fieldName}:`, value.substring(0, 50) + (value.length > 50 ? '...' : ''));
     if (!value || typeof value !== 'string') {
       throw new ValidationError(`${fieldName} inválido`);
     }
@@ -31,7 +30,6 @@ export class Validator {
     // data:[<mediatype>][;base64],<data>
     const match = value.match(/^data:([\w/+.-]+);base64,([A-Za-z0-9+/=\n\r]+)$/);
     if (!match) {
-      console.error(`[Validator.isBase64DataUrl] FALHOU para ${fieldName}. Valor: ${value.substring(0, 100)}`);
       throw new ValidationError(`${fieldName} deve ser um Data URL em base64 válido`);
     }
   }

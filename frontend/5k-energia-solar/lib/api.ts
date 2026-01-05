@@ -32,13 +32,6 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.error('[API] 401 Unauthorized', {
-        url: error.config?.url,
-        method: error.config?.method,
-        hasToken: typeof window !== 'undefined' && !!localStorage.getItem('token'),
-        message: error.response?.data?.message,
-      });
-      
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
