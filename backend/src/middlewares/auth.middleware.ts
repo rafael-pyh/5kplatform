@@ -20,7 +20,6 @@ export const authenticate = async (
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      console.log('[Auth Middleware] ERRO: Authorization header não fornecido');
       return res.status(401).json({
         success: false,
         message: "Token não fornecido",
@@ -38,18 +37,18 @@ export const authenticate = async (
     }
 
     const token = parts[1];
-    console.log('[Auth Middleware] Token extraído, verificando...');
-
 
     // Verifica o token
     const decoded = verifyToken(token);
 
     // Adiciona os dados do usuário ao request
-    req.user = decoded
+    req.user = decoded;
+
+    next();
   } catch (error: any) {
-    console.error('[Auth Middleware] ERRO:', error.message);
     return res.status(401).json({
       success: false,
+      message: error.message || "Token inválido",
     });
   }
 };

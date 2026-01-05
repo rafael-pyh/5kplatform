@@ -298,7 +298,6 @@ export const deleteQRCodeFromMinIO = async (objectName: string): Promise<void> =
     });
 
     await s3Client.send(command);
-    console.log(`QR Code deletado: ${objectName}`);
   } catch (error: any) {
     console.error('Erro ao deletar QR Code do S3:', error);
     throw new Error(`Erro ao deletar QR Code: ${error.message}`);
