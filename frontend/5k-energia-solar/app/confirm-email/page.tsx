@@ -12,30 +12,31 @@ function ConfirmEmailContent() {
 
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [resendingEmail, setResendingEmail] = useState(false);
 
   useEffect(() => {
     const confirmEmail = async () => {
       if (!token) {
-        setError(true);
+        setError("Token inválido ou ausente.");
         toast.error("Token inválido ou ausente.");
         setLoading(false);
         return;
       }
 
       try {
+        console.log('[ConfirmEmailContent] Confirmando email com token:', token.substring(0, 20) + '...');
         const response = await confirmEmailAction(token);
+        console.log("[ConfirmEmailContent] Resposta da confirmação de email:", response);
         toast.success(response.message || "Email confirmado com sucesso!");
         setSuccess(true);
 
       } catch (error: any) {
-        console.error("Erro ao confirmar email:", error);
-        setError(true);
-        toast.error(
-          "Erro ao confirmar email. Tente novamente."
-        );
+        console.error("[ConfirmEmailContent] Erro ao confirmar email:", error);
+        const errorMessage = error.message || "Erro ao confirmar email. Tente novamente.";
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -88,6 +89,11 @@ function ConfirmEmailContent() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-blue-500 to-green-500 text-white p-4">
       <h1 className="text-3xl font-bold mb-4">Erro ao confirmar email</h1>
+      {error && (
+        <div className="mb-6 p-4 bg-red-500 bg-opacity-75 rounded-lg max-w-md w-full">
+          <p className="text-white font-semibold">{error}</p>
+        </div>
+      )}
       <p className="text-lg mb-8">O token pode ter expirado ou já foi utilizado.</p>
       
       <div className="bg-white text-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full">

@@ -78,11 +78,14 @@ export const confirmEmail = async (req: Request, res: Response, next: NextFuncti
   try {
     const { token } = req.body;
     logger.info('confirmEmail', 'Iniciando confirmação de email', { token: token?.substring(0, 20) + '...' });
+    console.log('[Auth] Confirmando email com token:', token);
     const result = await authService.confirmEmail(token);
+    console.log('[Auth] Email confirmado com sucesso para:', result);
     logger.info('confirmEmail', 'Email confirmado com sucesso', result);
     return ResponseBuilder.success(res, result);
   } catch (error) {
     logger.error('confirmEmail', 'Erro ao confirmar email', error);
+    console.error('[Auth] Erro ao confirmar email:', error);
     next(error);
   }
 };

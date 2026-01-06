@@ -91,7 +91,15 @@ export async function getTokenFromCookies(): Promise<string | undefined> {
 export async function confirmEmailAction(token: string): Promise<{ message: string }> {
   try {
     // Para server actions, usamos a URL do backend diretamente
-    const apiUrl = process.env.API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.API_URL;
+    
+    if (!apiUrl) {
+      console.error('[confirmEmailAction] API_URL não está configurada!');
+      console.error('[confirmEmailAction] Variáveis disponíveis:', Object.keys(process.env).filter(k => k.includes('API') || k.includes('URL')));
+      throw new Error("API_URL não configurada. Verifique variáveis de ambiente.");
+    }
+
+    console.log('[confirmEmailAction] Chamando API:', `${apiUrl}/api/auth/confirm-email`);
 
     const response = await fetch(`${apiUrl}/api/auth/confirm-email`, {
       method: "POST",
@@ -101,21 +109,39 @@ export async function confirmEmailAction(token: string): Promise<{ message: stri
       body: JSON.stringify({ token }),
     });
 
+    console.log('[confirmEmailAction] Resposta status:', response.status);
+
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Erro ao confirmar email");
+      const errorText = await response.text();
+      console.error('[confirmEmailAction] Erro da API:', errorText);
+      
+      try {
+        const error = JSON.parse(errorText);
+        throw new Error(error.message || "Erro ao confirmar email");
+      } catch (e) {
+        throw new Error(`Erro da API (Status ${response.status}): ${errorText}`);
+      }
     }
 
     const result = await response.json();
+    console.log('[confirmEmailAction] Sucesso:', result);
     return result.data || result;
   } catch (error: any) {
     console.error('Error in confirmEmailAction:', error);
     throw new Error(error.message || "Erro ao confirmar email");
   }
 }
+
 export async function resendVerificationEmailAction(email: string): Promise<{ message: string }> {
   try {
-    const apiUrl = process.env.API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.API_URL;
+    
+    if (!apiUrl) {
+      console.error('[resendVerificationEmailAction] API_URL não está configurada!');
+      throw new Error("API_URL não configurada. Verifique variáveis de ambiente.");
+    }
+
+    console.log('[resendVerificationEmailAction] Chamando API:', `${apiUrl}/api/seller/resend-verification-email`);
 
     const response = await fetch(`${apiUrl}/api/seller/resend-verification-email`, {
       method: "POST",
@@ -125,15 +151,25 @@ export async function resendVerificationEmailAction(email: string): Promise<{ me
       body: JSON.stringify({ email }),
     });
 
+    console.log('[resendVerificationEmailAction] Resposta status:', response.status);
+
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Erro ao resolicitar email de verificação");
+      const errorText = await response.text();
+      console.error('[resendVerificationEmailAction] Erro da API:', errorText);
+      
+      try {
+        const error = JSON.parse(errorText);
+        throw new Error(error.message || "Erro ao resolicitar email de verificação");
+      } catch (e) {
+        throw new Error(`Erro da API (Status ${response.status}): ${errorText}`);
+      }
     }
 
     const result = await response.json();
+    console.log('[resendVerificationEmailAction] Sucesso:', result);
     return result.data || result;
   } catch (error: any) {
-    console.error('Error in resendVerificationEmailAction:', error);
+    console.error('[resendVerificationEmailAction] Erro:', error);
     throw new Error(error.message || "Erro ao resolicitar email de verificação");
   }
 }
