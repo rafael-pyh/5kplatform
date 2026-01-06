@@ -43,9 +43,11 @@ export default function LoginForm({ form, onSubmit, isLoading }: Props) {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                     message: 'Email inválido',
                   },
+                  maxLength: { value: 254, message: 'Email muito longo' },
                 })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 placeholder="seu@email.com"
+                maxLength={254}
               />
               {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
             </div>
@@ -60,9 +62,11 @@ export default function LoginForm({ form, onSubmit, isLoading }: Props) {
                 registerOptions={{
                   required: 'Senha é obrigatória',
                   minLength: { value: 8, message: 'Senha deve ter no mínimo 8 caracteres, incluindo letras e números' },
+                  maxLength: { value: 128, message: 'Senha deve ter no máximo 128 caracteres' },
                 }}
                 placeholder="••••••••"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                maxLength={128}
               />
               {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
             </div>

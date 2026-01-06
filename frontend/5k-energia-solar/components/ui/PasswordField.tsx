@@ -6,6 +6,7 @@ interface PasswordFieldProps {
   name: string;
   placeholder?: string;
   className?: string;
+  maxLength?: number;
   // react-hook-form register function (optional)
   register?: (name: string, options?: any) => any;
   registerOptions?: any;
@@ -20,6 +21,7 @@ export default function PasswordField({
   name,
   placeholder,
   className,
+  maxLength,
   register,
   registerOptions,
   value,
@@ -37,6 +39,7 @@ export default function PasswordField({
         name={name}
         type={show ? 'text' : 'password'}
         placeholder={placeholder}
+        maxLength={maxLength}
         value={value}
         onChange={onChange}
         {...registerProps}

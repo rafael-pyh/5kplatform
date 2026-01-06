@@ -33,22 +33,22 @@ export default function RegisterForm({ states, formData, handleChange, handleFil
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-0.5">Nome</label>
-              <input id="name" type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="Seu nome completo" required />
+              <input id="name" type="text" name="name" value={formData.name} onChange={handleChange} maxLength={100} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="Seu nome completo" required />
             </div>
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-0.5">Email</label>
-              <input id="email" type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="seu@email.com" required />
+              <input id="email" type="email" name="email" value={formData.email} onChange={handleChange} maxLength={254} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="seu@email.com" required />
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-0.5">Senha</label>
-              <PasswordField name="password" value={formData.password} onChange={handleChange} placeholder="••••••••" className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
+              <PasswordField name="password" value={formData.password} onChange={handleChange} placeholder="••••••••" maxLength={128} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
             </div>
 
             <div>
               <label htmlFor="repeatPassword" className="block text-sm font-medium text-gray-700 mb-0.5">Repita a Senha</label>
-              <PasswordField name="repeatPassword" value={formData.repeatPassword} onChange={handleChange} placeholder="••••••••" className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
+              <PasswordField name="repeatPassword" value={formData.repeatPassword} onChange={handleChange} placeholder="••••••••" maxLength={128} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
             </div>
 
             <div>
@@ -58,12 +58,12 @@ export default function RegisterForm({ states, formData, handleChange, handleFil
 
             <div>
               <label htmlFor="pixKey" className="block text-sm font-medium text-gray-700 mb-0.5">Chave Pix</label>
-              <input id="pixKey" type="text" name="pixKey" value={formData.pixKey} onChange={handleChange} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="Sua chave Pix" required />
+              <input id="pixKey" type="text" name="pixKey" value={formData.pixKey} onChange={handleChange} maxLength={77} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="Sua chave Pix" required />
             </div>
 
             <div>
               <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-0.5">Cidade</label>
-              <input id="city" type="text" name="city" value={formData.city} onChange={handleChange} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="Sua cidade" required />
+              <input id="city" type="text" name="city" value={formData.city} onChange={handleChange} maxLength={100} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="Sua cidade" required />
             </div>
 
             <div>
