@@ -91,7 +91,7 @@ export async function getTokenFromCookies(): Promise<string | undefined> {
 export async function confirmEmailAction(token: string): Promise<{ message: string }> {
   try {
     // Para server actions, usamos a URL do backend diretamente
-    const apiUrl = process.env.API_URL;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     
     if (!apiUrl) {
       console.error('[confirmEmailAction] API_URL não está configurada!');
@@ -134,7 +134,7 @@ export async function confirmEmailAction(token: string): Promise<{ message: stri
 
 export async function resendVerificationEmailAction(email: string): Promise<{ message: string }> {
   try {
-    const apiUrl = process.env.API_URL;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     
     if (!apiUrl) {
       console.error('[resendVerificationEmailAction] API_URL não está configurada!');
