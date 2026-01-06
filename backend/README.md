@@ -55,14 +55,14 @@ cp .env.example .env
 # Edite o arquivo .env com suas configurações
 ```
 
-4. **Execute as migrações do Prisma**
+4. **Execute as migrações do banco de dados**
 ```bash
-npm run prisma:migrate
+npm run db:migrate
 ```
 
 5. **Execute o seed (usuário admin padrão)**
 ```bash
-npm run prisma:seed
+npm run db:seed
 ```
 
 6. **Inicie o servidor**
@@ -264,23 +264,25 @@ file: [arquivo]
 
 ```
 backend/
-├── prisma/
-│   ├── schema.prisma      # Schema do banco de dados
-│   └── seed.ts            # Dados iniciais
+├── config/
+│   └── database.js        # Configuração do Sequelize
 ├── src/
 │   ├── config/
 │   │   └── env.ts         # Configurações de ambiente
 │   ├── controllers/       # Controladores
 │   ├── database/
-│   │   └── prisma.ts      # Cliente Prisma
+│   │   └── sequelize.ts   # Cliente Sequelize
+│   ├── models/            # Modelos Sequelize
 │   ├── middlewares/
 │   │   └── auth.middleware.ts
+│   ├── migrations/        # Migrações do banco
 │   ├── routes/            # Rotas da API
 │   ├── services/          # Lógica de negócio
 │   ├── utils/             # Utilitários
 │   ├── app.ts             # Configuração Express
 │   └── server.ts          # Servidor HTTP
 ├── .env.example
+├── .sequelizerc            # Configuração Sequelize CLI
 ├── package.json
 └── tsconfig.json
 ```
@@ -336,10 +338,10 @@ O token é obtido no login e tem validade de 7 dias (configurável).
 - `npm run dev` - Inicia em modo desenvolvimento
 - `npm run build` - Compila TypeScript
 - `npm start` - Inicia em produção
-- `npm run prisma:migrate` - Executa migrações
-- `npm run prisma:generate` - Gera Prisma Client
-- `npm run prisma:studio` - Abre Prisma Studio
-- `npm run prisma:seed` - Popula banco com dados iniciais
+- `npm run db:migrate` - Executa migrações do Sequelize
+- `npm run db:migrate:undo` - Desfaz última migração
+- `npm run db:seed` - Popula banco com dados iniciais
+- `npm run db:seed:undo` - Desfaz seed
 
 ## 📄 Licença
 

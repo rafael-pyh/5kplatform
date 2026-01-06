@@ -115,7 +115,7 @@ export const verifyEmailToken = async (token: string) => {
 export const setPassword = async (data: SetPasswordDto) => {
   Validator.required(data.token, 'Token');
   Validator.required(data.password, 'Senha');
-  Validator.minLength(data.password, 6, 'Senha');
+  Validator.minLength(data.password, 8, 'Senha');
 
   // Busca pessoa pelo token
   const person = await Person.findOne({
