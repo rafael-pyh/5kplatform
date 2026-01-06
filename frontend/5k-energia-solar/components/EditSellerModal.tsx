@@ -124,21 +124,164 @@ export default function EditSellerModal({
 
   return (
     <ResponsiveModal isOpen={isOpen} onClose={onClose}>
-      <div className="p-6">
+      <div className="p-4">
         {/* Header */}
-        <div className="mb-6 pb-4 border-b border-gray-200">
+        <div className="text-center mb-4">
           <h2 className="text-xl font-semibold text-gray-900">Editar Vendedor</h2>
+          <p className="text-sm text-gray-600 mt-1">Atualize as informações do vendedor</p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Photo Upload */}
+        <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Nome Completo *
+            </label>
+            <input
+              id="name"
+              type="text"
+              maxLength={100}
+              {...register('name', { required: 'Nome é obrigatório' })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              placeholder="Nome do vendedor"
+            />
+            {errors.name && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.name.message}</p>
+            )}
+          </div>
+
+          {/* Email */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Email *
+            </label>
+            <input
+              id="email"
+              type="email"
+              maxLength={120}
+              {...register('email', {
+                required: 'Email é obrigatório',
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: 'Email inválido',
+                },
+              })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              placeholder="email@exemplo.com"
+            />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.email.message}</p>
+            )}
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Telefone *
+            </label>
+            <input
+              id="phone"
+              type="tel"
+              inputMode="numeric"
+              maxLength={20}
+              pattern="[\d\s\-\(\)]+"
+              {...register('phone', { required: 'Telefone é obrigatório' })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              placeholder="(00) 00000-0000"
+            />
+            {errors.phone && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.phone.message}</p>
+            )}
+          </div>
+
+          {/* Pix Key */}
+          <div>
+            <label htmlFor="pixKey" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Chave Pix
+            </label>
+            <input
+              id="pixKey"
+              type="text"
+              maxLength={150}
+              {...register('pixKey')}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              placeholder="CPF, email, telefone ou chave aleatória"
+            />
+            {errors && (errors as any).pixKey && (
+              <p className="text-red-500 text-xs mt-0.5">{(errors as any).pixKey.message}</p>
+            )}
+          </div>
+
+          {/* City */}
+          <div>
+            <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Cidade *
+            </label>
+            <input
+              id="city"
+              type="text"
+              maxLength={100}
+              {...register('city', { required: 'Cidade é obrigatória' })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              placeholder="Sua cidade"
+            />
+            {errors.city && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.city.message}</p>
+            )}
+          </div>
+
+          {/* State */}
+          <div>
+            <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Estado *
+            </label>
+            <select
+              id="state"
+              {...register('state', { required: 'Estado é obrigatório' })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+            >
+              <option value="">Selecione um estado</option>
+              <option value="AC">AC</option>
+              <option value="AL">AL</option>
+              <option value="AP">AP</option>
+              <option value="AM">AM</option>
+              <option value="BA">BA</option>
+              <option value="CE">CE</option>
+              <option value="DF">DF</option>
+              <option value="ES">ES</option>
+              <option value="GO">GO</option>
+              <option value="MA">MA</option>
+              <option value="MT">MT</option>
+              <option value="MS">MS</option>
+              <option value="MG">MG</option>
+              <option value="PA">PA</option>
+              <option value="PB">PB</option>
+              <option value="PR">PR</option>
+              <option value="PE">PE</option>
+              <option value="PI">PI</option>
+              <option value="RJ">RJ</option>
+              <option value="RN">RN</option>
+              <option value="RS">RS</option>
+              <option value="RO">RO</option>
+              <option value="RR">RR</option>
+              <option value="SC">SC</option>
+              <option value="SP">SP</option>
+              <option value="SE">SE</option>
+              <option value="TO">TO</option>
+            </select>
+            {errors.state && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.state.message}</p>
+            )}
+          </div>
+
+          {/* Photo Upload - Full Width */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-0.5">
               Foto do Vendedor
             </label>
-            <div className="flex items-center gap-4">
-              <div className="h-20 w-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="h-16 w-16 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200">
                 {photoPreview ? (
                   <img
                     src={photoPreview}
@@ -147,7 +290,7 @@ export default function EditSellerModal({
                   />
                 ) : (
                   <svg
-                    className="w-10 h-10 text-gray-400"
+                    className="w-8 h-8 text-gray-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -162,7 +305,7 @@ export default function EditSellerModal({
                 )}
               </div>
               <label className="cursor-pointer">
-                <span className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition inline-block">
+                <span className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block text-sm font-medium">
                   Alterar Foto
                 </span>
                 <input
@@ -175,94 +318,23 @@ export default function EditSellerModal({
             </div>
           </div>
 
-          {/* Name */}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Nome Completo *
-            </label>
-            <input
-              id="name"
-              type="text"
-              {...register('name', { required: 'Nome é obrigatório' })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="Nome do vendedor"
-            />
-            {errors.name && (
-              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
-            )}
-          </div>
-
-          {/* Email */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email *
-            </label>
-            <input
-              id="email"
-              type="email"
-              {...register('email', {
-                required: 'Email é obrigatório',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Email inválido',
-                },
-              })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="email@exemplo.com"
-            />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
-            )}
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-              Telefone *
-            </label>
-            <input
-              id="phone"
-              type="tel"
-              {...register('phone', { required: 'Telefone é obrigatório' })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="(00) 00000-0000"
-            />
-            {errors.phone && (
-              <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
-            )}
-          </div>
-
-          {/* Pix Key */}
-          <div>
-            <label htmlFor="pixKey" className="block text-sm font-medium text-gray-700 mb-1">
-              Chave Pix
-            </label>
-            <input
-              id="pixKey"
-              type="text"
-              {...register('pixKey')}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="CPF, email, telefone ou chave aleatória"
-            />
-            {errors && (errors as any).pixKey && (
-              <p className="text-red-500 text-sm mt-1">{(errors as any).pixKey.message}</p>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
-            <Button
+          {/* Actions - Full Width */}
+          <div className="md:col-span-2 flex flex-col gap-2 pt-2">
+            <button
               type="submit"
-              variant="primary"
-              className="flex-1"
-              isLoading={loading}
               disabled={loading}
+              className="cursor-pointer w-full px-4 py-2 bg-linear-to-r from-blue-500 to-green-500 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
-              Salvar Alterações
-            </Button>
-            <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
+              {loading ? 'Salvando...' : 'Salvar Alterações'}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="cursor-pointer w-full px-4 py-2 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
               Cancelar
-            </Button>
+            </button>
           </div>
         </form>
       </div>

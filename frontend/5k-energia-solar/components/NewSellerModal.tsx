@@ -73,61 +73,26 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
 
   return (
     <ResponsiveModal isOpen={isOpen} onClose={handleClose}>
-      <div className="p-6">
+      <div className="bg-white rounded-2xl px-6 py-6">
         {/* Header */}
-        <div className="mb-6 pb-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Novo Vendedor</h2>
+        <div className="text-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-900 mb-1">Novo Vendedor</h2>
+          <p className="text-sm text-gray-600">Preencha os dados para criar um novo vendedor</p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Foto de Perfil */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Foto de Perfil
-            </label>
-            <div className="flex items-center gap-4">
-              {photoPreview ? (
-                <img
-                  src={photoPreview}
-                  alt="Preview"
-                  className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
-                  <svg
-                    className="w-10 h-10 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                </div>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
-              />
-            </div>
-          </div>
-
+        <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {/* Nome */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nome Completo *
+            <label className="block text-sm font-medium text-gray-700 mb-0.5">
+              Nome *
             </label>
             <input
               {...register('name', { required: 'Nome é obrigatório' })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-              placeholder="João da Silva"
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              placeholder="Seu nome completo"
+              maxLength={100}
+              required
             />
             {errors.name && (
               <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
@@ -136,7 +101,7 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-0.5">
               Email *
             </label>
             <input
@@ -148,8 +113,10 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
                   message: 'Email inválido',
                 },
               })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-              placeholder="joao@exemplo.com"
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              placeholder="seu@email.com"
+              maxLength={254}
+              required
             />
             {errors.email && (
               <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
@@ -158,13 +125,17 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
 
           {/* Telefone */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-0.5">
               Telefone *
             </label>
             <input
               {...register('phone', { required: 'Telefone é obrigatório' })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-              placeholder="(11) 99999-9999"
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              placeholder="Somente números (ex: 11999999999)"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={11}
+              required
             />
             {errors.phone && (
               <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
@@ -173,42 +144,132 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
 
           {/* Chave Pix */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-0.5">
               Chave Pix *
             </label>
             <input
               {...register('pixKey', { required: 'Chave Pix é obrigatória' })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-              placeholder="CPF, email, telefone ou chave aleatória"
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              placeholder="Sua chave Pix"
+              maxLength={77}
+              required
             />
             {errors.pixKey && (
               <p className="mt-1 text-sm text-red-600">{errors.pixKey.message}</p>
             )}
           </div>
 
-          {/* Buttons */}
-          <div className="flex gap-4 pt-4 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={handleClose}
-              disabled={loading}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          {/* Cidade */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-0.5">
+              Cidade *
+            </label>
+            <input
+              {...register('city', { required: 'Cidade é obrigatória' })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              placeholder="Sua cidade"
+              maxLength={100}
+              required
+            />
+            {errors.city && (
+              <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>
+            )}
+          </div>
+
+          {/* Estado */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-0.5">
+              Estado *
+            </label>
+            <select
+              {...register('state', { required: 'Estado é obrigatório' })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              required
             >
-              Cancelar
-            </button>
+              <option value="">Selecione um estado</option>
+              <option value="AC">AC</option>
+              <option value="AL">AL</option>
+              <option value="AP">AP</option>
+              <option value="AM">AM</option>
+              <option value="BA">BA</option>
+              <option value="CE">CE</option>
+              <option value="DF">DF</option>
+              <option value="ES">ES</option>
+              <option value="GO">GO</option>
+              <option value="MA">MA</option>
+              <option value="MT">MT</option>
+              <option value="MS">MS</option>
+              <option value="MG">MG</option>
+              <option value="PA">PA</option>
+              <option value="PB">PB</option>
+              <option value="PR">PR</option>
+              <option value="PE">PE</option>
+              <option value="PI">PI</option>
+              <option value="RJ">RJ</option>
+              <option value="RN">RN</option>
+              <option value="RS">RS</option>
+              <option value="RO">RO</option>
+              <option value="RR">RR</option>
+              <option value="SC">SC</option>
+              <option value="SP">SP</option>
+              <option value="SE">SE</option>
+              <option value="TO">TO</option>
+            </select>
+            {errors.state && (
+              <p className="mt-1 text-sm text-red-600">{errors.state.message}</p>
+            )}
+          </div>
+
+          {/* Foto de Perfil - full width */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-0.5">
+              Foto de Perfil
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition file:mr-4 file:py-2 file:px-4 file:cursor-pointer file:border-0 file:text-sm file:bg-blue-50 file:rounded-lg file:text-blue-700 hover:file:bg-blue-100"
+            />
+            {photoPreview && (
+              <div className="mt-2 flex items-center gap-2">
+                <img
+                  src={photoPreview}
+                  alt="Preview"
+                  className="w-12 h-12 rounded-lg object-cover border border-gray-200"
+                />
+                <span className="text-sm text-gray-600">Imagem selecionada</span>
+              </div>
+            )}
+          </div>
+
+          {/* Submit Button - full width */}
+          <div className="md:col-span-2">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="cursor-pointer w-full bg-linear-to-r from-blue-500 to-green-500 text-white py-2 rounded-lg font-medium hover:from-blue-600 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Salvando...
+                  Criando...
                 </>
               ) : (
                 'Criar Vendedor'
               )}
+            </button>
+          </div>
+
+          {/* Cancel Button - full width */}
+          <div className="md:col-span-2">
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={loading}
+              className="cursor-pointer w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancelar
             </button>
           </div>
         </form>

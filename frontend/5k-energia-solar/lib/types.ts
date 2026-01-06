@@ -74,6 +74,8 @@ export interface CreatePersonDto {
   email: string;
   phone: string;
   pixKey: string;
+  city: string;
+  state: string;
   photoBase64?: string;
 }
 
@@ -82,6 +84,8 @@ export interface UpdatePersonDto {
   email?: string;
   phone?: string;
   pixKey?: string;
+  city?: string;
+  state?: string;
   photoBase64?: string;
   active?: boolean;
 }

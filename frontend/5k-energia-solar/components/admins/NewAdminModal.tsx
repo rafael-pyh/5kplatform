@@ -88,141 +88,143 @@ export default function NewAdminModal({ isOpen, onClose, onSuccess }: NewAdminMo
 
   return (
     <ResponsiveModal isOpen={isOpen} onClose={handleClose}>
-      <div className="p-6">
+      <div className="p-4">
         {/* Header */}
-        <div className="mb-6 pb-4 border-b border-gray-200">
+        <div className="text-center mb-4">
           <h2 className="text-xl font-semibold text-gray-900">Novo Administrador</h2>
+          <p className="text-sm text-gray-600 mt-1">Crie um novo administrador do sistema</p>
         </div>
 
         {/* Body */}
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-4">
-            {/* Nome */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Nome completo *
-              </label>
-              <input
-                id="name"
-                type="text"
-                {...register('name', { required: 'Nome é obrigatório' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ex: João Silva"
-              />
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-              )}
-            </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {/* Nome */}
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Nome completo *
+            </label>
+            <input
+              id="name"
+              type="text"
+              maxLength={100}
+              {...register('name', { required: 'Nome é obrigatório' })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              placeholder="Ex: João Silva"
+            />
+            {errors.name && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.name.message}</p>
+            )}
+          </div>
 
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                E-mail *
-              </label>
-              <input
-                id="email"
-                type="email"
-                {...register('email', {
-                  required: 'E-mail é obrigatório',
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'E-mail inválido',
-                  },
-                })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="admin@exemplo.com"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-              )}
-            </div>
+          {/* Email */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-0.5">
+              E-mail *
+            </label>
+            <input
+              id="email"
+              type="email"
+              maxLength={120}
+              {...register('email', {
+                required: 'E-mail é obrigatório',
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: 'E-mail inválido',
+                },
+              })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              placeholder="admin@exemplo.com"
+            />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.email.message}</p>
+            )}
+          </div>
 
-            {/* Senha */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Senha *
-              </label>
-              <PasswordField
-                name="password"
-                register={register as any}
-                registerOptions={{
-                  required: 'Senha é obrigatória',
-                  minLength: { value: 8, message: 'Senha deve ter no mínimo 8 caracteres, incluindo letras e números' },
-                }}
-                placeholder="******"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-              )}
-            </div>
+          {/* Senha */}
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Senha *
+            </label>
+            <PasswordField
+              name="password"
+              register={register as any}
+              registerOptions={{
+                required: 'Senha é obrigatória',
+                minLength: { value: 8, message: 'Mínimo 8 caracteres' },
+              }}
+              placeholder="Mínimo 8 caracteres"
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+            {errors.password && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.password.message}</p>
+            )}
+          </div>
 
-            {/* Tipo */}
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                Tipo de administrador *
-              </label>
-              <select
-                id="role"
-                {...register('role', { required: 'Tipo é obrigatório' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Selecione...</option>
-                <option value="ADMIN">Admin</option>
-                <option value="SUPER_ADMIN">Super Admin</option>
-              </select>
-              {errors.role && (
-                <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
-              )}
-            </div>
+          {/* Tipo */}
+          <div>
+            <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Tipo de administrador *
+            </label>
+            <select
+              id="role"
+              {...register('role', { required: 'Tipo é obrigatório' })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            >
+              <option value="">Selecione...</option>
+              <option value="ADMIN">Admin</option>
+              <option value="SUPER_ADMIN">Super Admin</option>
+            </select>
+            {errors.role && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.role.message}</p>
+            )}
+          </div>
 
-            {/* Imagem de perfil */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Imagem de perfil
-              </label>
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0">
-                  {preview ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                  ) : (
-                    <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                    </svg>
-                  )}
-                </div>
-
-                <div className="flex-1">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">Envie uma imagem para o perfil (opcional).</p>
-                </div>
+          {/* Imagem de perfil - Full Width */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-0.5">
+              Imagem de perfil
+            </label>
+            <div className="flex items-center gap-3">
+              <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200">
+                {preview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                  </svg>
+                )}
               </div>
+              <label className="cursor-pointer">
+                <span className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block text-sm font-medium">
+                  Escolher Arquivo
+                </span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
+          {/* Actions - Full Width */}
+          <div className="md:col-span-2 flex flex-col gap-2 pt-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="cursor-pointer w-full px-4 py-2 bg-linear-to-r from-blue-500 to-green-500 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              {loading ? 'Criando...' : 'Criar Administrador'}
+            </button>
             <button
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="cursor-pointer w-full px-4 py-2 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Criando...' : 'Criar'}
             </button>
           </div>
         </form>
