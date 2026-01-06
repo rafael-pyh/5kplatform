@@ -7,6 +7,7 @@ const router = Router();
 // Rotas públicas
 router.post("/register", authController.register);
 router.post("/login", authController.login);
+router.post("/validate-remember-me", authController.validateRememberMeToken);
 
 // Nova rota para confirmar email
 router.post("/confirm-email", authController.confirmEmail);

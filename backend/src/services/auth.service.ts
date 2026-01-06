@@ -7,6 +7,7 @@ import { generateToken } from "../utils/jwt";
 import { Validator } from "../shared/Validator";
 import { UnauthorizedError, ConflictError } from "../shared/errors";
 import { uploadBase64ToS3 } from "./storage.service";
+import * as crypto from "crypto";
 
 // ==================== DTOs ====================
 export interface CreateUserDto {
@@ -19,6 +20,7 @@ export interface CreateUserDto {
 export interface LoginDto {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 // ==================== AUTH SERVICE (Single Responsibility) ====================
@@ -135,12 +137,25 @@ export const login = async (data: LoginDto) => {
   // Define o role (se não tiver, assume SELLER)
   const userRole = user.role || PersonRole.SELLER;
 
-  // Gera o token
+  // Gera o token JWT
   const token = generateToken({
     userId: user.id,
     email: user.email,
     role: userRole,
   });
+
+  // Gera token de "Lembrar de mim" se solicitado (válido por 30 dias)
+  let rememberMeToken: string | undefined;
+  if (data.rememberMe) {
+    rememberMeToken = crypto.randomBytes(32).toString('hex');
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 30); // 30 dias
+    
+    await user.update({
+      rememberMeToken,
+      rememberMeExpiry: expiryDate,
+    });
+  }
 
   return {
     user: {
@@ -151,6 +166,7 @@ export const login = async (data: LoginDto) => {
       photoBase64: (user as any).photoBase64,
     },
     token,
+    rememberMeToken,
   };
 };
 
@@ -333,4 +349,63 @@ export const getCurrentUser = async (userId: string) => {
   }
 
   return user;
+};
+
+// Valida e usa o token de "Lembrar de mim"
+export const validateRememberMeToken = async (rememberMeToken: string) => {
+  if (!rememberMeToken) {
+    throw new UnauthorizedError("Token 'Lembrar de mim' inválido");
+  }
+
+  const user = await Person.findOne({
+    where: { rememberMeToken },
+  });
+
+  if (!user) {
+    throw new UnauthorizedError("Token 'Lembrar de mim' inválido");
+  }
+
+  // Verifica se o token expirou
+  if (user.rememberMeExpiry && new Date() > user.rememberMeExpiry) {
+    // Limpa o token expirado
+    await user.update({
+      rememberMeToken: null,
+      rememberMeExpiry: null,
+    });
+    throw new UnauthorizedError("Token 'Lembrar de mim' expirado");
+  }
+
+  // Verifica se o usuário está ativo
+  if (!user.active) {
+    throw new UnauthorizedError("Conta desativada");
+  }
+
+  // Gera novo token JWT
+  const token = generateToken({
+    userId: user.id,
+    email: user.email!,
+    role: user.role || PersonRole.SELLER,
+  });
+
+  // Regenera o token de "lembrar" (refresh)
+  const newRememberMeToken = crypto.randomBytes(32).toString('hex');
+  const newExpiryDate = new Date();
+  newExpiryDate.setDate(newExpiryDate.getDate() + 30);
+
+  await user.update({
+    rememberMeToken: newRememberMeToken,
+    rememberMeExpiry: newExpiryDate,
+  });
+
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role || PersonRole.SELLER,
+      photoBase64: (user as any).photoBase64,
+    },
+    token,
+    rememberMeToken: newRememberMeToken,
+  };
 };

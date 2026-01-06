@@ -93,6 +93,14 @@ export class Person extends Model {
   @Column(DataType.DATE)
   tokenExpiry?: Date;
 
+  @AllowNull(true)
+  @Column(DataType.STRING)
+  rememberMeToken?: string;
+
+  @AllowNull(true)
+  @Column(DataType.DATE)
+  rememberMeExpiry?: Date;
+
   @CreatedAt
   @Column(DataType.DATE)
   createdAt!: Date;

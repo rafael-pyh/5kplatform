@@ -8,7 +8,13 @@ import { LoginCredentials } from '@/lib/types';
 
 export function useLogin() {
   const [isLoading, setIsLoading] = useState(false);
-  const form = useForm<LoginCredentials>();
+  const form = useForm<LoginCredentials>({
+    defaultValues: {
+      email: '',
+      password: '',
+      rememberMe: false,
+    },
+  });
   const { login } = useAuth();
 
   const onSubmit = useCallback(

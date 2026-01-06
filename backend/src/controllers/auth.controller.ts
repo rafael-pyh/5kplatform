@@ -96,3 +96,13 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
     next(error);
   }
 };
+
+export const validateRememberMeToken = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { rememberMeToken } = req.body;
+    const result = await authService.validateRememberMeToken(rememberMeToken);
+    return ResponseBuilder.success(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
