@@ -3,16 +3,28 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
-import Button from '@/components/ui/Button';
 import { personService, uploadService } from '@/lib/services';
 import { Person, UpdatePersonDto } from '@/lib/types';
 import ResponsiveModal from '@/components/ResponsiveModal';
+import CityAutocomplete from '@/components/ui/CityAutocomplete';
+import { getStates, getCitiesByState } from '@/lib/actions/locationActions';
 
 interface EditSellerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   person: Person;
+}
+
+interface StateOption {
+  id: string;
+  name: string;
+  abbreviation: string;
+}
+
+interface CityOption {
+  id: string;
+  name: string;
 }
 
 export default function EditSellerModal({
@@ -24,20 +36,69 @@ export default function EditSellerModal({
   const [loading, setLoading] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(person.photoBase64 || null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [states, setStates] = useState<StateOption[]>([]);
+  const [cities, setCities] = useState<CityOption[]>([]);
+  const [citiesLoading, setCitiesLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
+    setValue,
   } = useForm<UpdatePersonDto>({
     defaultValues: {
       name: person.name,
       email: person.email,
       phone: person.phone,
       pixKey: (person as any).pixKey || '',
+      city: (person as any).city || '',
+      state: (person as any).state || '',
     },
   });
+
+  const watchState = watch('state');
+
+  // Load states on mount
+  useEffect(() => {
+    const loadStates = async () => {
+      try {
+        const statesData = await getStates();
+        setStates(statesData);
+      } catch (error) {
+        console.error('Error loading states:', error);
+        toast.error('Erro ao carregar estados');
+      }
+    };
+
+    if (isOpen) {
+      loadStates();
+    }
+  }, [isOpen]);
+
+  // Load cities when state changes
+  useEffect(() => {
+    const loadCities = async () => {
+      if (!watchState) {
+        setCities([]);
+        return;
+      }
+
+      setCitiesLoading(true);
+      try {
+        const citiesData = await getCitiesByState(watchState);
+        setCities(citiesData);
+      } catch (error) {
+        console.error('Error loading cities:', error);
+        toast.error('Erro ao carregar cidades');
+      } finally {
+        setCitiesLoading(false);
+      }
+    };
+
+    loadCities();
+  }, [watchState]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -95,6 +156,8 @@ export default function EditSellerModal({
       if (data.email !== undefined) updateData.email = data.email;
       if (data.phone !== undefined) updateData.phone = data.phone;
       if ((data as any).pixKey !== undefined) updateData.pixKey = (data as any).pixKey;
+      if (data.city !== undefined) updateData.city = data.city;
+      if (data.state !== undefined) updateData.state = data.state;
       if (photoBase64) updateData.photoBase64 = photoBase64;
 
       await personService.update(person.id, updateData);
@@ -213,24 +276,6 @@ export default function EditSellerModal({
             )}
           </div>
 
-          {/* City */}
-          <div>
-            <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-0.5">
-              Cidade *
-            </label>
-            <input
-              id="city"
-              type="text"
-              maxLength={100}
-              {...register('city', { required: 'Cidade é obrigatória' })}
-              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-              placeholder="Sua cidade"
-            />
-            {errors.city && (
-              <p className="text-red-500 text-xs mt-0.5">{errors.city.message}</p>
-            )}
-          </div>
-
           {/* State */}
           <div>
             <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-0.5">
@@ -242,36 +287,49 @@ export default function EditSellerModal({
               className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
             >
               <option value="">Selecione um estado</option>
-              <option value="AC">AC</option>
-              <option value="AL">AL</option>
-              <option value="AP">AP</option>
-              <option value="AM">AM</option>
-              <option value="BA">BA</option>
-              <option value="CE">CE</option>
-              <option value="DF">DF</option>
-              <option value="ES">ES</option>
-              <option value="GO">GO</option>
-              <option value="MA">MA</option>
-              <option value="MT">MT</option>
-              <option value="MS">MS</option>
-              <option value="MG">MG</option>
-              <option value="PA">PA</option>
-              <option value="PB">PB</option>
-              <option value="PR">PR</option>
-              <option value="PE">PE</option>
-              <option value="PI">PI</option>
-              <option value="RJ">RJ</option>
-              <option value="RN">RN</option>
-              <option value="RS">RS</option>
-              <option value="RO">RO</option>
-              <option value="RR">RR</option>
-              <option value="SC">SC</option>
-              <option value="SP">SP</option>
-              <option value="SE">SE</option>
-              <option value="TO">TO</option>
+              {states.map((state) => (
+                <option key={state.abbreviation} value={state.abbreviation}>
+                  {state.name} ({state.abbreviation})
+                </option>
+              ))}
             </select>
             {errors.state && (
               <p className="text-red-500 text-xs mt-0.5">{errors.state.message}</p>
+            )}
+          </div>
+
+          {/* City */}
+          <div>
+            <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Cidade *
+            </label>
+            {watchState ? (
+              citiesLoading ? (
+                <div className="w-full px-2 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 text-sm flex items-center justify-center">
+                  Carregando cidades...
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="hidden"
+                    {...register('city', { required: 'Cidade é obrigatória' })}
+                  />
+                  <CityAutocomplete
+                    cities={cities}
+                    value={watch('city') || ''}
+                    onChange={(cityName) => setValue('city', cityName)}
+                    placeholder="Digite para filtrar a cidade"
+                    disabled={cities.length === 0 || citiesLoading}
+                  />
+                </>
+              )
+            ) : (
+              <div className="w-full px-2 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 text-sm">
+                Selecione um estado primeiro
+              </div>
+            )}
+            {errors.city && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.city.message}</p>
             )}
           </div>
 
