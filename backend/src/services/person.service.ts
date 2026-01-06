@@ -5,6 +5,7 @@ import { QRCodeScan } from "../models/QRCodeScan";
 import { generateQRCode, generateQRCodeAndUpload } from "../utils/qr";
 import { sendEmailConfirmation, sendVerificationEmail } from "../utils/email";
 import { hashPassword } from "../utils/bcrypt";
+import { uploadBase64ToS3 } from "./storage.service";
 import crypto from "crypto";
 import { Validator } from "../shared/Validator";
 import { ConflictError } from "../shared/errors";
@@ -77,7 +78,8 @@ export const createPerson = async (data: CreatePersonDto) => {
     hashedPassword = await hashPassword(data.password);
   }
 
-  // Valida foto de perfil (URL) se fornecida
+  // Faz upload da foto base64 para S3 se fornecida
+  let photoUrl: string | undefined = undefined;
   if (data.photoBase64) {
     console.log(`[createPerson] Validando photoBase64:`, {
       tipo: typeof data.photoBase64,
@@ -85,9 +87,22 @@ export const createPerson = async (data: CreatePersonDto) => {
       trimmed: data.photoBase64.trim().length,
     });
     if (typeof data.photoBase64 !== 'string' || data.photoBase64.trim() === '') {
-      throw new Error('Foto de perfil deve ser uma URL válida');
+      throw new Error('Foto de perfil deve ser uma imagem válida em base64');
     }
-    console.log(`[createPerson] ✅ photoBase64 válido`);
+    console.log(`[createPerson] ✅ photoBase64 válido - fazendo upload para S3`);
+    
+    try {
+      // Gera nome do arquivo baseado no email ou timestamp
+      const fileName = data.email 
+        ? `${data.email.replace('@', '_').replace(/\./g, '_')}.jpg`
+        : `profile_${Date.now()}.jpg`;
+      
+      photoUrl = await uploadBase64ToS3(data.photoBase64, fileName, 'profile-photos');
+      console.log(`[createPerson] ✅ Upload de foto realizado com sucesso:`, photoUrl);
+    } catch (uploadError) {
+      console.error(`[createPerson] ❌ Erro ao fazer upload da foto:`, uploadError);
+      throw uploadError;
+    }
   } else {
     console.log(`[createPerson] ⚠️  Nenhuma foto de perfil fornecida`);
   }
@@ -96,7 +111,13 @@ export const createPerson = async (data: CreatePersonDto) => {
   // Se foi criado pelo admin (não tem senha), aprova automaticamente
   // Se foi registro público (tem senha), fica pendente
   const person = await Person.create({
-    ...data,
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    pixKey: data.pixKey,
+    photoBase64: photoUrl, // Salva apenas a URL do S3, não o base64
+    city: data.city,
+    state: data.state,
     password: hashedPassword,
     qrCode,
     qrCodeUrl, // Salva a URL do QR code do S3
@@ -214,6 +235,21 @@ export const updateById = async (id: string, data: UpdatePersonDto) => {
   const updateData: any = { ...data };
   if (data.password) {
     updateData.password = await hashPassword(data.password);
+  }
+  
+  // Faz upload de photoBase64 para S3 se fornecido
+  if (data.photoBase64) {
+    try {
+      const fileName = person.email 
+        ? `${person.email.replace('@', '_').replace(/\./g, '_')}.jpg`
+        : `profile_${person.id}.jpg`;
+      
+      const photoUrl = await uploadBase64ToS3(data.photoBase64, fileName, 'profile-photos');
+      updateData.photoBase64 = photoUrl; // Salva apenas a URL, não o base64
+    } catch (error) {
+      console.error('[updateById] Erro ao fazer upload de foto:', error);
+      throw error;
+    }
   }
   
   await person.update(updateData);

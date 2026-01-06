@@ -288,6 +288,93 @@ export const uploadQRCodeToMinIO = async (
 };
 
 /**
+ * Faz upload de arquivo base64 para S3
+ */
+export const uploadBase64ToS3 = async (
+  base64Data: string,
+  fileName: string,
+  folderName: string = 'profile-photos'
+): Promise<string> => {
+  try {
+    // Garante que o bucket existe
+    await createBucketIfNotExists(BUCKET_NAME);
+    
+    // Remove o prefixo "data:image/...;base64," se existir
+    let base64String = base64Data;
+    if (base64Data.includes('base64,')) {
+      base64String = base64Data.split('base64,')[1];
+    }
+    
+    // Converte base64 para buffer
+    const fileBuffer = Buffer.from(base64String, 'base64');
+    
+    // Detecta o tipo de arquivo do base64
+    let contentType = 'image/jpeg';
+    if (base64Data.includes('image/png')) {
+      contentType = 'image/png';
+    } else if (base64Data.includes('image/webp')) {
+      contentType = 'image/webp';
+    } else if (base64Data.includes('image/gif')) {
+      contentType = 'image/gif';
+    }
+    
+    const objectName = `${folderName}/${Date.now()}-${fileName}`;
+    
+    // Detecta se é uma imagem e comprime se necessário
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+    const fileExtension = fileName.split('.').pop()?.toLowerCase() || '';
+    const isImage = imageExtensions.includes(fileExtension);
+    let finalBuffer: any = fileBuffer;
+    
+    if (isImage) {
+      try {
+        let sharpInstance = sharp(fileBuffer);
+        
+        // Auto-rotaciona baseado em EXIF metadata
+        sharpInstance = sharpInstance.rotate();
+        
+        // Redimensiona para máximo de 1200x1200px
+        sharpInstance = sharpInstance.resize(1200, 1200, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        });
+        
+        // Aplica compressão específica por tipo
+        if (fileExtension === 'png') {
+          sharpInstance = sharpInstance.png({ 
+            compressionLevel: 9,
+            palette: true,
+          });
+        } else if (fileExtension === 'webp') {
+          sharpInstance = sharpInstance.webp({ quality: 80 });
+        } else {
+          sharpInstance = sharpInstance.jpeg({ quality: 80 });
+        }
+        
+        finalBuffer = await sharpInstance.toBuffer();
+      } catch (compressionError) {
+        console.warn(`[uploadBase64ToS3] ⚠️  Erro ao comprimir imagem, usando original:`, compressionError);
+      }
+    }
+
+    const command = new PutObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: objectName,
+      Body: finalBuffer as unknown as Buffer,
+      ContentType: contentType,
+    });
+
+    await s3Client.send(command);
+
+    // Retorna a URL pública do arquivo
+    return buildPublicUrl(objectName);
+  } catch (error: any) {
+    console.error('[uploadBase64ToS3] Erro ao fazer upload de base64 para S3:', error);
+    throw new Error(`Erro ao fazer upload da imagem: ${error.message}`);
+  }
+};
+
+/**
  * Deleta QR Code da pasta qrcodes do bucket principal
  */
 export const deleteQRCodeFromMinIO = async (objectName: string): Promise<void> => {

@@ -11,6 +11,9 @@ export const errorHandler = (
     name: err.name,
     message: err.message,
     type: err.constructor.name,
+    path: req.path,
+    method: req.method,
+    stack: err.stack,
   });
 
   if (err instanceof AppError) {

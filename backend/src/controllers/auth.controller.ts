@@ -76,9 +76,12 @@ export const createAdminUser = async (req: Request, res: Response, next: NextFun
 export const confirmEmail = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { token } = req.body;
+    console.log('[confirmEmail] Iniciando confirmação de email com token:', token);
     const result = await authService.confirmEmail(token);
+    console.log('[confirmEmail] Email confirmado com sucesso');
     return ResponseBuilder.success(res, result);
   } catch (error) {
+    console.error('[confirmEmail] Erro ao confirmar email:', error);
     next(error);
   }
 };

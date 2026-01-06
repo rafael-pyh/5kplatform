@@ -6,6 +6,7 @@ import { hashPassword, comparePassword } from "../utils/bcrypt";
 import { generateToken } from "../utils/jwt";
 import { Validator } from "../shared/Validator";
 import { UnauthorizedError, ConflictError } from "../shared/errors";
+import { uploadBase64ToS3 } from "./storage.service";
 
 // ==================== DTOs ====================
 export interface CreateUserDto {
@@ -53,9 +54,16 @@ export const register = async (data: CreateUserDto) => {
     active: true,
   };
 
-  // Adiciona photoBase64 se fornecido
+  // Faz upload de photoBase64 para S3 se fornecido
   if ((data as any).photoBase64) {
-    createData.photoBase64 = (data as any).photoBase64;
+    try {
+      const fileName = `${data.email.replace('@', '_').replace(/\./g, '_')}.jpg`;
+      const photoUrl = await uploadBase64ToS3((data as any).photoBase64, fileName, 'profile-photos');
+      createData.photoBase64 = photoUrl; // Salva apenas a URL, não o base64
+    } catch (error) {
+      console.error('Erro ao fazer upload de foto:', error);
+      throw error;
+    }
   }
 
   // Cria o usuário na tabela Person
@@ -178,11 +186,25 @@ export const updateUser = async (
     active: data.active,
   };
 
-  // Support updating photoBase64 (frontend may send as `photoBase64` or `avatar`)
+  // Faz upload de photoBase64 para S3 se fornecido
   if ((data as any).photoBase64) {
-    updateData.photoBase64 = (data as any).photoBase64;
+    try {
+      const fileName = `${data.email?.replace('@', '_').replace(/\./g, '_') || user.id}.jpg`;
+      const photoUrl = await uploadBase64ToS3((data as any).photoBase64, fileName, 'profile-photos');
+      updateData.photoBase64 = photoUrl; // Salva apenas a URL, não o base64
+    } catch (error) {
+      console.error('Erro ao fazer upload de foto:', error);
+      throw error;
+    }
   } else if ((data as any).avatar) {
-    updateData.photoBase64 = (data as any).avatar;
+    try {
+      const fileName = `${data.email?.replace('@', '_').replace(/\./g, '_') || user.id}.jpg`;
+      const photoUrl = await uploadBase64ToS3((data as any).avatar, fileName, 'profile-photos');
+      updateData.photoBase64 = photoUrl; // Salva apenas a URL, não o base64
+    } catch (error) {
+      console.error('Erro ao fazer upload de foto:', error);
+      throw error;
+    }
   }
 
   // Se a senha foi fornecida, faz o hash
@@ -193,7 +215,6 @@ export const updateUser = async (
   // Additional person fields
   if ((data as any).phone !== undefined) updateData.phone = (data as any).phone;
   if ((data as any).pixKey !== undefined) updateData.pixKey = (data as any).pixKey;
-  if ((data as any).photoBase64 !== undefined) updateData.photoBase64 = (data as any).photoBase64;
   if ((data as any).qrCodeUrl !== undefined) updateData.qrCodeUrl = (data as any).qrCodeUrl;
   if ((data as any).emailVerified !== undefined) updateData.emailVerified = (data as any).emailVerified;
 
@@ -271,11 +292,28 @@ export const createAdminUser = async (data: CreateUserDto, creatorRole: string) 
 };
 
 export const confirmEmail = async (token: string) => {
+  console.log('[confirmEmail] Buscando pessoa com token:', token);
+  
+  // Valida se o token foi fornecido
+  if (!token || token.trim() === '') {
+    console.warn('[confirmEmail] Token vazio ou inválido');
+    throw new Error("Token é obrigatório");
+  }
+  
   const person = await Person.findOne({ where: { verificationToken: token } });
 
   if (!person) {
+    console.warn('[confirmEmail] Token não encontrado no banco:', token);
     throw new Error("Token inválido ou expirado.");
   }
+
+  // Verifica se o token expirou
+  if (person.tokenExpiry && new Date() > person.tokenExpiry) {
+    console.warn('[confirmEmail] Token expirado para email:', person.email, 'Expiração:', person.tokenExpiry);
+    throw new Error("Token expirado. Solicite um novo link de verificação.");
+  }
+
+  console.log('[confirmEmail] Token válido para pessoa:', person.email);
 
   person.emailVerified = true;
   person.verificationToken = undefined;
@@ -283,6 +321,7 @@ export const confirmEmail = async (token: string) => {
 
   await person.save();
 
+  console.log('[confirmEmail] Email confirmado com sucesso para:', person.email);
   return { message: "Email confirmado com sucesso." };
 };
 
