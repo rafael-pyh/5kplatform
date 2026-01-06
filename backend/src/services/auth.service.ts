@@ -7,6 +7,7 @@ import { generateToken } from "../utils/jwt";
 import { Validator } from "../shared/Validator";
 import { UnauthorizedError, ConflictError } from "../shared/errors";
 import { uploadBase64ToS3 } from "./storage.service";
+import { logger } from "../utils/logger";
 
 // ==================== DTOs ====================
 export interface CreateUserDto {
@@ -292,28 +293,30 @@ export const createAdminUser = async (data: CreateUserDto, creatorRole: string) 
 };
 
 export const confirmEmail = async (token: string) => {
-  console.log('[confirmEmail] Buscando pessoa com token:', token);
+  logger.info('confirmEmail', 'Buscando pessoa com token', { tokenLength: token?.length });
   
   // Valida se o token foi fornecido
   if (!token || token.trim() === '') {
-    console.warn('[confirmEmail] Token vazio ou inválido');
+    logger.warn('confirmEmail', 'Token vazio ou inválido');
     throw new Error("Token é obrigatório");
   }
   
   const person = await Person.findOne({ where: { verificationToken: token } });
 
   if (!person) {
-    console.warn('[confirmEmail] Token não encontrado no banco:', token);
+    logger.warn('confirmEmail', 'Token não encontrado no banco', { token: token.substring(0, 20) });
     throw new Error("Token inválido ou expirado.");
   }
 
+  logger.info('confirmEmail', 'Pessoa encontrada', { email: person.email, emailVerified: person.emailVerified });
+
   // Verifica se o token expirou
   if (person.tokenExpiry && new Date() > person.tokenExpiry) {
-    console.warn('[confirmEmail] Token expirado para email:', person.email, 'Expiração:', person.tokenExpiry);
+    logger.warn('confirmEmail', 'Token expirado', { email: person.email, expiry: person.tokenExpiry });
     throw new Error("Token expirado. Solicite um novo link de verificação.");
   }
 
-  console.log('[confirmEmail] Token válido para pessoa:', person.email);
+  logger.info('confirmEmail', 'Token válido para pessoa', { email: person.email });
 
   person.emailVerified = true;
   person.verificationToken = undefined;
@@ -321,7 +324,7 @@ export const confirmEmail = async (token: string) => {
 
   await person.save();
 
-  console.log('[confirmEmail] Email confirmado com sucesso para:', person.email);
+  logger.info('confirmEmail', 'Email confirmado com sucesso', { email: person.email });
   return { message: "Email confirmado com sucesso." };
 };
 

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import * as authService from "../services/auth.service";
 import { ResponseBuilder } from "../shared/ResponseBuilder";
+import { logger } from "../utils/logger";
 
 // ==================== AUTH CONTROLLER (Single Responsibility: HTTP handling) ====================
 
@@ -76,12 +77,12 @@ export const createAdminUser = async (req: Request, res: Response, next: NextFun
 export const confirmEmail = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { token } = req.body;
-    console.log('[confirmEmail] Iniciando confirmação de email com token:', token);
+    logger.info('confirmEmail', 'Iniciando confirmação de email', { token: token?.substring(0, 20) + '...' });
     const result = await authService.confirmEmail(token);
-    console.log('[confirmEmail] Email confirmado com sucesso');
+    logger.info('confirmEmail', 'Email confirmado com sucesso', result);
     return ResponseBuilder.success(res, result);
   } catch (error) {
-    console.error('[confirmEmail] Erro ao confirmar email:', error);
+    logger.error('confirmEmail', 'Erro ao confirmar email', error);
     next(error);
   }
 };
