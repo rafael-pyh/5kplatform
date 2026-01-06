@@ -31,29 +31,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const rememberMeToken = localStorage.getItem('rememberMeToken');
         const storedUser = localStorage.getItem('user');
 
-        console.log('[AuthContext] initAuth:', { token: !!token, rememberMeToken: !!rememberMeToken, storedUser: !!storedUser });
 
         if (token && storedUser) {
           try {
             // Valida o token com o backend
             const response = await api.get('/auth/me');
             const userData = response.data.data;
-            console.log('[AuthContext] Token JWT válido, usuário carregado:', userData.email);
             setUser(userData);
             localStorage.setItem('user', JSON.stringify(userData));
           } catch (jwtError: any) {
             // JWT expirou, tenta rememberMeToken
-            console.log('[AuthContext] JWT inválido/expirado. Tentando rememberMeToken...', jwtError.response?.status);
             
             if (rememberMeToken) {
               try {
-                console.log('[AuthContext] Validando rememberMeToken...');
                 const response = await api.post<{ data: AuthResponse }>('/auth/validate-remember-me', {
                   rememberMeToken,
                 });
                 const { token: newToken, user: userData, rememberMeToken: newRememberMeToken } = response.data.data;
 
-                console.log('[AuthContext] rememberMeToken válido! Sessão renovada para:', userData.email);
 
                 // Salva os novos tokens
                 localStorage.setItem('token', newToken);
@@ -65,7 +60,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(userData);
               } catch (rememberError: any) {
                 // Token de "lembrar" também expirou ou é inválido
-                console.log('[AuthContext] rememberMeToken também inválido/expirado:', rememberError.response?.data?.message || rememberError.message);
                 localStorage.removeItem('rememberMeToken');
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
@@ -73,7 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
             } else {
               // Sem rememberMeToken, limpa tudo
-              console.log('[AuthContext] Sem rememberMeToken, fazendo logout');
               localStorage.removeItem('token');
               localStorage.removeItem('user');
               setUser(null);
@@ -82,13 +75,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else if (rememberMeToken && !token) {
           // Tenta usar o token de "lembrar de mim" para renovar a sessão
           try {
-            console.log('[AuthContext] Validando rememberMeToken (sem JWT)...');
             const response = await api.post<{ data: AuthResponse }>('/auth/validate-remember-me', {
               rememberMeToken,
             });
             const { token: newToken, user: userData, rememberMeToken: newRememberMeToken } = response.data.data;
 
-            console.log('[AuthContext] rememberMeToken válido! Sessão criada para:', userData.email);
 
             // Salva os novos tokens
             localStorage.setItem('token', newToken);
@@ -100,18 +91,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(userData);
           } catch (error: any) {
             // Token de "lembrar" expirou ou é inválido
-            console.log('[AuthContext] rememberMeToken inválido ou expirado:', error.response?.data?.message || error.message);
             localStorage.removeItem('rememberMeToken');
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             setUser(null);
           }
         } else {
-          console.log('[AuthContext] Sem token ou rememberMeToken válido');
           setUser(null);
         }
       } catch (error) {
-        console.log('[AuthContext] Erro na inicialização:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('rememberMeToken');
         localStorage.removeItem('user');
@@ -126,11 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (credentials: LoginCredentials) => {
     try {
-      console.log('[AuthContext] Login iniciado com rememberMe:', credentials.rememberMe);
       const response = await api.post<{ data: AuthResponse }>('/auth/login', credentials);
       const { token, user: userData, rememberMeToken } = response.data.data;
 
-      console.log('[AuthContext] Login sucesso! rememberMeToken recebido:', !!rememberMeToken);
 
       // Salva no localStorage
       localStorage.setItem('token', token);
@@ -138,11 +124,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Salva o token de "lembrar de mim" se foi marcado o checkbox
       if (rememberMeToken && credentials.rememberMe) {
-        console.log('[AuthContext] Salvando rememberMeToken no localStorage');
         localStorage.setItem('rememberMeToken', rememberMeToken);
       } else {
         // Remove se desmarcou o checkbox
-        console.log('[AuthContext] Removendo rememberMeToken (checkbox não marcado)');
         localStorage.removeItem('rememberMeToken');
       }
 

@@ -111,8 +111,6 @@ export function useRegister(initial: Partial<FormData> = {}) {
         errorMessage = error.message;
       }
       
-      console.log('Mensagem de erro extraída:', errorMessage);
-      
       // Exibe a mensagem apropriada baseada no tipo de erro
       if (errorMessage.includes('já existe') || errorMessage.includes('cadastrado') || errorMessage.includes('Email')) {
         toast.error('Usuário já existe. Faça login para continuar.');
