@@ -21,12 +21,9 @@ export const sellerLogin = async (req: Request, res: Response, next: NextFunctio
 export const verifyEmailToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { token } = req.params;
-    console.log('[SellerAuth] Verificando token de email:', token);
     const result = await sellerAuthService.verifyEmailToken(token);
-    console.log('[SellerAuth] Token verificado com sucesso para:', result.email);
     return ResponseBuilder.success(res, result);
   } catch (error) {
-    console.error('[SellerAuth] Erro ao verificar token:', error);
     next(error);
   }
 };

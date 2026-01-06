@@ -36,14 +36,6 @@ export interface UpdatePersonDto {
 }
 
 export const createPerson = async (data: CreatePersonDto) => {
-  console.log(`[createPerson] Iniciando criação de pessoa com dados:`, {
-    name: data.name,
-    email: data.email,
-    phone: data.phone,
-    photoBase64: data.photoBase64 ? `[URL com ${data.photoBase64.length} chars]` : 'SEM FOTO',
-    city: data.city,
-    state: data.state,
-  });
 
   // Verifica se email já existe
   if (data.email) {
@@ -81,15 +73,9 @@ export const createPerson = async (data: CreatePersonDto) => {
   // Faz upload da foto base64 para S3 se fornecida
   let photoUrl: string | undefined = undefined;
   if (data.photoBase64) {
-    console.log(`[createPerson] Validando photoBase64:`, {
-      tipo: typeof data.photoBase64,
-      length: data.photoBase64.length,
-      trimmed: data.photoBase64.trim().length,
-    });
     if (typeof data.photoBase64 !== 'string' || data.photoBase64.trim() === '') {
       throw new Error('Foto de perfil deve ser uma imagem válida em base64');
     }
-    console.log(`[createPerson] ✅ photoBase64 válido - fazendo upload para S3`);
     
     try {
       // Gera nome do arquivo baseado no email ou timestamp
@@ -98,13 +84,9 @@ export const createPerson = async (data: CreatePersonDto) => {
         : `profile_${Date.now()}.jpg`;
       
       photoUrl = await uploadBase64ToS3(data.photoBase64, fileName, 'profile-photos');
-      console.log(`[createPerson] ✅ Upload de foto realizado com sucesso:`, photoUrl);
     } catch (uploadError) {
-      console.error(`[createPerson] ❌ Erro ao fazer upload da foto:`, uploadError);
       throw uploadError;
     }
-  } else {
-    console.log(`[createPerson] ⚠️  Nenhuma foto de perfil fornecida`);
   }
 
   // Cria a pessoa no banco (sempre como SELLER)
@@ -247,7 +229,6 @@ export const updateById = async (id: string, data: UpdatePersonDto) => {
       const photoUrl = await uploadBase64ToS3(data.photoBase64, fileName, 'profile-photos');
       updateData.photoBase64 = photoUrl; // Salva apenas a URL, não o base64
     } catch (error) {
-      console.error('[updateById] Erro ao fazer upload de foto:', error);
       throw error;
     }
   }

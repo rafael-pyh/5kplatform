@@ -7,7 +7,6 @@ import { generateToken } from "../utils/jwt";
 import { Validator } from "../shared/Validator";
 import { UnauthorizedError, ConflictError } from "../shared/errors";
 import { uploadBase64ToS3 } from "./storage.service";
-import { logger } from "../utils/logger";
 
 // ==================== DTOs ====================
 export interface CreateUserDto {
@@ -62,12 +61,9 @@ export const register = async (data: CreateUserDto) => {
       const photoUrl = await uploadBase64ToS3((data as any).photoBase64, fileName, 'profile-photos');
       createData.photoBase64 = photoUrl; // Salva apenas a URL, não o base64
     } catch (error) {
-      console.error('Erro ao fazer upload de foto:', error);
       throw error;
     }
   }
-
-  // Cria o usuário na tabela Person
   const user = await Person.create(createData);
 
   // Gera o token
@@ -194,7 +190,6 @@ export const updateUser = async (
       const photoUrl = await uploadBase64ToS3((data as any).photoBase64, fileName, 'profile-photos');
       updateData.photoBase64 = photoUrl; // Salva apenas a URL, não o base64
     } catch (error) {
-      console.error('Erro ao fazer upload de foto:', error);
       throw error;
     }
   } else if ((data as any).avatar) {
@@ -203,7 +198,6 @@ export const updateUser = async (
       const photoUrl = await uploadBase64ToS3((data as any).avatar, fileName, 'profile-photos');
       updateData.photoBase64 = photoUrl; // Salva apenas a URL, não o base64
     } catch (error) {
-      console.error('Erro ao fazer upload de foto:', error);
       throw error;
     }
   }
@@ -293,30 +287,21 @@ export const createAdminUser = async (data: CreateUserDto, creatorRole: string) 
 };
 
 export const confirmEmail = async (token: string) => {
-  logger.info('confirmEmail', 'Buscando pessoa com token', { tokenLength: token?.length });
-  
   // Valida se o token foi fornecido
   if (!token || token.trim() === '') {
-    logger.warn('confirmEmail', 'Token vazio ou inválido');
     throw new Error("Token é obrigatório");
   }
   
   const person = await Person.findOne({ where: { verificationToken: token } });
 
   if (!person) {
-    logger.warn('confirmEmail', 'Token não encontrado no banco', { token: token.substring(0, 20) });
     throw new Error("Token inválido ou expirado.");
   }
 
-  logger.info('confirmEmail', 'Pessoa encontrada', { email: person.email, emailVerified: person.emailVerified });
-
   // Verifica se o token expirou
   if (person.tokenExpiry && new Date() > person.tokenExpiry) {
-    logger.warn('confirmEmail', 'Token expirado', { email: person.email, expiry: person.tokenExpiry });
     throw new Error("Token expirado. Solicite um novo link de verificação.");
   }
-
-  logger.info('confirmEmail', 'Token válido para pessoa', { email: person.email });
 
   person.emailVerified = true;
   person.verificationToken = undefined;
@@ -324,7 +309,6 @@ export const confirmEmail = async (token: string) => {
 
   await person.save();
 
-  logger.info('confirmEmail', 'Email confirmado com sucesso', { email: person.email });
   return { message: "Email confirmado com sucesso." };
 };
 

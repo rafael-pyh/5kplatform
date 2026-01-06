@@ -91,8 +91,6 @@ export const sellerLogin = async (data: SellerLoginDto) => {
 export const verifyEmailToken = async (token: string) => {
   Validator.required(token, 'Token');
 
-  console.log('[SellerAuthService] Buscando token:', token);
-
   const person = await Person.findOne({
     where: {
       verificationToken: token,
@@ -103,11 +101,8 @@ export const verifyEmailToken = async (token: string) => {
   });
 
   if (!person) {
-    console.warn('[SellerAuthService] Token não encontrado ou expirado:', token);
     throw new BadRequestError("Token inválido ou expirado");
   }
-
-  console.log('[SellerAuthService] Token válido para pessoa:', person.email);
 
   return {
     id: person.id,
@@ -164,8 +159,6 @@ export const setPassword = async (data: SetPasswordDto) => {
 
   // Atualiza pessoa
   await person.update(updateData);
-
-  console.log('[SellerAuthService] Senha definida com sucesso para:', person.email);
 
   // Gera token JWT
   const token = generateToken({

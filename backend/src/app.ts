@@ -18,9 +18,6 @@ import { authenticate } from "./middlewares/auth.middleware";
 
 const app = express();
 
-console.log('[APP] Inicializando aplicação...');
-console.log('[APP] NODE_ENV:', process.env.NODE_ENV);
-
 // Inicializa o bucket do MinIO
 initializeMinIOBucket().catch(error => {
   console.error("Erro ao inicializar MinIO:", error);
@@ -32,24 +29,10 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// ==================== LOGGING MIDDLEWARE ====================
-app.use((req, res, next) => {
-  const start = Date.now();
-  const originalSend = res.send;
 
-  res.send = function(data) {
-    const duration = Date.now() - start;
-    console.log(`[REQUEST] ${req.method} ${req.path} - Status: ${res.statusCode} - ${duration}ms`);
-    
-    return originalSend.call(this, data);
-  };
-
-  next();
-});
 
 // Rota de health check
 app.get("/health", (req, res) => {
-  console.log('[HEALTH] Health check called');
   res.json({
     success: true,
     message: "API está funcionando!",
