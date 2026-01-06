@@ -11,6 +11,7 @@ import sellerLeadsRoutes from "./routes/seller-leads.routes";
 import manualRegisterRoutes from "./routes/manualRegister.routes";
 import approvalRoutes from "./routes/approval.routes";
 import migrationRoutes from "./routes/migration.routes";
+import emailActivationRouter from "./routes/emailActivation.routes";
 import { errorHandler } from "./shared/errorHandler";
 import { initializeMinIOBucket } from "./services/storage.service";
 import { authenticate } from "./middlewares/auth.middleware";
@@ -49,6 +50,8 @@ app.use("/api/seller", sellerLeadsRoutes);
 app.use("/api", manualRegisterRoutes);
 app.use("/api/approval", approvalRoutes);
 app.use("/api/admin", authenticate, migrationRoutes);
+app.use("/api/admin", authenticate, migrationRoutes);
+app.use("/api", emailActivationRouter);
 
 // Rota 404
 app.use((req, res) => {

@@ -15,7 +15,7 @@ if (databaseUrl) {
   sequelize = new Sequelize(databaseUrl, {
     dialect: 'postgres',
     models: [Person, Lead, QRCodeScan, Creative],
-    logging: process.env.NODE_ENV === 'development' ? console.log : false,
+    logging: process.env.NODE_ENV === 'development' ? console.log : (msg) => console.log(`[SQL] ${msg}`),
     pool: {
       max: 5,
       min: 0,
@@ -41,7 +41,7 @@ if (databaseUrl) {
     username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
     models: [Person, Lead, QRCodeScan, Creative],
-    logging: process.env.NODE_ENV === 'development' ? console.log : false,
+    logging: process.env.NODE_ENV === 'development' ? console.log : (msg) => console.log(`[SQL] ${msg}`),
     pool: {
       max: 5,
       min: 0,
