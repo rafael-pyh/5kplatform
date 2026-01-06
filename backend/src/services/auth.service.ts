@@ -29,6 +29,10 @@ export const register = async (data: CreateUserDto) => {
   Validator.required(data.email, 'Email');
   Validator.required(data.password, 'Senha');
   Validator.email(data.email);
+  // Limites de tamanho para mitigar payloads muito grandes
+  Validator.maxLength(data.name, 100, 'Nome');
+  Validator.maxLength(data.email, 254, 'Email');
+  Validator.maxLength(data.password, 128, 'Senha');
   Validator.minLength(data.password, 6, 'Senha');
 
   // Verifica se o usuário já existe
@@ -92,6 +96,9 @@ export const login = async (data: LoginDto) => {
   Validator.required(data.email, 'Email');
   Validator.required(data.password, 'Senha');
   Validator.email(data.email);
+  // Limites de tamanho
+  Validator.maxLength(data.email, 254, 'Email');
+  Validator.maxLength(data.password, 128, 'Senha');
 
   // Busca o usuário na tabela Person (unificada)
   const user = await Person.findOne({

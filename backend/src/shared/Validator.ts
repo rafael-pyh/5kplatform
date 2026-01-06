@@ -22,6 +22,15 @@ export class Validator {
     }
   }
 
+  static maxLength(value: string, max: number, fieldName: string): void {
+    if (typeof value !== 'string') return;
+    if (value.length > max) {
+      throw new ValidationError(
+        `${fieldName} deve ter no máximo ${max} caracteres`
+      );
+    }
+  }
+
   static isBase64DataUrl(value: string, fieldName: string): void {
     if (!value || typeof value !== 'string') {
       throw new ValidationError(`${fieldName} inválido`);

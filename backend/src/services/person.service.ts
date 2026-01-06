@@ -37,6 +37,30 @@ export interface UpdatePersonDto {
 
 export const createPerson = async (data: CreatePersonDto) => {
 
+  // Validações básicas e limites de tamanho para evitar payloads excessivos
+  if (!data.name || typeof data.name !== 'string' || data.name.trim() === '') {
+    throw new Error('Nome é obrigatório');
+  }
+  Validator.maxLength(data.name, 100, 'Nome');
+  if (data.email) {
+    Validator.email(data.email);
+    Validator.maxLength(data.email, 254, 'Email');
+  }
+  if (data.phone) {
+    // mantém apenas dígitos — mas limita o tamanho
+    if (typeof data.phone === 'string') Validator.maxLength(data.phone, 11, 'Telefone');
+  }
+  if (data.pixKey) {
+    Validator.maxLength(data.pixKey, 77, 'Chave Pix');
+  }
+  if (data.city) {
+    Validator.maxLength(data.city, 100, 'Cidade');
+  }
+  if (data.password) {
+    Validator.maxLength(data.password, 128, 'Senha');
+    Validator.minLength(data.password, 8, 'Senha');
+  }
+
   // Verifica se email já existe
   if (data.email) {
     const existingPerson = await Person.findOne({
