@@ -71,16 +71,21 @@ export default function LoginForm({ form, onSubmit, isLoading }: Props) {
               {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
             </div>
 
-            <div className="flex items-center">
-              <input
-                id="rememberMe"
-                type="checkbox"
-                {...register('rememberMe')}
-                className="w-4 h-4 rounded border-gray-300 cursor-pointer focus:ring-2 focus:ring-blue-500"
-              />
-              <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-700 cursor-pointer">
-                Lembrar de mim
-              </label>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="rememberMe"
+                  type="checkbox"
+                  {...register('rememberMe')}
+                  className="w-4 h-4 rounded border-gray-300 cursor-pointer focus:ring-2 focus:ring-blue-500"
+                />
+                <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-700 cursor-pointer">
+                  Lembrar de mim
+                </label>
+              </div>
+              <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
+                Esqueceu a senha?
+              </Link>
             </div>
 
             <button

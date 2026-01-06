@@ -173,3 +173,117 @@ export async function resendVerificationEmailAction(email: string): Promise<{ me
     throw new Error(error.message || "Erro ao resolicitar email de verificação");
   }
 }
+
+export interface ForgotPasswordData {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
+export async function forgotPasswordAction(data: ForgotPasswordData): Promise<ForgotPasswordResponse> {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    const response = await fetch(`${apiUrl}/api/auth/forgot-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      return {
+        success: false,
+        error: error.message || 'Erro ao solicitar reset de senha',
+      };
+    }
+
+    const result = await response.json();
+    return {
+      success: true,
+      message: result.data?.message || result.message || 'Email enviado com sucesso',
+    };
+  } catch (error: any) {
+    console.error('[forgotPasswordAction] Erro:', error);
+    return {
+      success: false,
+      error: error.message || 'Erro ao solicitar reset de senha',
+    };
+  }
+}
+
+export interface ResetPasswordData {
+  token: string;
+  password: string;
+}
+
+export interface ResetPasswordResponse {
+  success: boolean;
+  token?: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    role: 'ADMIN' | 'SUPER_ADMIN' | 'SELLER';
+  };
+  error?: string;
+  message?: string;
+}
+
+export async function resetPasswordAction(data: ResetPasswordData): Promise<ResetPasswordResponse> {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    const response = await fetch(`${apiUrl}/api/auth/reset-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        token: data.token,
+        password: data.password,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      return {
+        success: false,
+        error: error.message || 'Erro ao redefinir senha',
+      };
+    }
+
+    const result = await response.json();
+    const { token, user } = result.data || result;
+
+    if (token && user) {
+      // Store token in cookie
+      const cookieStore = await cookies();
+      cookieStore.set('authToken', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60, // 7 days
+      });
+    }
+
+    return {
+      success: true,
+      token,
+      user,
+      message: result.data?.message || 'Senha redefinida com sucesso',
+    };
+  } catch (error: any) {
+    console.error('[resetPasswordAction] Erro:', error);
+    return {
+      success: false,
+      error: error.message || 'Erro ao redefinir senha',
+    };
+  }
+}

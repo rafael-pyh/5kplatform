@@ -146,7 +146,7 @@ export const sendPasswordResetEmail = async (
             <p style="background: #e5e7eb; padding: 10px; border-radius: 5px; word-break: break-all;">
               ${resetUrl}
             </p>
-            <p><strong>Este link expira em 1 hora.</strong></p>
+            <p><strong>Este link expira em 24 horas.</strong></p>
             <p>Se você não solicitou esta redefinição, ignore este email.</p>
           </div>
           <div class="footer">
@@ -161,7 +161,7 @@ export const sendPasswordResetEmail = async (
     to: email,
     subject: '🔒 Redefinir Senha - 5K Energia Solar',
     html,
-    text: `Olá, ${name}!\n\nPara redefinir sua senha, acesse: ${resetUrl}\n\nEste link expira em 1 hora.`,
+    text: `Olá, ${name}!\n\nPara redefinir sua senha, acesse: ${resetUrl}\n\nEste link expira em 24 horas.`,
   });
 };
 

@@ -101,6 +101,14 @@ export class Person extends Model {
   @Column(DataType.DATE)
   rememberMeExpiry?: Date;
 
+  @AllowNull(true)
+  @Column(DataType.STRING)
+  resetPasswordToken?: string;
+
+  @AllowNull(true)
+  @Column(DataType.DATE)
+  resetPasswordExpiry?: Date;
+
   @CreatedAt
   @Column(DataType.DATE)
   createdAt!: Date;

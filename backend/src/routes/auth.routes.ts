@@ -8,6 +8,8 @@ const router = Router();
 router.post("/register", authController.register);
 router.post("/login", authController.login);
 router.post("/validate-remember-me", authController.validateRememberMeToken);
+router.post("/forgot-password", authController.requestPasswordReset);
+router.post("/reset-password", authController.resetPassword);
 
 // Nova rota para confirmar email
 router.post("/confirm-email", authController.confirmEmail);

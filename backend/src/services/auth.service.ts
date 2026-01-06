@@ -8,6 +8,8 @@ import { Validator } from "../shared/Validator";
 import { UnauthorizedError, ConflictError } from "../shared/errors";
 import { uploadBase64ToS3 } from "./storage.service";
 import * as crypto from "crypto";
+import { sendPasswordResetEmail } from "../utils/email";
+import { Op } from "sequelize";
 
 // ==================== DTOs ====================
 export interface CreateUserDto {
@@ -409,3 +411,78 @@ export const validateRememberMeToken = async (rememberMeToken: string) => {
     rememberMeToken: newRememberMeToken,
   };
 };
+
+export const requestPasswordReset = async (email: string) => {
+  Validator.required(email, 'Email');
+  Validator.email(email);
+
+  const user = await Person.findOne({
+    where: { email },
+  });
+
+  if (!user) {
+    // Não revela se o email existe por segurança
+    return { message: "Se o email existir, um link de redefinição será enviado" };
+  }
+
+  // Gera novo token com 24 horas de validade
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const expiryDate = new Date();
+  expiryDate.setHours(expiryDate.getHours() + 24); // 24 horas
+
+  await user.update({
+    resetPasswordToken: resetToken,
+    resetPasswordExpiry: expiryDate,
+  });
+
+  // Envia email com link de reset
+  await sendPasswordResetEmail(user.email || email, user.name, resetToken);
+
+  return { message: "Se o email existir, um link de redefinição será enviado" };
+};
+
+export const resetPassword = async (token: string, newPassword: string) => {
+  Validator.required(token, 'Token');
+  Validator.required(newPassword, 'Nova senha');
+  Validator.minLength(newPassword, 6, 'Nova senha');
+
+  const user = await Person.findOne({
+    where: {
+      resetPasswordToken: token,
+      resetPasswordExpiry: {
+        [Op.gte]: new Date(),
+      },
+    },
+  });
+
+  if (!user) {
+    throw new UnauthorizedError("Link de redefinição inválido ou expirado");
+  }
+
+  const hashedPassword = await hashPassword(newPassword);
+
+  await user.update({
+    password: hashedPassword,
+    resetPasswordToken: null,
+    resetPasswordExpiry: null,
+  });
+
+  // Gera token JWT para fazer login automático
+  const jwtToken = generateToken({
+    userId: user.id,
+    email: user.email!,
+    role: user.role || PersonRole.SELLER,
+  });
+
+  return {
+    message: "Senha redefinida com sucesso",
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role || PersonRole.SELLER,
+    },
+    token: jwtToken,
+  };
+};
+

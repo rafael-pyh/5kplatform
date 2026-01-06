@@ -25,6 +25,8 @@ services:
       timeout: 3s
       retries: 3
       start_period: 40s
+    entrypoint: ["/usr/local/bin/docker-entrypoint.sh"]
+    command: npm start
 
   # PostgreSQL Database
   postgres:

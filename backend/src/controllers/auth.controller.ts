@@ -106,3 +106,22 @@ export const validateRememberMeToken = async (req: Request, res: Response, next:
     next(error);
   }
 };
+export const requestPasswordReset = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email } = req.body;
+    const result = await authService.requestPasswordReset(email);
+    return ResponseBuilder.success(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { token, password } = req.body;
+    const result = await authService.resetPassword(token, password);
+    return ResponseBuilder.success(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
