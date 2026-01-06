@@ -16,6 +16,7 @@ import ActionButtons from '@/components/ActionButtons';
 import { Button } from './ui';
 import { Icon } from '@/components/ui/Icon';
 import { isValidQRCode } from '@/lib/utils/imageUrl';
+import ResponsiveModal from '@/components/ResponsiveModal';
 
 interface Creative {
   id: string;
@@ -497,8 +498,8 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg max-h-full shadow-xl max-w-xl w-full p-6 overflow-auto" onClick={(e) => e.stopPropagation()}>
+    <ResponsiveModal isOpen={isOpen} onClose={onClose}>
+      <div className="p-6" onClick={(e) => e.stopPropagation()}>
         <ModalHeader personName={personName} onClose={onClose} />
 
         {/* Tabs to switch between modes */}
@@ -662,6 +663,6 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
           )}
         </div>
       </div>
-    </div>
+    </ResponsiveModal>
   );
 }

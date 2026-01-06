@@ -6,6 +6,7 @@ import { Lead } from '@/lib/types';
 import Button from '@/components/ui/Button';
 import { Icon } from '../ui/Icon';
 import toast from 'react-hot-toast';
+import ResponsiveModal from '@/components/ResponsiveModal';
 
 interface LeadDetailsModalProps {
   isOpen: boolean;
@@ -33,13 +34,6 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
       document.body.style.overflow = 'unset';
     };
   }, [isOpen, handleEscape]);
-
-  const handleBackdropClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) onClose();
-    },
-    [onClose]
-  );
 
   const openFile = (url: string) => {
     window.open(url, '_blank');
@@ -140,188 +134,179 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
 
   if (!isOpen) return null;
 
-  return (
-    <div
-      className={cn('fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fadeIn min-w-full', className)}
-      onClick={handleBackdropClick}
-    >
-      <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full p-6 animate-slideUp max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-900">Detalhes do Lead</h2>
-            <p className="text-sm text-gray-500">Informações detalhadas e anexos</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" onClick={downloadAll} className="hidden sm:inline-flex">
-              <Icon icon="bi-download" className="mr-2" /> Baixar tudo
-            </Button>
-            <button onClick={onClose} aria-label="Fechar modal" className="rounded-md p-2 text-gray-500 hover:bg-gray-100">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+  const modalContent = (
+    <div onClick={(e) => e.stopPropagation()}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-900">Detalhes do Lead</h2>
+          <p className="text-sm text-gray-500">Informações detalhadas e anexos</p>
         </div>
-
-        {/* Content */}
-        <div className="space-y-6">
-          {/* Personal Info */}
-          <div className="bg-gray-50 border border-gray-100 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-gray-600 mb-3">Informações Pessoais</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-500">Nome</p>
-                <p className="text-sm font-semibold text-gray-900">{lead.name || '-'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Email</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-gray-800 truncate">{lead.email || '-'}</p>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(lead.email)}><Icon icon="bi-clipboard" /></Button>
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Telefone</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-gray-800">{lead.phone || '-'}</p>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(lead.phone)}><Icon icon="bi-clipboard" /></Button>
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Vendedor</p>
-                <p className="text-sm font-medium text-gray-900">{lead.owner?.name || '-'}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Attachments */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-3">Anexos</h3>
-
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex-1">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs text-gray-500">Email</label>
-                    <div className="flex items-center gap-0.5">
-                      <p className="text-sm font-medium text-gray-900">{lead.email || '-'}</p>
-                      <Button variant="ghost" size="sm" onClick={() => copyToClipboard(lead.email)}><Icon icon="bi-copy" /></Button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500">Telefone</label>
-                    <div className="flex items-center gap-0.5">
-                      <p className="text-sm font-medium text-gray-900">{lead.phone || '-'}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                {(!energyUrl && !roofUrl) && (
-                  <p className="text-sm text-gray-500">Nenhuma imagem ou documento anexado</p>
-                )}
-
-                    <div className="mt-2">
-                      {/* Main preview */}
-                      {selectedImage ? (
-                        <div className="border rounded p-2 flex items-center justify-center bg-white">
-                          <img
-                            src={ensureDataUrl(selectedImage) || undefined}
-                            alt="Preview"
-                            className="max-h-96 object-contain cursor-pointer"
-                            onClick={() => setLightboxOpen(true)}
-                          />
-                        </div>
-                      ) : (
-                        (roofUrl || energyUrl) && (
-                          <div className="border rounded p-2 flex items-center justify-center bg-white">
-                            <img
-                              src={ensureDataUrl(roofUrl || energyUrl) || undefined}
-                              alt="Preview"
-                              className="max-h-96 object-contain cursor-pointer"
-                              onClick={() => { setSelectedImage(roofUrl || energyUrl || null); setLightboxOpen(true); }}
-                            />
-                          </div>
-                        )
-                      )}
-                    </div>
-
-                {/* Thumbnails */}
-                <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {roofUrl && (
-                    <div>
-                      Foto do telhado
-                      <div className={`border rounded overflow-hidden cursor-pointer relative ${selectedImage === roofUrl ? 'ring-2 ring-blue-400' : ''}`} onClick={() => setSelectedImage(roofUrl || null)}>
-                        {isImageUrl(roofUrl) ? (
-                          <img src={ensureDataUrl(roofUrl) || undefined} alt="telhado" className="w-full h-28 object-cover bg-white" />
-                        ) : (
-                          <div className="w-full h-28 flex items-center justify-center bg-gray-50">Documento</div>
-                        )}
-                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 hover:opacity-100">
-                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); downloadFile(ensureDataUrl(roofUrl!) || roofUrl!, `lead-${lead.id}-roof`); }}>Baixar</Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {energyUrl && (
-                    <div>
-                        Conta de energia
-                      <div className={`border rounded overflow-hidden cursor-pointer relative ${selectedImage === energyUrl ? 'ring-2 ring-blue-400' : ''}`} onClick={() => setSelectedImage(energyUrl || null)}>
-                        {isImageUrl(energyUrl) ? (
-                          <img src={ensureDataUrl(energyUrl) || undefined} alt="conta" className="w-full h-28 object-cover bg-white" />
-                        ) : (
-                          <div className="w-full h-28 flex items-center justify-center bg-gray-50">Documento</div>
-                        )}
-                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 hover:opacity-100">
-                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); downloadFile(ensureDataUrl(energyUrl!) || energyUrl!, `lead-${lead.id}-energybill`); }}>Baixar</Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Status & Date */}
-          <div className="pt-4 border-t border-gray-200">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs text-gray-500">Status</label>
-                <p className="text-sm font-medium text-gray-900">
-                  {lead.status === 'BOUGHT' && 'Comprou'}
-                  {lead.status === 'NEGOTIATION' && 'Negociando'}
-                  {lead.status === 'CANCELLED' && 'Cancelado'}
-                </p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-500">Data de Cadastro</label>
-                <p className="text-sm font-medium text-gray-900">
-                  {new Date(lead.createdAt).toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-6 flex justify-end">
-          <Button onClick={onClose} variant="secondary">
-            Fechar
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" onClick={downloadAll} className="hidden sm:inline-flex">
+            <Icon icon="bi-download" className="mr-2" /> Baixar tudo
           </Button>
         </div>
       </div>
+
+      {/* Content */}
+      <div className="space-y-6">
+        {/* Personal Info */}
+        <div className="bg-gray-50 border border-gray-100 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-gray-600 mb-3">Informações Pessoais</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-gray-500">Nome</p>
+              <p className="text-sm font-semibold text-gray-900">{lead.name || '-'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Email</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-gray-800 truncate">{lead.email || '-'}</p>
+                <Button variant="ghost" size="sm" onClick={() => copyToClipboard(lead.email)}><Icon icon="bi-clipboard" /></Button>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Telefone</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-gray-800">{lead.phone || '-'}</p>
+                <Button variant="ghost" size="sm" onClick={() => copyToClipboard(lead.phone)}><Icon icon="bi-clipboard" /></Button>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Vendedor</p>
+              <p className="text-sm font-medium text-gray-900">{lead.owner?.name || '-'}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Attachments */}
+        <div>
+          <h3 className="text-sm font-medium text-gray-500 mb-3">Anexos</h3>
+
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex-1">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-gray-500">Email</label>
+                  <div className="flex items-center gap-0.5">
+                    <p className="text-sm font-medium text-gray-900">{lead.email || '-'}</p>
+                    <Button variant="ghost" size="sm" onClick={() => copyToClipboard(lead.email)}><Icon icon="bi-copy" /></Button>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Telefone</label>
+                  <div className="flex items-center gap-0.5">
+                    <p className="text-sm font-medium text-gray-900">{lead.phone || '-'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              {(!energyUrl && !roofUrl) && (
+                <p className="text-sm text-gray-500">Nenhuma imagem ou documento anexado</p>
+              )}
+
+              <div className="mt-2">
+                {/* Main preview */}
+                {selectedImage ? (
+                  <div className="border rounded p-2 flex items-center justify-center bg-white">
+                    <img
+                      src={ensureDataUrl(selectedImage) || undefined}
+                      alt="Preview"
+                      className="max-h-96 object-contain cursor-pointer"
+                      onClick={() => setLightboxOpen(true)}
+                    />
+                  </div>
+                ) : (
+                  (roofUrl || energyUrl) && (
+                    <div className="border rounded p-2 flex items-center justify-center bg-white">
+                      <img
+                        src={ensureDataUrl(roofUrl || energyUrl) || undefined}
+                        alt="Preview"
+                        className="max-h-96 object-contain cursor-pointer"
+                        onClick={() => { setSelectedImage(roofUrl || energyUrl || null); setLightboxOpen(true); }}
+                      />
+                    </div>
+                  )
+                )}
+              </div>
+
+              {/* Thumbnails */}
+              <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {roofUrl && (
+                  <div>
+                    Foto do telhado
+                    <div className={`border rounded overflow-hidden cursor-pointer relative ${selectedImage === roofUrl ? 'ring-2 ring-blue-400' : ''}`} onClick={() => setSelectedImage(roofUrl || null)}>
+                      {isImageUrl(roofUrl) ? (
+                        <img src={ensureDataUrl(roofUrl) || undefined} alt="telhado" className="w-full h-28 object-cover bg-white" />
+                      ) : (
+                        <div className="w-full h-28 flex items-center justify-center bg-gray-50">Documento</div>
+                      )}
+                      <div className="absolute top-1 right-1 flex gap-1 opacity-0 hover:opacity-100">
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); downloadFile(ensureDataUrl(roofUrl!) || roofUrl!, `lead-${lead.id}-roof`); }}>Baixar</Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {energyUrl && (
+                  <div>
+                    Conta de energia
+                    <div className={`border rounded overflow-hidden cursor-pointer relative ${selectedImage === energyUrl ? 'ring-2 ring-blue-400' : ''}`} onClick={() => setSelectedImage(energyUrl || null)}>
+                      {isImageUrl(energyUrl) ? (
+                        <img src={ensureDataUrl(energyUrl) || undefined} alt="conta" className="w-full h-28 object-cover bg-white" />
+                      ) : (
+                        <div className="w-full h-28 flex items-center justify-center bg-gray-50">Documento</div>
+                      )}
+                      <div className="absolute top-1 right-1 flex gap-1 opacity-0 hover:opacity-100">
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); downloadFile(ensureDataUrl(energyUrl!) || energyUrl!, `lead-${lead.id}-energybill`); }}>Baixar</Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Status & Date */}
+        <div className="pt-4 border-t border-gray-200">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-gray-500">Status</label>
+              <p className="text-sm font-medium text-gray-900">
+                {lead.status === 'BOUGHT' && 'Comprou'}
+                {lead.status === 'NEGOTIATION' && 'Negociando'}
+                {lead.status === 'CANCELLED' && 'Cancelado'}
+              </p>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500">Data de Cadastro</label>
+              <p className="text-sm font-medium text-gray-900">
+                {new Date(lead.createdAt).toLocaleDateString('pt-BR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-6 flex justify-end pt-4 border-t border-gray-200">
+        <Button onClick={onClose} variant="secondary">
+          Fechar
+        </Button>
+      </div>
+
       {lightboxOpen && selectedImage && (
         <div className="fixed inset-0 z-60 bg-black/70 flex items-center justify-center p-4">
           <div className="relative max-w-4xl w-full">
@@ -333,6 +318,14 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
         </div>
       )}
     </div>
+  );
+
+  return (
+    <ResponsiveModal isOpen={isOpen} onClose={onClose} className={className}>
+      <div className="p-6">
+        {modalContent}
+      </div>
+    </ResponsiveModal>
   );
 }
 
