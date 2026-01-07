@@ -59,6 +59,8 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
   const [panPos, setPanPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [showQROverlay, setShowQROverlay] = useState<boolean>(false);
   const disableDragRef = useRef<boolean>(false);
+  const [savingPosition, setSavingPosition] = useState(false);
+  const [qrPositionLocked, setQrPositionLocked] = useState(false); // True se a posição foi carregada do admin
   
   // Generate QR code with vendor name embedded
   const { qrCodeWithVendor } = useQRCodeWithVendor(qrCodeBase64, personName);
@@ -87,17 +89,71 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
     fetchCriativos();
   }, [isOpen]);
 
+  // Carregar posição do QR code salva pelo admin
+  const loadQRPosition = async (criativoId: string) => {
+    try {
+      const response = await api.get<any>(`/creatives/${criativoId}/qr-position`);
+      const position = response.data.data;
+      
+      // Se houver posição salva, carregar
+      if (position.boxCenterXRatio !== undefined && position.boxCenterYRatio !== undefined && position.boxSizeRatio !== undefined) {
+        setOverlayCenter({ x: position.boxCenterXRatio, y: position.boxCenterYRatio });
+        setOverlaySizePercent(position.boxSizeRatio * 100);
+        setQrPositionLocked(userRole === 'SELLER'); // Bloquear se for vendedor
+        return true;
+      }
+      
+      // Sem posição salva, usar padrão
+      setOverlayCenter({ x: 0.7, y: 0.7 });
+      setOverlaySizePercent(15);
+      setQrPositionLocked(false);
+      return false;
+    } catch (error) {
+      console.error('Erro ao carregar posição do QR code:', error);
+      // Se erro, usar posição padrão
+      setOverlayCenter({ x: 0.7, y: 0.7 });
+      setOverlaySizePercent(15);
+      setQrPositionLocked(false);
+    }
+  };
+
   // Handler para selecionar um criativo
-  const handleSelectCriativo = (criativo: Creative) => {
+  const handleSelectCriativo = async (criativo: Creative) => {
     setCustomPoster(criativo.imageUrl);
     setSelectedCriativoId(criativo.id);
     setPreviewMode('poster');
-    // Resetar posicionamento do QR code
-    setOverlayCenter({ x: 0.7, y: 0.7 });
-    setOverlaySizePercent(15);
     setZoomLevel(1);
     setPanPos({ x: 0, y: 0 });
+    
+    // Carregar posição salva do criativo
+    await loadQRPosition(criativo.id);
   };
+
+  // Salvar posição do QR code (apenas admin)
+  const handleSaveQRPosition = async () => {
+    if (!selectedCriativoId || userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+      toast.error('Apenas admins podem salvar a posição do QR code');
+      return;
+    }
+
+    try {
+      setSavingPosition(true);
+      await api.post(`/creatives/${selectedCriativoId}/qr-position`, {
+        boxCenterXRatio: overlayCenter.x,
+        boxCenterYRatio: overlayCenter.y,
+        boxSizeRatio: overlaySizePercent / 100,
+      });
+      
+      toast.success('Posição do QR code salva com sucesso!');
+      setQrPositionLocked(false); // Desbloquear pois já foi salva
+    } catch (error) {
+      console.error('Erro ao salvar posição:', error);
+      toast.error('Erro ao salvar posição do QR code');
+    } finally {
+      setSavingPosition(false);
+    }
+  };
+
 
   // poster preview generator hook (handles auto composition when not using customPoster)
   const posterPreviewHook = usePosterPreview({
@@ -606,12 +662,67 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
             {/* Controls for poster preview: X, Y, Size sliders */}
             {previewMode === 'poster' && (posterPreviewValue || customPoster) && (
               <>
-                <div className="text-sm font-medium text-gray-700 mt-4 mb-3">Ajustar QR Code</div>
-                <div className="mt-3 flex flex-col gap-3">
-                  <SliderControl label="Mover X" min={0} max={100} step={0.5} value={Math.round(overlayCenter.x * 100 * 2) / 2} onChange={(v) => setOverlayCenter((c) => ({ ...c, x: v / 100 }))} display={`${Math.round(overlayCenter.x * 100)}%`} />
-                  <SliderControl label="Mover Y" min={0} max={100} step={0.5} value={Math.round(overlayCenter.y * 100 * 2) / 2} onChange={(v) => setOverlayCenter((c) => ({ ...c, y: v / 100 }))} display={`${Math.round(overlayCenter.y * 100)}%`} />
-                  <SliderControl label="Tamanho QR" min={5} max={50} step={0.5} value={overlaySizePercent} onChange={(v) => setOverlaySizePercent(v)} display={`${overlaySizePercent}%`} />
+                <div className="text-sm font-medium text-gray-700 mt-4 mb-3">
+                  Ajustar QR Code
+                  {qrPositionLocked && userRole === 'SELLER' && (
+                    <span className="ml-2 text-xs text-orange-600 font-normal">🔒 Posição definida pelo admin</span>
+                  )}
                 </div>
+                <div className="mt-3 flex flex-col gap-3">
+                  <SliderControl 
+                    label="Mover X" 
+                    min={0} 
+                    max={100} 
+                    step={0.5} 
+                    value={Math.round(overlayCenter.x * 100 * 2) / 2} 
+                    onChange={(v) => setOverlayCenter((c) => ({ ...c, x: v / 100 }))} 
+                    display={`${Math.round(overlayCenter.x * 100)}%`}
+                    disabled={qrPositionLocked && userRole === 'SELLER'}
+                  />
+                  <SliderControl 
+                    label="Mover Y" 
+                    min={0} 
+                    max={100} 
+                    step={0.5} 
+                    value={Math.round(overlayCenter.y * 100 * 2) / 2} 
+                    onChange={(v) => setOverlayCenter((c) => ({ ...c, y: v / 100 }))} 
+                    display={`${Math.round(overlayCenter.y * 100)}%`}
+                    disabled={qrPositionLocked && userRole === 'SELLER'}
+                  />
+                  <SliderControl 
+                    label="Tamanho QR" 
+                    min={5} 
+                    max={50} 
+                    step={0.5} 
+                    value={overlaySizePercent} 
+                    onChange={(v) => setOverlaySizePercent(v)} 
+                    display={`${overlaySizePercent}%`}
+                    disabled={qrPositionLocked && userRole === 'SELLER'}
+                  />
+                </div>
+
+                {/* Save QR Position Button - Only for Admin */}
+                {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <Button 
+                      onClick={handleSaveQRPosition}
+                      disabled={savingPosition}
+                      className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium disabled:opacity-50"
+                    >
+                      {savingPosition ? (
+                        <>
+                          <span className="inline-block mr-2 animate-spin">⏳</span>
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <Icon icon="bi-check-circle" className="inline-block mr-2 w-4 h-4" />
+                          Salvar Posição do QR Code
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </>
             )}
           </div>

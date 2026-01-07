@@ -64,6 +64,18 @@ export class Creative extends Model {
   @Column(DataType.TEXT)
   tags?: string; // Tags separadas por vírgula para busca
 
+  @AllowNull(true)
+  @Column(DataType.FLOAT)
+  qrBoxCenterXRatio?: number; // Posição X do QR code (0-1, relativo ao criativo)
+
+  @AllowNull(true)
+  @Column(DataType.FLOAT)
+  qrBoxCenterYRatio?: number; // Posição Y do QR code (0-1, relativo ao criativo)
+
+  @AllowNull(true)
+  @Column(DataType.FLOAT)
+  qrBoxSizeRatio?: number; // Tamanho do QR code em relação ao criativo (0-1)
+
   @CreatedAt
   @Column(DataType.DATE)
   createdAt!: Date;

@@ -10,6 +10,8 @@ import {
   adminDeactivateCreative,
   adminDeleteCreative,
   adminGetStats,
+  adminSetQRCodePosition,
+  getQRCodePositionController,
 } from '../controllers/creative.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { PersonRole } from '../models/Person';
@@ -121,6 +123,24 @@ router.delete('/admin/:id', authenticate, checkAdminRole, adminDeleteCreative);
  * ADMIN/SUPER_ADMIN only
  */
 router.get('/admin/stats', authenticate, checkAdminRole, adminGetStats);
+
+/**
+ * POST /api/creatives/:id/qr-position - Definir posição do QR code
+ * ADMIN/SUPER_ADMIN only
+ * Body: { boxCenterXRatio, boxCenterYRatio, boxSizeRatio }
+ */
+router.post(
+  '/:id/qr-position',
+  authenticate,
+  checkAdminRole,
+  adminSetQRCodePosition
+);
+
+/**
+ * GET /api/creatives/:id/qr-position - Obter posição do QR code
+ * PUBLIC
+ */
+router.get('/:id/qr-position', getQRCodePositionController);
 
 /**
  * GET /api/creatives/:id - Obter detalhes de um criativo

@@ -9,6 +9,8 @@ import {
   deleteCreative,
   deactivateCreative,
   getCreativeStats,
+  setQRCodePosition,
+  getQRCodePosition,
 } from '../services/creative.service';
 import { CreativeType } from '../models/Creative';
 
@@ -377,6 +379,82 @@ export const adminGetStats = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Erro ao obter estatísticas:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+/**
+ * ADMIN ONLY: Definir posição do QR code no criativo
+ */
+export const adminSetQRCodePosition = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { boxCenterXRatio, boxCenterYRatio, boxSizeRatio } = req.body;
+
+    // Validar que os valores foram fornecidos
+    if (
+      boxCenterXRatio === undefined ||
+      boxCenterYRatio === undefined ||
+      boxSizeRatio === undefined
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Forneça boxCenterXRatio, boxCenterYRatio e boxSizeRatio',
+      });
+    }
+
+    const creative = await setQRCodePosition(
+      id,
+      boxCenterXRatio,
+      boxCenterYRatio,
+      boxSizeRatio
+    );
+
+    return res.json({
+      success: true,
+      message: 'Posição do QR code salva com sucesso',
+      data: {
+        id: creative.id,
+        name: creative.name,
+        qrBoxCenterXRatio: creative.qrBoxCenterXRatio,
+        qrBoxCenterYRatio: creative.qrBoxCenterYRatio,
+        qrBoxSizeRatio: creative.qrBoxSizeRatio,
+      },
+    });
+  } catch (error: any) {
+    console.error('Erro ao salvar posição do QR code:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+/**
+ * PUBLIC: Obter a posição do QR code de um criativo
+ */
+export const getQRCodePositionController = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const position = await getQRCodePosition(id);
+
+    if (!position) {
+      return res.status(404).json({
+        success: false,
+        message: 'Criativo não encontrado',
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: position,
+    });
+  } catch (error: any) {
+    console.error('Erro ao obter posição do QR code:', error);
     res.status(500).json({
       success: false,
       message: error.message,

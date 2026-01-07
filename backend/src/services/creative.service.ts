@@ -288,3 +288,68 @@ export const getCreativeStats = async () => {
     throw new Error(`Erro ao obter estatísticas: ${error.message}`);
   }
 };
+/**
+ * Salvar a posição do QR code no criativo (apenas ADMIN/SUPER_ADMIN)
+ */
+export const setQRCodePosition = async (
+  creativeId: string,
+  boxCenterXRatio: number,
+  boxCenterYRatio: number,
+  boxSizeRatio: number
+): Promise<Creative> => {
+  try {
+    // Validar valores (devem estar entre 0 e 1)
+    if (
+      boxCenterXRatio < 0 || boxCenterXRatio > 1 ||
+      boxCenterYRatio < 0 || boxCenterYRatio > 1 ||
+      boxSizeRatio < 0 || boxSizeRatio > 1
+    ) {
+      throw new Error(
+        'Valores de posição devem estar entre 0 e 1'
+      );
+    }
+
+    const creative = await Creative.findByPk(creativeId);
+    if (!creative) {
+      throw new Error('Criativo não encontrado');
+    }
+
+    // Atualizar a posição do QR code
+    creative.qrBoxCenterXRatio = boxCenterXRatio;
+    creative.qrBoxCenterYRatio = boxCenterYRatio;
+    creative.qrBoxSizeRatio = boxSizeRatio;
+    await creative.save();
+
+    return creative;
+  } catch (error: any) {
+    console.error('Erro ao salvar posição do QR code:', error);
+    throw new Error(`Erro ao salvar posição do QR code: ${error.message}`);
+  }
+};
+
+/**
+ * Obter a posição do QR code de um criativo
+ */
+export const getQRCodePosition = async (
+  creativeId: string
+): Promise<{
+  boxCenterXRatio?: number;
+  boxCenterYRatio?: number;
+  boxSizeRatio?: number;
+} | null> => {
+  try {
+    const creative = await Creative.findByPk(creativeId);
+    if (!creative) {
+      return null;
+    }
+
+    return {
+      boxCenterXRatio: creative.qrBoxCenterXRatio,
+      boxCenterYRatio: creative.qrBoxCenterYRatio,
+      boxSizeRatio: creative.qrBoxSizeRatio,
+    };
+  } catch (error: any) {
+    console.error('Erro ao obter posição do QR code:', error);
+    throw new Error(`Erro ao obter posição do QR code: ${error.message}`);
+  }
+};
