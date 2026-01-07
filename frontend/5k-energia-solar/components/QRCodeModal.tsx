@@ -49,8 +49,6 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
   const [selectedCriativoId, setSelectedCriativoId] = useState<string | null>(null);
   const previewRef = useRef<HTMLDivElement | null>(null);
   const emptyOverlayRef = useRef<HTMLDivElement | null>(null);
-  const [overlayPos, setOverlayPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [overlaySize, setOverlaySize] = useState<number>(140);
   const [overlayCenter, setOverlayCenter] = useState<{ x: number; y: number }>({ x: 0.5, y: 0.4 });
   const [overlaySizePercent, setOverlaySizePercent] = useState<number>(22);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
@@ -89,14 +87,22 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
       const response = await api.get<any>(`/creatives/${criativoId}/qr-position`);
       const position = response.data.data;
       
+      console.log('[QRCodeModal] Loaded position:', position);
+      
       // Se houver posição salva, carregar
       if (position.boxCenterXRatio !== undefined && position.boxCenterYRatio !== undefined && position.boxSizeRatio !== undefined) {
+        console.log('[QRCodeModal] Setting position:', {
+          x: position.boxCenterXRatio,
+          y: position.boxCenterYRatio,
+          size: position.boxSizeRatio * 100,
+        });
         setOverlayCenter({ x: position.boxCenterXRatio, y: position.boxCenterYRatio });
         setOverlaySizePercent(position.boxSizeRatio * 100);
         return true;
       }
       
       // Sem posição salva, usar padrão
+      console.log('[QRCodeModal] No position saved, using defaults');
       setOverlayCenter({ x: 0.7, y: 0.7 });
       setOverlaySizePercent(15);
       return false;
@@ -110,6 +116,7 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
 
   // Handler para selecionar um criativo
   const handleSelectCriativo = async (criativo: Creative) => {
+    console.log('[QRCodeModal] Selected creative:', criativo.id, criativo.name);
     setCustomPoster(criativo.imageUrl);
     setSelectedCriativoId(criativo.id);
     setPreviewMode('poster');
@@ -119,22 +126,6 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
     // Carregar posição salva do criativo
     await loadQRPosition(criativo.id);
   };
-
-  // When entering poster preview or when preview size/state changes, initialize overlay position/size
-  useEffect(() => {
-    if (previewMode !== 'poster') return;
-    const init = () => {
-      if (!previewRef.current) return;
-      const rect = previewRef.current.getBoundingClientRect();
-      const sizePx = Math.round(rect.width * (overlaySizePercent / 100));
-      setOverlaySize(sizePx);
-      const left = Math.round(rect.width * overlayCenter.x - sizePx / 2);
-      const top = Math.round(rect.height * overlayCenter.y - sizePx / 2);
-      setOverlayPos({ x: Math.max(0, Math.min(left, rect.width - sizePx)), y: Math.max(0, Math.min(top, rect.height - sizePx)) });
-    };
-    const t = setTimeout(init, 50);
-    return () => clearTimeout(t);
-  }, [previewMode, customPoster, overlayCenter.x, overlayCenter.y, overlaySizePercent]);
 
 
   // poster preview generator hook (handles auto composition when not using customPoster)
@@ -491,8 +482,8 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
               overlayRef={emptyOverlayRef}
               customPoster={customPoster}
               posterPreview={posterPreviewValue}
-              overlayPos={overlayPos}
-              overlaySize={overlaySize}
+              overlayCenter={overlayCenter}
+              overlaySizePercent={overlaySizePercent}
               qrCodeBase64={qrCodeWithVendor}
               showQROverlay={true}
               onOverlayPointerDown={() => {}}

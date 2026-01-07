@@ -8,8 +8,8 @@ interface PosterPreviewProps {
   overlayRef: React.RefObject<HTMLDivElement> | React.MutableRefObject<HTMLDivElement | null>;
   customPoster: string | null;
   posterPreview: string | null;
-  overlayPos: { x: number; y: number };
-  overlaySize: number;
+  overlayCenter: { x: number; y: number };
+  overlaySizePercent: number;
   qrCodeBase64: string;
   showQROverlay: boolean;
   onOverlayPointerDown: (e: React.PointerEvent) => void;
@@ -25,8 +25,8 @@ export default function PosterPreview({
   overlayRef,
   customPoster,
   posterPreview,
-  overlayPos,
-  overlaySize,
+  overlayCenter,
+  overlaySizePercent,
   qrCodeBase64,
   showQROverlay,
   onOverlayPointerDown,
@@ -36,7 +36,7 @@ export default function PosterPreview({
   personName,
 }: PosterPreviewProps) {
   return (
-    <div className="relative w-full h-96 flex items-center justify-center bg-gray-50">
+    <div className="relative w-full flex items-center justify-center bg-gray-50" style={{ minHeight: '400px' }}>
       {previewMode === 'qr' && (
         <div className="relative w-full h-full flex flex-col items-center justify-center">
           <img src={qrCodeBase64} alt="QR" className="object-contain m-auto" style={{ width: 256, height: 256 }} />
@@ -83,10 +83,11 @@ export default function PosterPreview({
               onPointerDown={onOverlayPointerDown}
               style={{
                 position: 'absolute',
-                left: overlayPos.x,
-                top: overlayPos.y,
-                width: overlaySize,
-                height: overlaySize,
+                left: `${overlayCenter.x * 100}%`,
+                top: `${overlayCenter.y * 100}%`,
+                width: `${overlaySizePercent}%`,
+                aspectRatio: '1 / 1',
+                transform: 'translate(-50%, -50%)',
                 cursor: 'grab',
                 touchAction: 'none',
               }}

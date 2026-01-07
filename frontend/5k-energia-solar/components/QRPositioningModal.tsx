@@ -100,11 +100,13 @@ export default function QRPositioningModal({
 
     try {
       setSaving(true);
-      onSave({
+      const positionData = {
         boxCenterXRatio: overlayCenter.x,
         boxCenterYRatio: overlayCenter.y,
         boxSizeRatio: overlaySizePercent / 100,
-      });
+      };
+      console.log('[QRPositioningModal] Saving position:', positionData);
+      onSave(positionData);
     } catch (error) {
       console.error('Erro ao salvar posição:', error);
       toast.error('Erro ao salvar posição');
