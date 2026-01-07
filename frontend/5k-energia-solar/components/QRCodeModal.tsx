@@ -452,7 +452,7 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
                     <p>📭 Nenhum criativo disponível no momento</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 gap-3 max-h-64 overflow-y-auto pr-2">
+                  <div className="flex md:grid md:grid-cols-3 gap-3 max-h-64 overflow-y-auto pr-2">
                     {criativos.map((criativo) => (
                       <div
                         key={criativo.id}
