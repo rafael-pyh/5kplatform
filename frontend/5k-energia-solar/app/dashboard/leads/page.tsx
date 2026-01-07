@@ -29,7 +29,7 @@ export default function LeadsPage() {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="flex-1 p-8">
+        <div className="flex-1 p-8 mt-18">
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">{error}</div>
         </div>
       </DashboardLayout>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
+import QRPositioningModal from './QRPositioningModal';
 
 interface CreativesUploadFormProps {
   onSuccess?: () => void;
@@ -17,6 +18,9 @@ export default function CreativesUploadForm({ onSuccess }: CreativesUploadFormPr
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [createdCreativeId, setCreatedCreativeId] = useState<string | null>(null);
+  const [creativeImageUrl, setCreativeImageUrl] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -52,8 +56,47 @@ export default function CreativesUploadForm({ onSuccess }: CreativesUploadFormPr
     reader.readAsDataURL(selectedFile);
   };
 
+  const handleSaveQRPosition = async (position: {
+    boxCenterXRatio: number;
+    boxCenterYRatio: number;
+    boxSizeRatio: number;
+  }) => {
+    if (!createdCreativeId) {
+      console.error('Creative ID is missing', { createdCreativeId, creativeImageUrl });
+      toast.error('ID do criativo não encontrado');
+      return;
+    }
+
+    try {
+      console.log('Saving QR position:', { createdCreativeId, position });
+      const response = await api.post(`/creatives/${createdCreativeId}/qr-position`, position);
+      console.log('QR position saved successfully:', response.data);
+      toast.success('Posição do QR code salva com sucesso!');
+      setShowQRModal(false);
+      setCreatedCreativeId(null);
+      setCreativeImageUrl(null);
+      onSuccess?.();
+    } catch (error: any) {
+      console.error('Erro ao salvar posição:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Erro ao salvar posição do QR code';
+      toast.error(errorMsg);
+    }
+  };
+
+  const handleCloseQRModal = () => {
+    setShowQRModal(false);
+    setCreatedCreativeId(null);
+    setCreativeImageUrl(null);
+    onSuccess?.();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Se há um criativo sendo criado (modal aberto), não permitir resubmissão do formulário
+    if (showQRModal || createdCreativeId) {
+      return;
+    }
 
     if (!file) {
       toast.error('Por favor, selecione uma imagem');
@@ -94,6 +137,13 @@ export default function CreativesUploadForm({ onSuccess }: CreativesUploadFormPr
 
       toast.success('Criativo criado com sucesso!');
 
+      // Salvar ID do criativo para posicionamento do QR code
+      setCreatedCreativeId(response.data.data?.id);
+      setCreativeImageUrl(imageUrl);
+      
+      // Mostrar modal de posicionamento
+      setShowQRModal(true);
+
       // Resetar formulário
       setFormData({
         name: '',
@@ -102,9 +152,6 @@ export default function CreativesUploadForm({ onSuccess }: CreativesUploadFormPr
       });
       setFile(null);
       setPreview(null);
-
-      // Callback para recarregar lista
-      onSuccess?.();
     } catch (error: any) {
       console.error('Erro ao criar criativo:', error);
       const errorMsg = error.response?.data?.message || error.message || 'Erro ao criar criativo';
@@ -235,6 +282,17 @@ export default function CreativesUploadForm({ onSuccess }: CreativesUploadFormPr
           </>
         )}
       </button>
+
+      {/* QR Positioning Modal */}
+      {createdCreativeId && creativeImageUrl && (
+        <QRPositioningModal
+          isOpen={showQRModal}
+          onClose={handleCloseQRModal}
+          onSave={handleSaveQRPosition}
+          imageUrl={creativeImageUrl}
+          creativeId={createdCreativeId}
+        />
+      )}
     </form>
   );
 }

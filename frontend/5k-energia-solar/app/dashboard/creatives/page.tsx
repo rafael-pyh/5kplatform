@@ -11,7 +11,7 @@ export default function CreativesPage() {
   return (
     <DashboardLayout>
       <div className="flex-1 flex flex-col">
-        <div className="sticky top-0 z-10 mb-8">
+        <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-700">Gerenciar Criativos</h1>
           <p className="text-gray-600 mt-1">Faça upload e gerencie as placas/criativos disponíveis para os usuários</p>
         </div>

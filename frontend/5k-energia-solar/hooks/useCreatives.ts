@@ -52,7 +52,7 @@ export default function useCreatives() {
       if (!confirm('Tem certeza que deseja deletar este criativo?')) return;
 
       try {
-        await api.delete(`/creatives/${creativeId}`);
+        await api.delete(`/creatives/admin/${creativeId}`);
         toast.success('Criativo deletado com sucesso');
         await loadCreatives();
       } catch (error: any) {

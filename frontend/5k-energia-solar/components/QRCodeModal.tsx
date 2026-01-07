@@ -4,11 +4,9 @@ import { useState, useRef, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import api from '@/lib/api';
 import { composePosterBlob } from '../lib/composePoster';
-import SliderControl from './SliderControl';
 import PosterPreview from './PosterPreview';
 import useModalEscape from '@/hooks/useModalEscape';
 import usePosterPreview from '@/hooks/usePosterPreview';
-import useOverlayDrag from '@/hooks/useOverlayDrag';
 import useImagePanZoom from '@/hooks/useImagePanZoom';
 import useQRCodeWithVendor from '@/hooks/useQRCodeWithVendor';
 import ModalHeader from '@/components/ModalHeader';
@@ -50,17 +48,13 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
   const [loadingCriativos, setLoadingCriativos] = useState(false);
   const [selectedCriativoId, setSelectedCriativoId] = useState<string | null>(null);
   const previewRef = useRef<HTMLDivElement | null>(null);
-  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const emptyOverlayRef = useRef<HTMLDivElement | null>(null);
   const [overlayPos, setOverlayPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [overlaySize, setOverlaySize] = useState<number>(140); // px in preview
-  const [overlayCenter, setOverlayCenter] = useState<{ x: number; y: number }>({ x: 0.5, y: 0.4 }); // relative (0-1)
-  const [overlaySizePercent, setOverlaySizePercent] = useState<number>(22); // percent of preview width
+  const [overlaySize, setOverlaySize] = useState<number>(140);
+  const [overlayCenter, setOverlayCenter] = useState<{ x: number; y: number }>({ x: 0.5, y: 0.4 });
+  const [overlaySizePercent, setOverlaySizePercent] = useState<number>(22);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [panPos, setPanPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [showQROverlay, setShowQROverlay] = useState<boolean>(false);
-  const disableDragRef = useRef<boolean>(false);
-  const [savingPosition, setSavingPosition] = useState(false);
-  const [qrPositionLocked, setQrPositionLocked] = useState(false); // True se a posição foi carregada do admin
   
   // Generate QR code with vendor name embedded
   const { qrCodeWithVendor } = useQRCodeWithVendor(qrCodeBase64, personName);
@@ -99,21 +93,18 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
       if (position.boxCenterXRatio !== undefined && position.boxCenterYRatio !== undefined && position.boxSizeRatio !== undefined) {
         setOverlayCenter({ x: position.boxCenterXRatio, y: position.boxCenterYRatio });
         setOverlaySizePercent(position.boxSizeRatio * 100);
-        setQrPositionLocked(userRole === 'SELLER'); // Bloquear se for vendedor
         return true;
       }
       
       // Sem posição salva, usar padrão
       setOverlayCenter({ x: 0.7, y: 0.7 });
       setOverlaySizePercent(15);
-      setQrPositionLocked(false);
       return false;
     } catch (error) {
       console.error('Erro ao carregar posição do QR code:', error);
       // Se erro, usar posição padrão
       setOverlayCenter({ x: 0.7, y: 0.7 });
       setOverlaySizePercent(15);
-      setQrPositionLocked(false);
     }
   };
 
@@ -129,70 +120,6 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
     await loadQRPosition(criativo.id);
   };
 
-  // Salvar posição do QR code (apenas admin)
-  const handleSaveQRPosition = async () => {
-    if (!selectedCriativoId || userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
-      toast.error('Apenas admins podem salvar a posição do QR code');
-      return;
-    }
-
-    try {
-      setSavingPosition(true);
-      await api.post(`/creatives/${selectedCriativoId}/qr-position`, {
-        boxCenterXRatio: overlayCenter.x,
-        boxCenterYRatio: overlayCenter.y,
-        boxSizeRatio: overlaySizePercent / 100,
-      });
-      
-      toast.success('Posição do QR code salva com sucesso!');
-      setQrPositionLocked(false); // Desbloquear pois já foi salva
-    } catch (error) {
-      console.error('Erro ao salvar posição:', error);
-      toast.error('Erro ao salvar posição do QR code');
-    } finally {
-      setSavingPosition(false);
-    }
-  };
-
-
-  // poster preview generator hook (handles auto composition when not using customPoster)
-  const posterPreviewHook = usePosterPreview({
-    previewMode,
-    qrCodeBase64: qrCodeWithVendor,
-    customPoster,
-    boxCenterXRatio: overlayCenter.x,
-    boxCenterYRatio: overlayCenter.y,
-    boxSizeRatio: overlaySizePercent / 100,
-    vendorName: personName,
-  });
-  const posterPreviewValue = posterPreviewHook.posterPreview;
-
-  // overlay dragging
-  const { start: startOverlayDrag, draggingRef: overlayDraggingRef } = useOverlayDrag((clientX: number, clientY: number) => {
-    if (!overlayDraggingRef.current || !overlayDraggingRef.current.dragging || !previewRef.current) return;
-    const previewRect = previewRef.current.getBoundingClientRect();
-    const x = clientX - previewRect.left - (overlayDraggingRef.current.offsetX || 0);
-    const y = clientY - previewRect.top - (overlayDraggingRef.current.offsetY || 0);
-    const maxX = previewRect.width - overlaySize;
-    const maxY = previewRect.height - overlaySize;
-    setOverlayPos({ x: Math.max(0, Math.min(x, maxX)), y: Math.max(0, Math.min(y, maxY)) });
-  }, () => {
-    // onEnd: sync center ratios
-    if (previewRef.current && overlayRef.current) {
-      const previewRect = previewRef.current.getBoundingClientRect();
-      const overlayRect = overlayRef.current.getBoundingClientRect();
-      const centerX = (overlayRect.left + overlayRect.width / 2 - previewRect.left) / previewRect.width;
-      const centerY = (overlayRect.top + overlayRect.height / 2 - previewRect.top) / previewRect.height;
-      setOverlayCenter({ x: Math.max(0, Math.min(1, centerX)), y: Math.max(0, Math.min(1, centerY)) });
-    }
-  });
-
-  // image panning
-  const { start: startImageDrag, imageDragRef } = useImagePanZoom((dx: number, dy: number) => {
-    if (!imageDragRef.current) return;
-    setPanPos({ x: imageDragRef.current.startPanX + dx, y: imageDragRef.current.startPanY + dy });
-  });
-
   // When entering poster preview or when preview size/state changes, initialize overlay position/size
   useEffect(() => {
     if (previewMode !== 'poster') return;
@@ -207,7 +134,30 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
     };
     const t = setTimeout(init, 50);
     return () => clearTimeout(t);
-  }, [previewMode, posterPreviewValue, customPoster, overlayCenter.x, overlayCenter.y, overlaySizePercent]);
+  }, [previewMode, customPoster, overlayCenter.x, overlayCenter.y, overlaySizePercent]);
+
+
+  // poster preview generator hook (handles auto composition when not using customPoster)
+  const posterPreviewHook = usePosterPreview({
+    previewMode,
+    qrCodeBase64: qrCodeWithVendor,
+    customPoster,
+    boxCenterXRatio: overlayCenter.x,
+    boxCenterYRatio: overlayCenter.y,
+    boxSizeRatio: overlaySizePercent / 100,
+    vendorName: personName,
+  });
+  const posterPreviewValue = posterPreviewHook.posterPreview;
+
+
+
+  // image panning
+  const { start: startImageDrag, imageDragRef } = useImagePanZoom((dx: number, dy: number) => {
+    if (!imageDragRef.current) return;
+    setPanPos({ x: imageDragRef.current.startPanX + dx, y: imageDragRef.current.startPanY + dy });
+  });
+
+
 
   // Handlers
   const handleDownload = () => {
@@ -248,64 +198,15 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
 
   const handleDownloadPoster = async () => {
     try {
-      // if user provided a custom poster, compute ratios from overlay position
-      if (customPoster && previewRef.current && overlayRef.current) {
-        const overlayRect = overlayRef.current.getBoundingClientRect();
-        // find poster image element in preview
-        const imgEl = previewRef.current.querySelector('img[alt="Poster custom"]') as HTMLImageElement | null;
-        const firstImg = previewRef.current.querySelector('img:not([alt="QR overlay"])') as HTMLImageElement | null;
-        const posterImg = imgEl || firstImg;
-        if (!posterImg) {
-          throw new Error('Imagem da placa não encontrada');
-        }
-
-        // Compute the mapping
-        const natW = posterImg.naturalWidth || posterImg.width;
-        const natH = posterImg.naturalHeight || posterImg.height;
-        const previewRect = previewRef.current.getBoundingClientRect();
-
-        // base fit scale used by object-contain
-        const baseScale = Math.min(previewRect.width / natW, previewRect.height / natH);
-        const finalImgW = natW * baseScale;
-        const finalImgH = natH * baseScale;
-
-        // image center in page coords (object-contain centers the image in the container)
-        const imgCenterX = previewRect.left + previewRect.width / 2;
-        const imgCenterY = previewRect.top + previewRect.height / 2;
-
-        const imgLeft = imgCenterX - finalImgW / 2;
-        const imgTop = imgCenterY - finalImgH / 2;
-
-        const overlayCenterX = overlayRect.left + overlayRect.width / 2;
-        const overlayCenterY = overlayRect.top + overlayRect.height / 2;
-
-        const localX = (overlayCenterX - imgLeft) / finalImgW;
-        const localY = (overlayCenterY - imgTop) / finalImgH;
-        const boxSizeRatio = overlayRect.width / finalImgW;
-
-        const boxCenterXRatio = Math.max(0, Math.min(1, localX));
-        const boxCenterYRatio = Math.max(0, Math.min(1, localY));
-
-        const blob = await composePosterBlob(qrCodeWithVendor, {
-          outputWidth: 2048,
-          posterUrl: customPoster,
-          boxCenterXRatio,
-          boxCenterYRatio,
-          boxSizeRatio,
-          vendorName: personName,
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `placa-${personName.replace(/\s+/g, '-').toLowerCase()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        return;
-      }
-
-      const blob = await composePosterBlob(qrCodeWithVendor, { outputWidth: 2048 });
+      // Use the admin-defined position for the poster
+      const blob = await composePosterBlob(qrCodeWithVendor, {
+        outputWidth: 2048,
+        posterUrl: customPoster || undefined,
+        boxCenterXRatio: overlayCenter.x,
+        boxCenterYRatio: overlayCenter.y,
+        boxSizeRatio: overlaySizePercent / 100,
+        vendorName: personName,
+      });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -321,55 +222,18 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
 
   const handleSaveAndDownload = async () => {
     try {
-      if (!customPoster || !previewRef.current) {
+      if (!customPoster) {
         toast.error('Selecione um criativo antes de salvar.');
         return;
       }
 
-      const previewRect = previewRef.current.getBoundingClientRect();
-      const overlayRect = overlayRef.current?.getBoundingClientRect();
-
-      if (!overlayRect) {
-        toast.error('Posicione o QR Code antes de salvar.');
-        return;
-      }
-
-      // Find the poster image element inside preview (exclude the QR overlay image)
-      const imgEl = previewRef.current.querySelector('img[alt="Poster custom"]') as HTMLImageElement | null;
-      // fallback: use first img that's not the overlay
-      const firstImg = previewRef.current.querySelector('img:not([alt="QR overlay"])') as HTMLImageElement | null;
-      const posterImg = imgEl || firstImg;
-      if (!posterImg) {
-        toast.error('Imagem da placa não encontrada para compor.');
-        return;
-      }
-
-      // Use natural size and container fit to compute accurate mapping
-      const natW = posterImg.naturalWidth || posterImg.width;
-      const natH = posterImg.naturalHeight || posterImg.height;
-      const baseScale = Math.min(previewRect.width / natW, previewRect.height / natH);
-      const finalImgW = natW * baseScale;
-      const finalImgH = natH * baseScale;
-      const imgCenterX = previewRect.left + previewRect.width / 2;
-      const imgCenterY = previewRect.top + previewRect.height / 2;
-      const imgLeft = imgCenterX - finalImgW / 2;
-      const imgTop = imgCenterY - finalImgH / 2;
-
-      const overlayCenterX = overlayRect.left + overlayRect.width / 2;
-      const overlayCenterY = overlayRect.top + overlayRect.height / 2;
-      const localX = (overlayCenterX - imgLeft) / finalImgW;
-      const localY = (overlayCenterY - imgTop) / finalImgH;
-      const boxSizeRatio = overlayRect.width / finalImgW;
-
-      const boxCenterXRatio = Math.max(0, Math.min(1, localX));
-      const boxCenterYRatio = Math.max(0, Math.min(1, localY));
-
+      // Use the admin-defined position
       const blob = await composePosterBlob(qrCodeWithVendor, {
         outputWidth: 2048,
         posterUrl: customPoster,
-        boxCenterXRatio,
-        boxCenterYRatio,
-        boxSizeRatio,
+        boxCenterXRatio: overlayCenter.x,
+        boxCenterYRatio: overlayCenter.y,
+        boxSizeRatio: overlaySizePercent / 100,
         vendorName: personName,
       });
 
@@ -524,31 +388,10 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
     }
   };
 
-  const onOverlayPointerDown = (e: React.PointerEvent) => {
-    if (disableDragRef.current) return;
-    if (!previewRef.current || !overlayRef.current) return;
-    const overlayRect = overlayRef.current.getBoundingClientRect();
-    const offsetX = e.clientX - overlayRect.left;
-    const offsetY = e.clientY - overlayRect.top;
-    startOverlayDrag(e.clientX, e.clientY, offsetX, offsetY);
-    (e.target as Element).setPointerCapture(e.pointerId);
-  };
-
   const handleImagePointerDown = (e: React.PointerEvent<HTMLImageElement>) => {
     if (zoomLevel <= 1) return;
     startImageDrag(e.clientX, e.clientY, panPos.x, panPos.y);
     (e.target as Element).setPointerCapture(e.pointerId);
-  };
-
-  const toggleQROverlay = () => {
-    if (!showQROverlay) {
-      // Reset QR overlay position when adding
-      if (!previewRef.current) return;
-      const rect = previewRef.current.getBoundingClientRect();
-      setOverlaySize(Math.round(rect.width * 0.22));
-      setOverlayPos({ x: Math.round((rect.width - rect.width * 0.22) / 2), y: Math.round((rect.height - rect.width * 0.22) / 2) });
-    }
-    setShowQROverlay(!showQROverlay);
   };
 
   if (!isOpen) return null;
@@ -645,86 +488,19 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
             <PosterPreview
               previewMode={previewMode}
               previewRef={previewRef}
-              overlayRef={overlayRef}
+              overlayRef={emptyOverlayRef}
               customPoster={customPoster}
               posterPreview={posterPreviewValue}
               overlayPos={overlayPos}
               overlaySize={overlaySize}
               qrCodeBase64={qrCodeWithVendor}
-              showQROverlay={showQROverlay}
-              onOverlayPointerDown={onOverlayPointerDown}
+              showQROverlay={true}
+              onOverlayPointerDown={() => {}}
               handleImagePointerDown={handleImagePointerDown}
               panPos={panPos}
               zoomLevel={zoomLevel}
               personName={personName}
             />
-
-            {/* Controls for poster preview: X, Y, Size sliders */}
-            {previewMode === 'poster' && (posterPreviewValue || customPoster) && (
-              <>
-                <div className="text-sm font-medium text-gray-700 mt-4 mb-3">
-                  Ajustar QR Code
-                  {qrPositionLocked && userRole === 'SELLER' && (
-                    <span className="ml-2 text-xs text-orange-600 font-normal">🔒 Posição definida pelo admin</span>
-                  )}
-                </div>
-                <div className="mt-3 flex flex-col gap-3">
-                  <SliderControl 
-                    label="Mover X" 
-                    min={0} 
-                    max={100} 
-                    step={0.5} 
-                    value={Math.round(overlayCenter.x * 100 * 2) / 2} 
-                    onChange={(v) => setOverlayCenter((c) => ({ ...c, x: v / 100 }))} 
-                    display={`${Math.round(overlayCenter.x * 100)}%`}
-                    disabled={qrPositionLocked && userRole === 'SELLER'}
-                  />
-                  <SliderControl 
-                    label="Mover Y" 
-                    min={0} 
-                    max={100} 
-                    step={0.5} 
-                    value={Math.round(overlayCenter.y * 100 * 2) / 2} 
-                    onChange={(v) => setOverlayCenter((c) => ({ ...c, y: v / 100 }))} 
-                    display={`${Math.round(overlayCenter.y * 100)}%`}
-                    disabled={qrPositionLocked && userRole === 'SELLER'}
-                  />
-                  <SliderControl 
-                    label="Tamanho QR" 
-                    min={5} 
-                    max={50} 
-                    step={0.5} 
-                    value={overlaySizePercent} 
-                    onChange={(v) => setOverlaySizePercent(v)} 
-                    display={`${overlaySizePercent}%`}
-                    disabled={qrPositionLocked && userRole === 'SELLER'}
-                  />
-                </div>
-
-                {/* Save QR Position Button - Only for Admin */}
-                {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
-                  <div className="mt-4 pt-3 border-t border-gray-200">
-                    <Button 
-                      onClick={handleSaveQRPosition}
-                      disabled={savingPosition}
-                      className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium disabled:opacity-50"
-                    >
-                      {savingPosition ? (
-                        <>
-                          <span className="inline-block mr-2 animate-spin">⏳</span>
-                          Salvando...
-                        </>
-                      ) : (
-                        <>
-                          <Icon icon="bi-check-circle" className="inline-block mr-2 w-4 h-4" />
-                          Salvar Posição do QR Code
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
           </div>
         </div>
 
