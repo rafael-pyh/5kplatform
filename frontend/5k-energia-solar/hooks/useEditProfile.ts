@@ -3,14 +3,14 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
-import { registerAction } from '../app/actions/register';
+import { updateProfileAction } from '../app/actions/profile';
+import { Person } from '../lib/types';
 import api from '../lib/api';
+import { getCitiesByState } from '../lib/actions/locationActions';
 
 type FormData = {
   name: string;
   email: string;
-  password: string;
-  repeatPassword: string;
   phone: string;
   pixKey: string;
   photoBase64: string;
@@ -18,23 +18,45 @@ type FormData = {
   state: string;
 };
 
-export function useRegister(initial: Partial<FormData> = {}) {
+interface CityOption {
+  id: string;
+  name: string;
+}
+
+export function useEditProfile(seller: Person | null) {
   const router = useRouter();
   const [states, setStates] = useState<string[]>([]);
+  const [cities, setCities] = useState<CityOption[]>([]);
   const [statesLoading, setStatesLoading] = useState(true);
+  const [citiesLoading, setCitiesLoading] = useState(false);
+  const [originalData, setOriginalData] = useState<FormData | null>(null);
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    email: '',
-    password: '',
-    repeatPassword: '',
-    phone: '',
-    pixKey: '',
-    photoBase64: '',
-    city: '',
-    state: '',
-    ...initial,
+    name: seller?.name || '',
+    email: seller?.email || '',
+    phone: seller?.phone || '',
+    pixKey: seller?.pixKey || '',
+    photoBase64: seller?.photoBase64 || '',
+    city: seller?.city || '',
+    state: seller?.state || '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Inicializar dados originais
+  useEffect(() => {
+    if (seller) {
+      const initialData: FormData = {
+        name: seller.name || '',
+        email: seller.email || '',
+        phone: seller.phone || '',
+        pixKey: seller?.pixKey || '',
+        photoBase64: seller?.photoBase64 || '',
+        city: seller?.city || '',
+        state: seller?.state || '',
+      };
+      setOriginalData(initialData);
+    }
+  }, [seller]);
 
   // Buscar estados da API
   useEffect(() => {
@@ -56,11 +78,42 @@ export function useRegister(initial: Partial<FormData> = {}) {
     fetchStates();
   }, []);
 
+  // Carregar cidades quando o estado mudar
+  useEffect(() => {
+    const loadCities = async () => {
+      if (!formData.state) {
+        setCities([]);
+        return;
+      }
+
+      setCitiesLoading(true);
+      try {
+        const citiesData = await getCitiesByState(formData.state);
+        setCities(citiesData);
+      } catch (error) {
+        console.error('Erro ao carregar cidades:', error);
+        toast.error('Erro ao carregar cidades');
+      } finally {
+        setCitiesLoading(false);
+      }
+    };
+
+    loadCities();
+  }, [formData.state]);
+
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target as HTMLInputElement;
     const newValue = name === 'phone' ? value.replace(/\D/g, '') : value;
     setFormData((prev) => ({ ...prev, [name]: newValue }));
-  }, []);
+    
+    // Verificar se houve mudanças
+    if (originalData) {
+      const changed = Object.keys(formData).some(
+        (key) => formData[key as keyof FormData] !== originalData[key as keyof FormData]
+      );
+      setHasChanges(changed);
+    }
+  }, [originalData, formData]);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -68,9 +121,14 @@ export function useRegister(initial: Partial<FormData> = {}) {
     const reader = new FileReader();
     reader.onloadend = () => {
       setFormData((prev) => ({ ...prev, photoBase64: reader.result as string }));
+      
+      // Verificar se houve mudanças
+      if (originalData && originalData.photoBase64 !== reader.result) {
+        setHasChanges(true);
+      }
     };
     reader.readAsDataURL(file);
-  }, []);
+  }, [originalData]);
 
   const validateForm = useCallback((data: FormData) => {
     if (!data.name.trim()) {
@@ -80,47 +138,46 @@ export function useRegister(initial: Partial<FormData> = {}) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!data.email.trim()) { toast.error('Email é obrigatório'); return false; }
     if (!emailRegex.test(data.email)) { toast.error('Email inválido'); return false; }
-    if (!data.password) { toast.error('Senha é obrigatória'); return false; }
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
-    if (!passwordRegex.test(data.password)) { toast.error('Senha deve ter no mínimo 8 caracteres, incluindo letras e números'); return false; }
-    if (data.password !== data.repeatPassword) { toast.error('As senhas não coincidem'); return false; }
     if (!data.phone.trim()) { toast.error('Telefone é obrigatório'); return false; }
     const phoneRegex = /^\d{10,11}$/;
     if (!phoneRegex.test(data.phone)) { toast.error('Telefone inválido. Insira apenas 10 ou 11 dígitos numéricos.'); return false; }
     if (!data.pixKey.trim()) { toast.error('Chave PIX é obrigatória'); return false; }
     if (!data.city.trim()) { toast.error('Cidade é obrigatória'); return false; }
     if (!data.state) { toast.error('Estado é obrigatório'); return false; }
-    if (!data.photoBase64) { toast.error('Foto é obrigatória'); return false; }
     return true;
   }, []);
 
   const handleSubmit = useCallback(async (e?: React.FormEvent<HTMLFormElement>) => {
     e?.preventDefault();
+    if (!seller?.id) {
+      toast.error('ID do vendedor não encontrado');
+      return;
+    }
     if (!validateForm(formData)) return;
     setIsLoading(true);
     try {
-      await registerAction(formData as any);
-      toast.success('Registro criado com sucesso! QR Code gerado.');
+      // Enviar apenas os campos que foram alterados
+      const dataToUpdate: Partial<FormData> = {};
       
-      // Limpar o formulário
-      setFormData({
-        name: '',
-        email: '',
-        password: '',
-        repeatPassword: '',
-        phone: '',
-        pixKey: '',
-        photoBase64: '',
-        city: '',
-        state: '',
-      });
-      
-      router.push('/login');
+      if (originalData) {
+        Object.keys(formData).forEach((key) => {
+          if (formData[key as keyof FormData] !== originalData[key as keyof FormData]) {
+            dataToUpdate[key as keyof FormData] = formData[key as keyof FormData];
+          }
+        });
+      } else {
+        // Se não há dados originais, enviar tudo
+        Object.assign(dataToUpdate, formData);
+      }
+
+      await updateProfileAction(seller.id, dataToUpdate as any);
+      toast.success('Perfil atualizado com sucesso!');
+      setHasChanges(false);
+      router.refresh();
     } catch (error: any) {
-      console.error('Erro ao criar registro:', error);
+      console.error('Erro ao atualizar perfil:', error);
       
-      // Extrai a mensagem de erro de várias formas possíveis
-      let errorMessage = 'Erro ao criar registro.';
+      let errorMessage = 'Erro ao atualizar perfil.';
       
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -130,25 +187,23 @@ export function useRegister(initial: Partial<FormData> = {}) {
         errorMessage = error.message;
       }
       
-      // Exibe a mensagem apropriada baseada no tipo de erro
-      if (errorMessage.includes('já existe') || errorMessage.includes('cadastrado') || errorMessage.includes('Email')) {
-        toast.error('Usuário já existe. Faça login para continuar.');
-      } else {
-        toast.error(errorMessage);
-      }
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [formData, validateForm, router]);
+  }, [formData, validateForm, router, seller?.id, originalData]);
 
   return {
     states,
+    cities,
     statesLoading,
+    citiesLoading,
     formData,
     setFormData,
     handleChange,
     handleFileChange,
     handleSubmit,
     isLoading,
+    hasChanges,
   } as const;
 }

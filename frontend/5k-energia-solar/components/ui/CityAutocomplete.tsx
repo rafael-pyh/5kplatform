@@ -78,7 +78,7 @@ export default function CityAutocomplete({
           {filteredCities.length > 0 ? (
             filteredCities.map((city) => (
               <button
-                key={city.id}
+                key={`${city.id}-${city.name}`}
                 type="button"
                 onClick={() => handleSelectCity(city.name)}
                 className="w-full px-3 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none text-sm transition-colors"

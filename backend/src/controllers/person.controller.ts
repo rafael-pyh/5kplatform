@@ -87,3 +87,12 @@ export const getStats = async (req: Request, res: Response, next: NextFunction) 
     next(error);
   }
 };
+
+export const getStates = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const states = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+    return ResponseBuilder.success(res, states);
+  } catch (error) {
+    next(error);
+  }
+};
