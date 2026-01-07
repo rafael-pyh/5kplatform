@@ -10,7 +10,6 @@ getColors(imgPath).then(colors => {
   const picked = hexes.slice(0, 3);
   const lightened = picked.map(h => tinycolor(h).lighten(18).toHexString());
 
-  console.log(JSON.stringify({ extracted: picked, lightened }, null, 2));
 }).catch(err => {
   console.error('Error extracting palette:', err);
   process.exit(1);

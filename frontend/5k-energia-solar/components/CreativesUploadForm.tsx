@@ -68,9 +68,7 @@ export default function CreativesUploadForm({ onSuccess }: CreativesUploadFormPr
     }
 
     try {
-      console.log('Saving QR position:', { createdCreativeId, position });
-      const response = await api.post(`/creatives/${createdCreativeId}/qr-position`, position);
-      console.log('QR position saved successfully:', response.data);
+      await api.post(`/creatives/${createdCreativeId}/qr-position`, position);
       toast.success('Posição do QR code salva com sucesso!');
       setShowQRModal(false);
       setCreatedCreativeId(null);

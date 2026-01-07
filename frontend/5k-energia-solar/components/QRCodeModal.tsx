@@ -87,22 +87,14 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
       const response = await api.get<any>(`/creatives/${criativoId}/qr-position`);
       const position = response.data.data;
       
-      console.log('[QRCodeModal] Loaded position:', position);
-      
       // Se houver posição salva, carregar
       if (position.boxCenterXRatio !== undefined && position.boxCenterYRatio !== undefined && position.boxSizeRatio !== undefined) {
-        console.log('[QRCodeModal] Setting position:', {
-          x: position.boxCenterXRatio,
-          y: position.boxCenterYRatio,
-          size: position.boxSizeRatio * 100,
-        });
         setOverlayCenter({ x: position.boxCenterXRatio, y: position.boxCenterYRatio });
         setOverlaySizePercent(position.boxSizeRatio * 100);
         return true;
       }
       
       // Sem posição salva, usar padrão
-      console.log('[QRCodeModal] No position saved, using defaults');
       setOverlayCenter({ x: 0.7, y: 0.7 });
       setOverlaySizePercent(15);
       return false;
@@ -116,7 +108,6 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
 
   // Handler para selecionar um criativo
   const handleSelectCriativo = async (criativo: Creative) => {
-    console.log('[QRCodeModal] Selected creative:', criativo.id, criativo.name);
     setCustomPoster(criativo.imageUrl);
     setSelectedCriativoId(criativo.id);
     setPreviewMode('poster');

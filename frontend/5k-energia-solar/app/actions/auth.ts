@@ -99,8 +99,6 @@ export async function confirmEmailAction(token: string): Promise<{ message: stri
       throw new Error("API_URL não configurada. Verifique variáveis de ambiente.");
     }
 
-    console.log('[confirmEmailAction] Chamando API:', `${apiUrl}/api/auth/confirm-email`);
-
     const response = await fetch(`${apiUrl}/api/auth/confirm-email`, {
       method: "POST",
       headers: {

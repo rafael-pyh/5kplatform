@@ -26,9 +26,7 @@ function ConfirmEmailContent() {
       }
 
       try {
-        console.log('[ConfirmEmailContent] Confirmando email com token:', token.substring(0, 20) + '...');
         const response = await confirmEmailAction(token);
-        console.log("[ConfirmEmailContent] Resposta da confirmação de email:", response);
         toast.success(response.message || "Email confirmado com sucesso!");
         setSuccess(true);
 
