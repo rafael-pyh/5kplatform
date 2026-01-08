@@ -44,7 +44,7 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onActivate
   const handleResendVerificationEmail = async () => {
     setResendingEmail(true);
     try {
-      await resendVerificationEmailAction(person.email);
+      await resendVerificationEmailAction(person.email!);
       // Show toast success message
       alert('Email de verificação reenviado com sucesso!');
     } catch (error) {
