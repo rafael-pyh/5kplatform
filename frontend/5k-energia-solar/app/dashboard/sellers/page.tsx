@@ -58,7 +58,7 @@ export default function SellersPage() {
     year: '',
   });
 
-  const { persons, loading, refetch } = usePersons(filter === 'active');
+  const { persons, loading, refetch } = usePersons(false);
 
   // Memoized counts for tabs
   const counts = useMemo(() => {
