@@ -1,9 +1,8 @@
 'use strict';
 
 /**
- * Migration: Garante que AFFILIATE existe no enum PersonRole
- * 
- * Esta migration é robusta e funciona mesmo se AFFILIATE já foi adicionado
+ * Migration: Adiciona AFFILIATE ao enum PersonRole
+ * Estratégia: Criar novo enum com todos os valores e substituir
  */
 
 module.exports = {
@@ -11,26 +10,31 @@ module.exports = {
     const transaction = await queryInterface.sequelize.transaction();
 
     try {
-      // Verificar se o enum já possui AFFILIATE
-      const result = await queryInterface.sequelize.query(
-        `SELECT enumlabel FROM pg_enum WHERE enumtypid = (SELECT oid FROM pg_type WHERE typname = 'PersonRole')`,
+      // Passo 1: Criar novo enum com AFFILIATE
+      await queryInterface.sequelize.query(
+        `CREATE TYPE "PersonRole_new" AS ENUM ('SELLER', 'ADMIN', 'SUPER_ADMIN', 'AFFILIATE')`,
         { transaction }
       );
 
-      const hasAffiliate = result[0].some(row => row.enumlabel === 'AFFILIATE');
+      // Passo 2: Converter coluna role para usar novo enum
+      await queryInterface.sequelize.query(
+        `ALTER TABLE "Person" ALTER COLUMN "role" TYPE "PersonRole_new" USING "role"::text::"PersonRole_new"`,
+        { transaction }
+      );
 
-      if (hasAffiliate) {
-        console.log('✅ AFFILIATE já existe no enum PersonRole, pulando...');
-      } else {
-        // Adicionar AFFILIATE ao enum
-        await queryInterface.sequelize.query(
-          `ALTER TYPE "PersonRole" ADD VALUE 'AFFILIATE'`,
-          { transaction }
-        );
-        console.log('✅ AFFILIATE adicionado ao enum PersonRole');
-      }
+      // Passo 3: Remover enum antigo
+      await queryInterface.sequelize.query(
+        `DROP TYPE "PersonRole"`,
+        { transaction }
+      );
 
-      // Garantir que registration_type existe
+      // Passo 4: Renomear novo enum para o nome original
+      await queryInterface.sequelize.query(
+        `ALTER TYPE "PersonRole_new" RENAME TO "PersonRole"`,
+        { transaction }
+      );
+
+      // Passo 5: Garantir que registration_type existe
       const columns = await queryInterface.describeTable('Person', { transaction });
       
       if (!columns.registration_type) {
@@ -44,12 +48,9 @@ module.exports = {
           },
           { transaction }
         );
-        console.log('✅ Coluna registration_type adicionada');
-      } else {
-        console.log('✅ Coluna registration_type já existe');
       }
 
-      // Garantir que created_by existe
+      // Passo 6: Garantir que created_by existe
       if (!columns.created_by) {
         await queryInterface.addColumn(
           'Person',
@@ -66,13 +67,10 @@ module.exports = {
           },
           { transaction }
         );
-        console.log('✅ Coluna created_by adicionada');
-      } else {
-        console.log('✅ Coluna created_by já existe');
       }
 
       await transaction.commit();
-      console.log('✅ Migration concluída com sucesso!');
+      console.log('✅ Migration concluída: AFFILIATE adicionado ao enum PersonRole');
     } catch (error) {
       await transaction.rollback();
       console.error('❌ Erro na migration:', error.message);
@@ -84,7 +82,31 @@ module.exports = {
     const transaction = await queryInterface.sequelize.transaction();
 
     try {
-      // Downgrade: Remover as colunas (não podemos remover valores do enum em PostgreSQL)
+      // Criar enum antigo sem AFFILIATE
+      await queryInterface.sequelize.query(
+        `CREATE TYPE "PersonRole_old" AS ENUM ('SELLER', 'ADMIN', 'SUPER_ADMIN')`,
+        { transaction }
+      );
+
+      // Converter coluna de volta
+      await queryInterface.sequelize.query(
+        `ALTER TABLE "Person" ALTER COLUMN "role" TYPE "PersonRole_old" USING "role"::text::"PersonRole_old"`,
+        { transaction }
+      );
+
+      // Remover enum novo
+      await queryInterface.sequelize.query(
+        `DROP TYPE "PersonRole"`,
+        { transaction }
+      );
+
+      // Renomear de volta
+      await queryInterface.sequelize.query(
+        `ALTER TYPE "PersonRole_old" RENAME TO "PersonRole"`,
+        { transaction }
+      );
+
+      // Remover colunas adicionadas
       const columns = await queryInterface.describeTable('Person', { transaction });
       
       if (columns.created_by) {
