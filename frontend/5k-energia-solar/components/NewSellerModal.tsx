@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
-import { personService, uploadService } from '@/lib/services';
+import { personService } from '@/lib/services';
 import { CreatePersonDto } from '@/lib/types';
 import ResponsiveModal from '@/components/ResponsiveModal';
 import CityAutocomplete from '@/components/ui/CityAutocomplete';
@@ -91,9 +91,31 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Por favor, selecione uma imagem válida');
+        return;
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Arquivo deve ter no máximo 5MB');
+        return;
+      }
       setPhotoFile(file);
       setPhotoPreview(URL.createObjectURL(file));
     }
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   const onSubmit = async (data: CreatePersonDto) => {
@@ -102,7 +124,7 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
       let photoBase64 = undefined;
 
       if (photoFile) {
-        photoBase64 = await uploadService.uploadProfilePhoto(photoFile);
+        photoBase64 = await fileToBase64(photoFile);
       }
 
       await personService.create({

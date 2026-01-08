@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
-import { personService, uploadService } from '@/lib/services';
+import { personService } from '@/lib/services';
 import { Person, UpdatePersonDto } from '@/lib/types';
 import ResponsiveModal from '@/components/ResponsiveModal';
 import CityAutocomplete from '@/components/ui/CityAutocomplete';
@@ -120,6 +120,11 @@ export default function EditSellerModal({
   const handlePhotoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Por favor, selecione uma imagem válida');
+        return;
+      }
       if (file.size > 5 * 1024 * 1024) {
         toast.error('A foto deve ter no máximo 5MB');
         return;
@@ -134,19 +139,31 @@ export default function EditSellerModal({
     }
   }, []);
 
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const onSubmit = async (data: UpdatePersonDto) => {
     try {
       setLoading(true);
 
       let photoBase64: string | undefined = undefined;
 
-      // If user selected a file, upload via uploadService and get base64
+      // If user selected a file, convert to base64
       if (photoFile) {
         try {
-          photoBase64 = await uploadService.uploadProfilePhoto(photoFile);
+          photoBase64 = await fileToBase64(photoFile);
         } catch (err) {
-          console.error('Erro ao fazer upload da foto:', err);
-          toast.error('Erro ao enviar foto. Tente novamente.');
+          console.error('Erro ao processar foto:', err);
+          toast.error('Erro ao processar foto. Tente novamente.');
           setLoading(false);
           return;
         }
