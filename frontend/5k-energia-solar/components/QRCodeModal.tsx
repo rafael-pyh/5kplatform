@@ -306,20 +306,114 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
     }
   };
 
+  const isMobileDevice = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
   const shareViaWhatsApp = async () => {
     try {
       setSharing(true);
+      const nav: any = navigator;
+      const isMobile = isMobileDevice();
       
-      if (!qrCode) {
-        toast.error('QR Code não disponível para compartilhamento');
+      // Se em modo poster, compartilhar a placa completa
+      if (previewMode === 'poster') {
+        const options: any = {
+          outputWidth: 2048,
+        };
+        if (customPoster) {
+          options.posterUrl = customPoster;
+          options.boxCenterXRatio = overlayCenter.x;
+          options.boxCenterYRatio = overlayCenter.y;
+          options.boxSizeRatio = overlaySizePercent / 100;
+          options.vendorName = personName;
+        }
+
+        const blob = await composePosterBlob(qrCodeWithVendor, options as any);
+        const file = new File([blob], `placa-${personName.replace(/\s+/g, '-')}.png`, { type: 'image/png' });
+
+        // Mobile: usar Web Share API para enviar a imagem
+        if (isMobile && nav.canShare && nav.canShare({ files: [file] })) {
+          try {
+            await nav.share({
+              files: [file],
+              title: `Placa - ${personName}`,
+              text: `Placa com QR Code de ${personName}`
+            });
+            setSharing(false);
+            return;
+          } catch (err) {
+            // Fallthrough para web
+          }
+        }
+
+        // Web (desktop): copiar imagem para clipboard e abrir WhatsApp Web
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob })
+          ]);
+          toast.success('Imagem copiada! Abra o WhatsApp e cole com Ctrl+V');
+        } catch (clipErr) {
+          console.error('Erro ao copiar imagem:', clipErr);
+          toast.error('Não foi possível copiar a imagem. Use o botão Compartilhar');
+        }
+        
+        window.open('https://web.whatsapp.com', '_blank');
         setSharing(false);
         return;
       }
       
-      const shareUrl = `${window.location.origin}/lead/new?qr=${encodeURIComponent(qrCode)}`;
-      const text = `Confira o QR Code de ${personName}: ${shareUrl}`;
-      const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-      window.open(waUrl, '_blank');
+      // Modo QR: compartilhar apenas o QR code
+      const file = base64ToFile(qrCodeWithVendor, `qrcode-${personName.replace(/\s+/g, '-')}.png`);
+
+      // Mobile: usar Web Share API para enviar a imagem
+      if (isMobile && nav.canShare && nav.canShare({ files: [file] })) {
+        try {
+          await nav.share({
+            files: [file],
+            title: `QR Code - ${personName}`,
+            text: `QR Code de ${personName}`
+          });
+          setSharing(false);
+          return;
+        } catch (err) {
+          // Fallthrough para web
+        }
+      }
+
+      // Web (desktop): copiar imagem para clipboard e abrir WhatsApp Web
+      try {
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          const img = document.createElement('img');
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              reject(new Error('Cannot get canvas context'));
+              return;
+            }
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob((blob) => {
+              if (blob) resolve(blob);
+              else reject(new Error('Failed to create blob'));
+            }, 'image/png');
+          };
+          img.onerror = () => reject(new Error('Failed to load image'));
+          img.src = qrCodeWithVendor;
+        });
+
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        toast.success('Imagem copiada! Abra o WhatsApp e cole com Ctrl+V');
+      } catch (clipErr) {
+        console.error('Erro ao copiar imagem:', clipErr);
+        toast.error('Não foi possível copiar a imagem. Use o botão Compartilhar');
+      }
+
+      window.open('https://web.whatsapp.com', '_blank');
     } catch (err) {
       console.error('Erro ao compartilhar via WhatsApp', err);
       toast.error('Erro ao compartilhar via WhatsApp');
