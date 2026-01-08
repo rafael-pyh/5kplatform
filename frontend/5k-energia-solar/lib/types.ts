@@ -96,6 +96,7 @@ export interface CreatePersonDto {
   pixKey: string;
   city: string;
   state: string;
+  role?: string;
   photoBase64?: string;
 }
 

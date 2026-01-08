@@ -303,6 +303,25 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
             )}
           </div>
 
+          {/* Role */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-0.5">
+              Tipo de Usuário *
+            </label>
+            <select
+              {...register('role', { required: 'Tipo de usuário é obrigatório' })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-sm"
+              required
+            >
+              <option value="">Selecione um tipo</option>
+              <option value="SELLER">Vendedor</option>
+              <option value="AFFILIATE">Afiliado</option>
+            </select>
+            {errors.role && (
+              <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
+            )}
+          </div>
+
           {/* Foto de Perfil - full width */}
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-0.5">
