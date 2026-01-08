@@ -50,6 +50,12 @@ export const personService = {
     await api.delete(`/person/${id}`);
   },
 
+  // Reativar vendedor
+  async activate(id: string): Promise<Person> {
+    const response = await api.put<ApiResponse<Person>>(`/person/${id}/activate`);
+    return normalizePersonUrls(response.data.data!);
+  },
+
   // Obter estatísticas do vendedor
   async getStats(id: string): Promise<PersonStats> {
     const response = await api.get<ApiResponse<PersonStats>>(`/person/${id}/stats`);

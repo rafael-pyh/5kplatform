@@ -70,6 +70,17 @@ export const deleteById = async (req: Request, res: Response, next: NextFunction
   }
 };
 
+export const activate = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await service.activate(req.params.id);
+    const jsonData = data.toJSON ? data.toJSON() : data;
+    const transformed = transformPersonUrls(jsonData);
+    return ResponseBuilder.success(res, transformed);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const hardDeleteById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.hardDeleteById(req.params.id);

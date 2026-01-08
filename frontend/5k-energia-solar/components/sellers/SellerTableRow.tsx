@@ -1,23 +1,69 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Person } from '@/types/Person';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { Icon } from '../ui/Icon';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 interface SellerTableRowProps {
   person: Person;
   onViewQRCode: (person: Person) => void;
   onEdit: (person: Person) => void;
   onDeactivate: (id: string) => void;
+  onActivate: (id: string) => void;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
 }
 
-function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onApprove, onReject }: SellerTableRowProps) {
+function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onActivate, onApprove, onReject }: SellerTableRowProps) {
+  const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+
+  const handleDeactivateClick = () => {
+    setDeactivateModalOpen(true);
+  };
+
+  const handleConfirmDeactivate = () => {
+    setDeactivateModalOpen(false);
+    onDeactivate(person.id);
+  };
+
+  const handleRejectClick = () => {
+    setRejectModalOpen(true);
+  };
+
+  const handleConfirmReject = () => {
+    setRejectModalOpen(false);
+    onReject(person.id);
+  };
+
   return (
-    <tr className="hover:bg-gray-50 border-b border-slate-200">
+    <>
+      <ConfirmationModal
+        isOpen={deactivateModalOpen}
+        title="Desativar Vendedor"
+        message={`Tem certeza que deseja desativar o vendedor ${person.name}? Isso o impedirá de gerar novos leads.`}
+        confirmText="Desativar"
+        cancelText="Cancelar"
+        isDangerous={true}
+        onConfirm={handleConfirmDeactivate}
+        onCancel={() => setDeactivateModalOpen(false)}
+      />
+
+      <ConfirmationModal
+        isOpen={rejectModalOpen}
+        title="Reprovar Vendedor"
+        message={`Tem certeza que deseja reprovar o vendedor ${person.name}?`}
+        confirmText="Reprovar"
+        cancelText="Cancelar"
+        isDangerous={true}
+        onConfirm={handleConfirmReject}
+        onCancel={() => setRejectModalOpen(false)}
+      />
+
+      <tr className="hover:bg-gray-50 border-b border-slate-200">
       <td className="px-2 py-4 whitespace-nowrap">
         <div className="flex items-center">
           <div className="h-10 w-10 shrink-0">
@@ -102,9 +148,18 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onApprove,
             <Button
               variant="outline-danger"
               size="sm"
-              onClick={() => onDeactivate(person.id)}
+              onClick={handleDeactivateClick}
             >
               <Icon icon="mdi:account-off-outline" className="w-5 h-5" />
+            </Button>
+          )}
+          {!person.active && (
+            <Button
+              variant="outline-success"
+              size="sm"
+              onClick={() => onActivate(person.id)}
+            >
+              <Icon icon="mdi:account-check-outline" className="w-5 h-5" />
             </Button>
           )}
           {person.approvalStatus === 'pending' && (
@@ -127,7 +182,7 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onApprove,
               <Button
                 variant="outline-danger"
                 size="sm"
-                onClick={() => onReject(person.id)}
+                onClick={handleRejectClick}
               >
                 Rejeitar
               </Button>
@@ -136,6 +191,7 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onApprove,
         </div>
       </td>
     </tr>
+    </>
   );
 }
 

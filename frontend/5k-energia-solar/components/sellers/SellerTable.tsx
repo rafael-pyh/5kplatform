@@ -12,10 +12,11 @@ interface SellerTableProps {
   onViewQRCode: (person: Person) => void;
   onEdit: (person: Person) => void;
   onDeactivate: (id: string) => void;
+  onActivate: (id: string) => void;
   onRefetch?: () => void;
 }
 
-function SellerTable({ persons, onViewQRCode, onEdit, onDeactivate, onRefetch }: SellerTableProps) {
+function SellerTable({ persons, onViewQRCode, onEdit, onDeactivate, onActivate, onRefetch }: SellerTableProps) {
   const handleApprove = async (id: string) => {
     try {
       await approveSeller(id);
@@ -116,6 +117,7 @@ function SellerTable({ persons, onViewQRCode, onEdit, onDeactivate, onRefetch }:
               onViewQRCode={onViewQRCode}
               onEdit={onEdit}
               onDeactivate={onDeactivate}
+              onActivate={onActivate}
               onApprove={() => handleApprove(person.id)}
               onReject={() => handleReject(person.id)}
             />

@@ -78,14 +78,24 @@ export default function SellersPage() {
   }, [setQrModalOpen]);
 
   const handleDeactivate = useCallback(async (id: string) => {
-    if (!confirm('Tem certeza que deseja desativar este vendedor?')) return;
-
     try {
       await personService.deactivate(id);
       toast.success('Vendedor desativado com sucesso!');
       refetch();
     } catch (error) {
       toast.error('Erro ao desativar vendedor');
+    }
+  }, [refetch]);
+
+  const handleActivate = useCallback(async (id: string) => {
+    if (!confirm('Tem certeza que deseja reativar este vendedor?')) return;
+
+    try {
+      await personService.activate(id);
+      toast.success('Vendedor reativado com sucesso!');
+      refetch();
+    } catch (error) {
+      toast.error('Erro ao reativar vendedor');
     }
   }, [refetch]);
 
@@ -206,6 +216,7 @@ export default function SellersPage() {
               onViewQRCode={handleOpenQRModal}
               onEdit={handleOpenEditModal}
               onDeactivate={handleDeactivate}
+              onActivate={handleActivate}
               onRefetch={refetch}
             />
           )}

@@ -16,5 +16,6 @@ router.get("/:id/stats", authenticate, requireAdmin, controller.getStats);
 router.put("/:id", authenticate, controller.updateById);
 router.delete("/:id", authenticate, requireAdmin, controller.deleteById);
 router.delete("/:id/hard", authenticate, requireAdmin, controller.hardDeleteById);
+router.put("/:id/activate", authenticate, requireAdmin, controller.activate);
 
 export default router;

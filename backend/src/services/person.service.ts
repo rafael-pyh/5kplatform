@@ -272,6 +272,15 @@ export const deleteById = async (id: string) => {
   return person;
 };
 
+export const activate = async (id: string) => {
+  // Reativa um vendedor desativado
+  const person = await Person.findByPk(id);
+  if (!person) throw new Error("Vendedor não encontrado");
+  
+  await person.update({ active: true });
+  return person;
+};
+
 export const hardDeleteById = async (id: string) => {
   // Hard delete - remove permanentemente
   const person = await Person.findByPk(id);
