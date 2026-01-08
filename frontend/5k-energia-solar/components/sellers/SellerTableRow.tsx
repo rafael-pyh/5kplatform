@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { Icon } from '../ui/Icon';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import { resendVerificationEmailAction } from '@/app/actions/auth';
 
 interface SellerTableRowProps {
   person: Person;
@@ -20,6 +21,7 @@ interface SellerTableRowProps {
 function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onActivate, onApprove, onReject }: SellerTableRowProps) {
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState(false);
 
   const handleDeactivateClick = () => {
     setDeactivateModalOpen(true);
@@ -37,6 +39,20 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onActivate
   const handleConfirmReject = () => {
     setRejectModalOpen(false);
     onReject(person.id);
+  };
+
+  const handleResendVerificationEmail = async () => {
+    setResendingEmail(true);
+    try {
+      await resendVerificationEmailAction(person.email);
+      // Show toast success message
+      alert('Email de verificação reenviado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao reenviar email:', error);
+      alert('Erro ao reenviar email de verificação');
+    } finally {
+      setResendingEmail(false);
+    }
   };
 
   return (
@@ -187,6 +203,17 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onActivate
                 Rejeitar
               </Button>
             </>
+          )}
+          {!person.emailVerified && (
+            <Button
+              variant="outline-blue"
+              size="sm"
+              onClick={handleResendVerificationEmail}
+              disabled={resendingEmail}
+              title="Reenviar email de verificação"
+            >
+              <Icon icon="mdi:email-send-outline" className="w-5 h-5" />
+            </Button>
           )}
         </div>
       </td>
