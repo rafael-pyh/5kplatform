@@ -45,21 +45,21 @@ export interface CreateSellerDto {
   pixKey?: string;
   state?: string;
   city?: string;
-  role?: 'SELLER' | 'ADMIN';
+  role?: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | 'AFFILIATE';
 }
 
 export interface CreateAdminDto {
   name: string;
   email: string;
   password: string;
-  role: 'ADMIN' | 'SUPER_ADMIN' | 'SELLER';
+  role: 'ADMIN' | 'SUPER_ADMIN' | 'SELLER' | 'AFFILIATE';
 }
 
 export interface UpdateAdminDto {
   name?: string;
   email?: string;
   password?: string;
-  role?: 'ADMIN' | 'SUPER_ADMIN' | 'SELLER';
+  role?: 'ADMIN' | 'SUPER_ADMIN' | 'SELLER' | 'AFFILIATE';
   active?: boolean;
   phone?: string;
   pixKey?: string;

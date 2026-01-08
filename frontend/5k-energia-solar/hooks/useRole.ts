@@ -20,7 +20,11 @@ export function useRole() {
     return isAuthenticated && user?.role === 'SELLER';
   };
 
-  const hasRole = (roles: ('ADMIN' | 'SUPER_ADMIN' | 'SELLER')[]) => {
+  const isAffiliate = () => {
+    return isAuthenticated && user?.role === 'AFFILIATE';
+  };
+
+  const hasRole = (roles: ('ADMIN' | 'SUPER_ADMIN' | 'SELLER' | 'AFFILIATE')[]) => {
     return isAuthenticated && user && roles.includes(user.role);
   };
 
@@ -28,6 +32,7 @@ export function useRole() {
     isAdmin: isAdmin(),
     isSuperAdmin: isSuperAdmin(),
     isSeller: isSeller(),
+    isAffiliate: isAffiliate(),
     hasRole,
   };
 }
