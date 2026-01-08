@@ -10,6 +10,7 @@ interface SellerFiltersProps {
     city: string;
     state: string;
     status: string;
+    role: string;
     month?: string;
     year?: string;
   };
@@ -18,6 +19,7 @@ interface SellerFiltersProps {
     city: string;
     state: string;
     status: string;
+    role: string;
     month?: string;
     year?: string;
   }) => void;
@@ -95,6 +97,16 @@ function SellerFilters({
           <option value="all">Todos</option>
           <option value="active">Ativo</option>
           <option value="inactive">Inativo</option>
+        </Select>
+        <Select
+          label="Cargo"
+          name="role"
+          value={additionalFilters.role}
+          onChange={handleSelectChange}
+        >
+          <option value="all">Todos</option>
+          <option value="SELLER">Vendedor</option>
+          <option value="AFFILIATE">Afiliado</option>
         </Select>
         <Select
           label="Mês"

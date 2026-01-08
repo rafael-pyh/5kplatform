@@ -3,7 +3,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'SUPER_ADMIN' | 'SELLER';
+  role: 'ADMIN' | 'SUPER_ADMIN' | 'SELLER' | 'AFFILIATE';
+  registration_type?: 'PUBLIC' | 'ADMIN';
   active?: boolean;
   createdAt: string;
   updatedAt: string;
@@ -26,6 +27,25 @@ export interface AuthResponse {
   token: string;
   rememberMeToken?: string;
   user: User;
+}
+
+export interface CreateAffiliateDto {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  state?: string;
+  city?: string;
+}
+
+export interface CreateSellerDto {
+  name: string;
+  email: string;
+  phone?: string;
+  pixKey?: string;
+  state?: string;
+  city?: string;
+  role?: 'SELLER' | 'ADMIN';
 }
 
 export interface CreateAdminDto {
@@ -60,7 +80,7 @@ export interface Person {
   qrCodeUrl?: string; // URL S3 do QR code
   scanCount: number;
   active: boolean;
-  role: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN';
+  role: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | 'AFFILIATE';
   emailVerified: boolean;
   approvalStatus: 'pending' | 'approved' | 'rejected';
   city: string;
@@ -88,6 +108,7 @@ export interface UpdatePersonDto {
   state?: string;
   photoBase64?: string;
   active?: boolean;
+  role?: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | 'AFFILIATE';
 }
 
 // ========== LEAD (INTERESSADO) ==========

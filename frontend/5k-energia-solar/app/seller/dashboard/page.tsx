@@ -55,7 +55,7 @@ export default function SellerDashboardPage() {
             <h2 className="text-lg font-semibold text-gray-900">Meus Leads</h2>
           </div>
           <div className="overflow-x-auto">
-            <LeadsTable leads={leads} />
+            <LeadsTable leads={leads} userRole={userRole} />
           </div>
         </div>
       </main>

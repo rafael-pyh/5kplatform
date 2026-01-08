@@ -15,7 +15,7 @@ interface DashboardStats {
 
 export default function useDashboard() {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({ totalPersons: 0, activePersons: 0, totalLeads: 0, newLeads: 0 });
@@ -48,9 +48,16 @@ export default function useDashboard() {
 
   useEffect(() => {
     if (authLoading) return;
+    
+    // Redireciona AFILIATEs para seller dashboard
+    if (user?.role === 'AFFILIATE') {
+      router.push('/seller/dashboard');
+      return;
+    }
+    
     if (!isAuthenticated) return;
     loadDashboardData();
-  }, [isAuthenticated, authLoading, loadDashboardData]);
+  }, [isAuthenticated, authLoading, loadDashboardData, user?.role, router]);
 
   return {
     loading,

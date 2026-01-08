@@ -18,6 +18,12 @@ export enum PersonRole {
   SELLER = 'SELLER',
   ADMIN = 'ADMIN',
   SUPER_ADMIN = 'SUPER_ADMIN',
+  AFFILIATE = 'AFFILIATE',
+}
+
+export enum RegistrationType {
+  PUBLIC = 'PUBLIC',    // Via link/QR Code (afiliado)
+  ADMIN = 'ADMIN',      // Criado por administrador
 }
 
 @Table({
@@ -69,6 +75,14 @@ export class Person extends Model {
   @Default(PersonRole.SELLER)
   @Column(DataType.ENUM(...Object.values(PersonRole)))
   role!: PersonRole;
+
+  @Default('ADMIN')
+  @Column(DataType.ENUM('PUBLIC', 'ADMIN'))
+  registration_type!: 'PUBLIC' | 'ADMIN';
+
+  @AllowNull(true)
+  @Column(DataType.UUID)
+  created_by?: string; // ID do admin que criou este usuário
 
   @AllowNull(true)
   @Column(DataType.STRING)

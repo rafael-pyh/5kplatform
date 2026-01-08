@@ -71,4 +71,10 @@ export const leadService = {
     const response = await api.get<ApiResponse<any>>('/lead/stats');
     return response.data.data!;
   },
+
+  // Obter leads do vendedor/afiliado autenticado
+  async getMyLeads(): Promise<Lead[]> {
+    const response = await api.get<ApiResponse<Lead[]>>('/lead/my-leads');
+    return response.data.data || [];
+  },
 };

@@ -163,9 +163,16 @@ export const login = async (data: LoginDto) => {
     user: {
       id: user.id,
       email: user.email,
-      name: user.name || 'Usuário',
+      name: user.name,
       role: user.role || PersonRole.SELLER,
-      photoBase64: (user as any).photoBase64,
+      registration_type: user.registration_type,
+      active: user.active,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      photoBase64: user.photoBase64,
+      emailVerified: user.emailVerified,
+      phone: user.phone,
+      pixKey: user.pixKey,
     },
     token,
     rememberMeToken,
@@ -339,7 +346,7 @@ export const confirmEmail = async (token: string) => {
 
 export const getCurrentUser = async (userId: string) => {
   const user = await Person.findByPk(userId, {
-    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt', 'photoBase64', 'phone', 'pixKey', 'emailVerified', 'approvalStatus', 'qrCode', 'qrCodeUrl'],
+    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt', 'updatedAt', 'photoBase64', 'phone', 'pixKey', 'emailVerified', 'registration_type'],
   });
 
   if (!user) {
@@ -350,7 +357,20 @@ export const getCurrentUser = async (userId: string) => {
     throw new UnauthorizedError("Conta desativada");
   }
 
-  return user;
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role || PersonRole.SELLER,
+    active: user.active,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    photoBase64: user.photoBase64,
+    phone: user.phone,
+    pixKey: user.pixKey,
+    emailVerified: user.emailVerified,
+    registration_type: (user as any).registration_type,
+  };
 };
 
 // Valida e usa o token de "Lembrar de mim"
@@ -405,7 +425,14 @@ export const validateRememberMeToken = async (rememberMeToken: string) => {
       email: user.email,
       name: user.name,
       role: user.role || PersonRole.SELLER,
-      photoBase64: (user as any).photoBase64,
+      registration_type: (user as any).registration_type,
+      active: user.active,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      photoBase64: user.photoBase64,
+      phone: user.phone,
+      pixKey: user.pixKey,
+      emailVerified: user.emailVerified,
     },
     token,
     rememberMeToken: newRememberMeToken,

@@ -22,7 +22,14 @@ const getStatusBadge = (status: string) => {
   return <span className={`px-2 py-1 text-xs font-medium rounded-full ${config.bg} ${config.text}`}>{config.label}</span>;
 };
 
-const LeadsTable = ({ leads }: { leads: Lead[] }) => {
+interface LeadsTableProps {
+  leads: Lead[];
+  userRole?: string;
+}
+
+const isSeller = (role?: string) => role === 'SELLER' || role === 'ADMIN' || role === 'SUPER_ADMIN';
+
+const LeadsTable = ({ leads, userRole }: LeadsTableProps) => {
   if (!leads || leads.length === 0) {
     return (
       <div className="text-center py-12">
@@ -31,12 +38,16 @@ const LeadsTable = ({ leads }: { leads: Lead[] }) => {
     );
   }
 
+  const showFullData = isSeller(userRole);
+
   return (
     <table className="min-w-full divide-y divide-gray-200">
       <thead className="bg-gray-50">
         <tr>
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contato</th>
+          {showFullData && (
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contato</th>
+          )}
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
         </tr>
@@ -45,7 +56,9 @@ const LeadsTable = ({ leads }: { leads: Lead[] }) => {
         {leads.map((lead) => (
           <tr key={lead.id} className="hover:bg-gray-50">
             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{lead.name}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{lead.phone || lead.email || '-'}</td>
+            {showFullData && (
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{lead.phone || lead.email || '-'}</td>
+            )}
             <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(lead.status)}</td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(lead.createdAt).toLocaleDateString('pt-BR')}</td>
           </tr>

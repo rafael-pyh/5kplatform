@@ -2,12 +2,17 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import React, { useState } from 'react';
 
 const SellerHeader = ({ seller, onOpenQR, onLogout, blocked }: any) => {
   const router = useRouter();
+  const { user } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Usa seller se disponível, senão usa user do contexto
+  const profileData = seller || user;
 
   const toggleProfileMenu = () => {
     setIsProfileOpen(!isProfileOpen);
@@ -57,12 +62,18 @@ const SellerHeader = ({ seller, onOpenQR, onLogout, blocked }: any) => {
                 onClick={toggleProfileMenu}
                 className="flex items-center gap-2 hover:opacity-80 transition-opacity"
               >
-                <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0">
-                  <Image src={seller?.photoBase64 || '/default-avatar.png'} alt="Foto do Vendedor" fill className="object-cover" />
+                <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 bg-blue-100 flex items-center justify-center">
+                  {profileData?.photoBase64 && !profileData.photoBase64.includes('data:') ? (
+                    <img src={profileData.photoBase64} alt="Foto do Vendedor" className="w-full h-full object-cover" />
+                  ) : profileData?.photoBase64 ? (
+                    <Image src={profileData.photoBase64} alt="Foto do Vendedor" fill className="object-cover" />
+                  ) : (
+                    <span className="text-blue-600 font-semibold text-sm">{profileData?.name?.[0]?.toUpperCase() || 'U'}</span>
+                  )}
                 </div>
                 <div className="text-left">
-                  <p className="text-sm text-gray-600">{seller?.name}</p>
-                  <p className="text-xs text-gray-500">{seller?.email}</p>
+                  <p className="text-sm text-gray-600">{profileData?.name}</p>
+                  <p className="text-xs text-gray-500">{profileData?.email}</p>
                 </div>
                 <svg className={`w-4 h-4 text-gray-600 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
@@ -72,15 +83,17 @@ const SellerHeader = ({ seller, onOpenQR, onLogout, blocked }: any) => {
               {/* Desktop Dropdown Menu */}
               {isProfileOpen && (
                 <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                  <button
-                    onClick={handleEditProfile}
-                    className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg transition-colors flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    <span className="font-medium">Editar Perfil</span>
-                  </button>
+                  {profileData?.email && (
+                    <button
+                      onClick={handleEditProfile}
+                      className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg transition-colors flex items-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      <span className="font-medium">Editar Perfil</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       onLogout?.();
@@ -116,12 +129,18 @@ const SellerHeader = ({ seller, onOpenQR, onLogout, blocked }: any) => {
         {isMobileMenuOpen && (
           <div className="md:hidden mt-4 pb-4 border-t border-gray-200">
             <div className="flex items-center gap-3 mb-4 pt-4">
-              <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0">
-                <Image src={seller?.photoBase64 || '/default-avatar.png'} alt="Foto do Vendedor" fill className="object-cover" />
+              <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 bg-blue-100 flex items-center justify-center">
+                {profileData?.photoBase64 && !profileData.photoBase64.includes('data:') ? (
+                  <img src={profileData.photoBase64} alt="Foto do Vendedor" className="w-full h-full object-cover" />
+                ) : profileData?.photoBase64 ? (
+                  <Image src={profileData.photoBase64} alt="Foto do Vendedor" fill className="object-cover" />
+                ) : (
+                  <span className="text-blue-600 font-semibold text-sm">{profileData?.name?.[0]?.toUpperCase() || 'U'}</span>
+                )}
               </div>
               <div className="text-left">
-                <p className="text-sm font-medium text-gray-900">{seller?.name}</p>
-                <p className="text-xs text-gray-600">{seller?.email}</p>
+                <p className="text-sm font-medium text-gray-900">{profileData?.name}</p>
+                <p className="text-xs text-gray-600">{profileData?.email}</p>
               </div>
             </div>
 

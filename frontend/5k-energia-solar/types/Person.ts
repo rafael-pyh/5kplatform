@@ -1,3 +1,6 @@
+export type PersonRole = 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | 'AFFILIATE';
+export type RegistrationType = 'PUBLIC' | 'ADMIN';
+
 export interface Person {
   id: string;
   name: string;
@@ -7,9 +10,11 @@ export interface Person {
   photoBase64?: string;
   qrCode: string;
   qrCodeUrl?: string;
+  qrCodeBase64?: string;
   active: boolean;
   scanCount: number;
-  role: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN';
+  role: PersonRole;
+  registration_type?: RegistrationType;
   password?: string;
   emailVerified: boolean;
   city: string;
@@ -19,4 +24,24 @@ export interface Person {
   createdAt: string | Date;
   updatedAt: string | Date;
   approvalStatus: 'pending' | 'approved' | 'rejected';
+  created_by?: string;
+}
+
+export interface CreateAffiliateDTO {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  state?: string;
+  city?: string;
+}
+
+export interface CreateSellerDTO {
+  name: string;
+  email: string;
+  phone?: string;
+  pixKey?: string;
+  state?: string;
+  city?: string;
+  role?: PersonRole;
 }

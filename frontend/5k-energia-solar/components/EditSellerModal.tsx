@@ -13,7 +13,7 @@ interface EditSellerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  person: Person;
+  person: any;
 }
 
 interface StateOption {
@@ -55,6 +55,7 @@ export default function EditSellerModal({
       pixKey: (person as any).pixKey || '',
       city: (person as any).city || '',
       state: (person as any).state || '',
+      role: (person as any).role || 'SELLER',
     },
   });
 
@@ -158,6 +159,7 @@ export default function EditSellerModal({
       if ((data as any).pixKey !== undefined) updateData.pixKey = (data as any).pixKey;
       if (data.city !== undefined) updateData.city = data.city;
       if (data.state !== undefined) updateData.state = data.state;
+      if ((data as any).role !== undefined) updateData.role = (data as any).role;
       if (photoBase64) updateData.photoBase64 = photoBase64;
 
       await personService.update(person.id, updateData);
@@ -199,13 +201,13 @@ export default function EditSellerModal({
           {/* Name */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-0.5">
-              Nome Completo *
+              Nome Completo
             </label>
             <input
               id="name"
               type="text"
               maxLength={100}
-              {...register('name', { required: 'Nome é obrigatório' })}
+              {...register('name')}
               className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
               placeholder="Nome do vendedor"
             />
@@ -217,14 +219,13 @@ export default function EditSellerModal({
           {/* Email */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-0.5">
-              Email *
+              Email
             </label>
             <input
               id="email"
               type="email"
               maxLength={120}
               {...register('email', {
-                required: 'Email é obrigatório',
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                   message: 'Email inválido',
@@ -241,7 +242,7 @@ export default function EditSellerModal({
           {/* Phone */}
           <div>
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-0.5">
-              Telefone *
+              Telefone
             </label>
             <input
               id="phone"
@@ -249,7 +250,7 @@ export default function EditSellerModal({
               inputMode="numeric"
               maxLength={20}
               pattern="[\d\s\-\(\)]+"
-              {...register('phone', { required: 'Telefone é obrigatório' })}
+              {...register('phone')}
               className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
               placeholder="(00) 00000-0000"
             />
@@ -279,11 +280,11 @@ export default function EditSellerModal({
           {/* State */}
           <div>
             <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-0.5">
-              Estado *
+              Estado
             </label>
             <select
               id="state"
-              {...register('state', { required: 'Estado é obrigatório' })}
+              {...register('state')}
               className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
             >
               <option value="">Selecione um estado</option>
@@ -301,7 +302,7 @@ export default function EditSellerModal({
           {/* City */}
           <div>
             <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-0.5">
-              Cidade *
+              Cidade
             </label>
             {watchState ? (
               citiesLoading ? (
@@ -312,7 +313,7 @@ export default function EditSellerModal({
                 <>
                   <input
                     type="hidden"
-                    {...register('city', { required: 'Cidade é obrigatória' })}
+                    {...register('city')}
                   />
                   <CityAutocomplete
                     cities={cities}
@@ -330,6 +331,27 @@ export default function EditSellerModal({
             )}
             {errors.city && (
               <p className="text-red-500 text-xs mt-0.5">{errors.city.message}</p>
+            )}
+          </div>
+
+          {/* Role */}
+          <div>
+            <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Cargo (Role) *
+            </label>
+            <select
+              id="role"
+              {...register('role', { required: 'Cargo é obrigatório' })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+            >
+              <option value="">Selecione um cargo</option>
+              <option value="AFFILIATE">Afiliado</option>
+              <option value="SELLER">Vendedor</option>
+              <option value="ADMIN">Administrador</option>
+              <option value="SUPER_ADMIN">Super Administrador</option>
+            </select>
+            {errors.role && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.role.message}</p>
             )}
           </div>
 

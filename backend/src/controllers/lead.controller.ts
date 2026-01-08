@@ -100,3 +100,21 @@ export const getNewLeads = async (req: Request, res: Response, next: NextFunctio
     next(error);
   }
 };
+
+// Endpoint para pegar leads do vendedor/afiliado autenticado com filtragem por role
+export const getMyLeads = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req.user as any)?.userId;
+    const userRole = (req.user as any)?.role;
+
+    if (!userId) {
+      return ResponseBuilder.error(res, 'Usuário não autenticado', 401);
+    }
+
+    const data = await service.getLeadsByPersonRole(userId, userRole);
+    const jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    return ResponseBuilder.success(res, jsonData);
+  } catch (error) {
+    next(error);
+  }
+};

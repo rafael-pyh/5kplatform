@@ -163,7 +163,7 @@ export const createPerson = async (data: CreatePersonDto) => {
 };
 
 export const getAll = async (activeOnly: boolean = false) => {
-  const where: any = { role: PersonRole.SELLER };
+  const where: any = { role: [PersonRole.SELLER, PersonRole.AFFILIATE] };
   if (activeOnly) where.active = true;
 
   return Person.findAll({

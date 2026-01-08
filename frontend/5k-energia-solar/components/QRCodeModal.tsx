@@ -37,7 +37,7 @@ interface QRCodeModalProps {
   qrCodeBase64: string; // Base64 data URL
   personName: string;
   qrCode?: string;
-  userRole?: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN';
+  userRole?: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | 'AFFILIATE';
 }
 
 export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName, qrCode, userRole = 'SELLER' }: QRCodeModalProps) {

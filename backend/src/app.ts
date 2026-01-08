@@ -8,6 +8,8 @@ import uploadRoutes from "./routes/upload.routes";
 import creativeRoutes from "./routes/creative.routes";
 import sellerAuthRoutes from "./routes/seller-auth.routes";
 import sellerLeadsRoutes from "./routes/seller-leads.routes";
+import sellerRoutes from "./routes/seller.routes";
+import registrationRoutes from "./routes/registration.routes";
 import manualRegisterRoutes from "./routes/manualRegister.routes";
 import approvalRoutes from "./routes/approval.routes";
 import migrationRoutes from "./routes/migration.routes";
@@ -42,6 +44,7 @@ app.get("/health", (req, res) => {
 
 // Rotas da API
 app.use("/api/auth", authRoutes);
+app.use("/api/auth", registrationRoutes);
 app.use("/api/person", personRoutes);
 app.use("/api/lead", leadRoutes);
 app.use("/api/qrcode", qrcodeRoutes);
@@ -49,6 +52,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/creatives", creativeRoutes);
 app.use("/api/seller", sellerAuthRoutes);
 app.use("/api/seller", sellerLeadsRoutes);
+app.use("/api/seller", authenticate, sellerRoutes);
 app.use("/api", manualRegisterRoutes);
 app.use("/api/approval", approvalRoutes);
 app.use("/api/admin", authenticate, migrationRoutes);

@@ -6,6 +6,7 @@ const router = Router();
 
 // Rotas protegidas (requerem autenticação de administrador)
 router.post("/", authenticate, requireAdmin, controller.createLead);
+router.get("/my-leads", authenticate, controller.getMyLeads);
 router.get("/", authenticate, requireAdmin, controller.getAllLeads);
 router.get("/stats", authenticate, requireAdmin, controller.getLeadsStats);
 router.get("/new", authenticate, requireAdmin, controller.getNewLeads);

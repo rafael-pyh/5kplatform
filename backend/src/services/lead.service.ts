@@ -247,3 +247,22 @@ export const getSellerLeadsStats = async (sellerId: string) => {
     conversionRate: total > 0 ? ((bought / total) * 100).toFixed(2) + "%" : "0%",
   };
 };
+
+// Buscar leads do vendedor/afiliado autenticado com filtragem por role
+export const getLeadsByPersonRole = async (userId: string, userRole: string) => {
+  // Se for AFFILIATE: retorna apenas seus leads com dados limitados
+  if (userRole === 'AFFILIATE') {
+    return Lead.findAll({
+      where: { ownerId: userId },
+      attributes: ['id', 'name', 'status', 'createdAt'],
+      order: [['createdAt', 'DESC']],
+    });
+  }
+
+  // Se for SELLER ou superior: retorna todos os dados dos seus leads
+  return Lead.findAll({
+    where: { ownerId: userId },
+    attributes: ['id', 'name', 'email', 'phone', 'status', 'createdAt', 'updatedAt', 'energyBill', 'roofPhoto', 'notes'],
+    order: [['createdAt', 'DESC']],
+  });
+};

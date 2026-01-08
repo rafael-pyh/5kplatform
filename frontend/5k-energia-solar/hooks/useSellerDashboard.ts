@@ -57,25 +57,23 @@ export default function useSellerDashboard() {
           return;
         }
 
+        // AFFILIATE não precisa de profile e stats
+        if (currentUser.role === 'AFFILIATE') {
+          const leadsRes = await api.get('/lead/my-leads');
+          setLeads(leadsRes.data.data || []);
+          setBlockedReason(null);
+          return;
+        }
+
         const profileRes = await api.get('/seller/profile');
         setSeller(profileRes.data.data);
-
-        if (!currentUser.emailVerified) {
-          setBlockedReason('unverified');
-          return;
-        }
-
-        if (currentUser.approvalStatus !== 'approved') {
-          setBlockedReason('pendingApproval');
-          return;
-        }
 
         if (currentUser.active === false) {
           setBlockedReason('inactive');
           return;
         }
 
-        const [leadsRes, statsRes] = await Promise.all([api.get('/seller/my-leads'), api.get('/seller/my-stats')]);
+        const [leadsRes, statsRes] = await Promise.all([api.get('/lead/my-leads'), api.get('/seller/my-stats')]);
         setLeads(leadsRes.data.data || []);
         setStats(statsRes.data.data || null);
         setBlockedReason(null);
@@ -109,8 +107,8 @@ export default function useSellerDashboard() {
         return;
       }
 
-      if (user.role?.toUpperCase() !== 'SELLER') {
-        toast.error('Acesso negado. Faça login como vendedor.');
+      if (user.role?.toUpperCase() !== 'SELLER' && user.role?.toUpperCase() !== 'AFFILIATE') {
+        toast.error('Acesso negado. Faça login como vendedor ou afiliado.');
         router.push('/login');
         return;
       }

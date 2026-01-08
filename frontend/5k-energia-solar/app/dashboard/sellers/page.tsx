@@ -45,6 +45,7 @@ export default function SellersPage() {
     city: string;
     state: string;
     status: string;
+    role: string;
     month?: string;
     year?: string;
   }>({
@@ -52,6 +53,7 @@ export default function SellersPage() {
     city: '',
     state: '',
     status: 'all',
+    role: '',
     month: '',
     year: '',
   });
@@ -138,10 +140,15 @@ export default function SellersPage() {
   // Apply additional filters to the persons data
   const filteredPersons = useMemo(() => {
     return persons.filter((person) => {
+      // Filtro de role: apenas SELLER e AFFILIATE
+      const isValidRole = person.role === 'SELLER' || person.role === 'AFFILIATE';
+      if (!isValidRole) return false;
+
       const matchesName = additionalFilters.name ? person.name.toLowerCase().includes(additionalFilters.name.toLowerCase()) : true;
       const matchesCity = additionalFilters.city ? person.city.toLowerCase().includes(additionalFilters.city.toLowerCase()) : true;
       const matchesState = additionalFilters.state ? person.state.toLowerCase() === additionalFilters.state.toLowerCase() : true;
       const matchesStatus = additionalFilters.status === 'all' || (additionalFilters.status === 'active' ? person.active : !person.active);
+      const matchesRole = additionalFilters.role === '' || additionalFilters.role === 'all' || person.role === (additionalFilters.role as any);
 
       const matchesMonth = additionalFilters.month && person.createdAt
         ? new Date(person.createdAt).getMonth() + 1 === Number(additionalFilters.month)
@@ -151,7 +158,7 @@ export default function SellersPage() {
         ? new Date(person.createdAt).getFullYear() === Number(additionalFilters.year)
         : true;
 
-      return matchesName && matchesCity && matchesState && matchesStatus && matchesMonth && matchesYear;
+      return matchesName && matchesCity && matchesState && matchesStatus && matchesRole && matchesMonth && matchesYear;
     });
   }, [persons, additionalFilters]);
 
