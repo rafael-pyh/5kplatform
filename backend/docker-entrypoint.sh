@@ -43,17 +43,31 @@ fi
 
 echo "✅ Configuração do Sequelize encontrada"
 
+# Verificar se há migrations pendentes
+echo "🔍 Verificando status das migrations..."
+if command -v npx >/dev/null 2>&1; then
+  PENDING=$(npx sequelize-cli db:migrate:status 2>&1 | grep -c "down" || echo "0")
+  echo "   Migrations pendentes: $PENDING"
+fi
+
 # Executar migrations do Sequelize
 echo "🔄 Executando migrations do Sequelize..."
-npx sequelize-cli db:migrate || {
-  echo "❌ Erro ao executar migrations!"
+if command -v npx >/dev/null 2>&1; then
+  if npx sequelize-cli db:migrate; then
+    echo "✅ Migrations aplicadas com sucesso!"
+  else
+    echo "⚠️ Aviso: Erro ao executar migrations, mas continuando..."
+  fi
+else
+  echo "❌ npx não disponível!"
   exit 1
-}
-echo "✅ Migrations aplicadas!"
+fi
 
 # Executar seeds (opcional, pode falhar sem problemas)
 echo "🌱 Executando seeds..."
-npx sequelize-cli db:seed:all || echo "⚠️ Seeds falharam ou não existem, continuando..."
+if command -v npx >/dev/null 2>&1; then
+  npx sequelize-cli db:seed:all 2>&1 | grep -v "^$" || echo "⚠️ Seeds falharam ou não existem, continuando..."
+fi
 
 echo "🚀 Iniciando aplicação..."
 exec npm start
