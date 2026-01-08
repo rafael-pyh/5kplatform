@@ -140,6 +140,9 @@ export default function SellersPage() {
   // Apply additional filters to the persons data
   const filteredPersons = useMemo(() => {
     return persons.filter((person) => {
+      // Filtro de aba
+      if (filter === 'active' && !person.active) return false;
+
       // Filtro de role: apenas SELLER e AFFILIATE
       const isValidRole = person.role === 'SELLER' || person.role === 'AFFILIATE';
       if (!isValidRole) return false;
@@ -160,7 +163,7 @@ export default function SellersPage() {
 
       return matchesName && matchesCity && matchesState && matchesStatus && matchesRole && matchesMonth && matchesYear;
     });
-  }, [persons, additionalFilters]);
+  }, [persons, additionalFilters, filter]);
 
   const cities = useMemo(() => {
     return Array.from(new Set(persons.map(p => p.city).filter(Boolean))).sort();
