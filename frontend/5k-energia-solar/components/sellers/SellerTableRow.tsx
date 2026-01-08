@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { Person } from '@/types/Person';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -45,11 +46,10 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onActivate
     setResendingEmail(true);
     try {
       await resendVerificationEmailAction(person.email!);
-      // Show toast success message
-      alert('Email de verificação reenviado com sucesso!');
+      toast.success('Email de verificação reenviado com sucesso!');
     } catch (error) {
       console.error('Erro ao reenviar email:', error);
-      alert('Erro ao reenviar email de verificação');
+      toast.error('Erro ao reenviar email de verificação');
     } finally {
       setResendingEmail(false);
     }
