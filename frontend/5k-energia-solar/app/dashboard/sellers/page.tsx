@@ -16,6 +16,7 @@ import { Person } from '@/types/Person';
 import { exportToCSV } from '@/lib/utils/exportToCSV';
 import { Icon } from '@/components/ui/Icon';
 import { isValidQRCode } from '@/lib/utils/imageUrl';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 // Lazy load modals for better performance
 const NewSellerModal = dynamic(() => import('@/components/NewSellerModal'), {
@@ -37,6 +38,8 @@ export default function SellersPage() {
   const [isEditModalOpen, toggleEditModal, setIsEditModalOpen] = useToggle(false);
   const [qrModalOpen, toggleQRModal, setQrModalOpen] = useToggle(false);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+  const [activateModalOpen, setActivateModalOpen] = useState(false);
+  const [personToActivate, setPersonToActivate] = useState<string | null>(null);
   const [additionalFilters, setAdditionalFilters] = useState<{
     name: string;
     city: string;
@@ -87,17 +90,24 @@ export default function SellersPage() {
     }
   }, [refetch]);
 
-  const handleActivate = useCallback(async (id: string) => {
-    if (!confirm('Tem certeza que deseja reativar este vendedor?')) return;
+  const handleActivate = useCallback((id: string) => {
+    setPersonToActivate(id);
+    setActivateModalOpen(true);
+  }, []);
+
+  const handleConfirmActivate = useCallback(async () => {
+    if (!personToActivate) return;
 
     try {
-      await personService.activate(id);
+      await personService.activate(personToActivate);
       toast.success('Vendedor reativado com sucesso!');
+      setActivateModalOpen(false);
+      setPersonToActivate(null);
       refetch();
     } catch (error) {
       toast.error('Erro ao reativar vendedor');
     }
-  }, [refetch]);
+  }, [personToActivate, refetch]);
 
   const handleModalSuccess = useCallback(() => {
     refetch();
@@ -259,6 +269,20 @@ export default function SellersPage() {
             />
           </Suspense>
         )}
+
+        <ConfirmationModal
+          isOpen={activateModalOpen}
+          title="Reativar Vendedor"
+          message={`Tem certeza que deseja reativar este vendedor? Isso o permitirá gerar novos leads novamente.`}
+          confirmText="Reativar"
+          cancelText="Cancelar"
+          isDangerous={false}
+          onConfirm={handleConfirmActivate}
+          onCancel={() => {
+            setActivateModalOpen(false);
+            setPersonToActivate(null);
+          }}
+        />
       </div>
     </DashboardLayout>
   );
