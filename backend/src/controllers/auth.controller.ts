@@ -90,8 +90,7 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
       throw new Error("Usuário não autenticado");
     }
     const user = await authService.getCurrentUser(userId);
-    const jsonData = user.toJSON ? user.toJSON() : user;
-    return ResponseBuilder.success(res, jsonData);
+    return ResponseBuilder.success(res, user);
   } catch (error) {
     next(error);
   }
