@@ -4,9 +4,35 @@ import RegisterForm from '../../components/register/RegisterForm';
 import { useRegister } from '../../hooks/useRegister';
 
 const RegisterPage = () => {
-  const { states, formData, handleChange, handleFileChange, handleSubmit, isLoading } = useRegister();
+  const { 
+    states, 
+    cities, 
+    citiesLoading,
+    formData, 
+    handleChange, 
+    handleFileChange, 
+    handleSubmit, 
+    isLoading,
+    setFormData
+  } = useRegister();
 
-  return <RegisterForm states={states} formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} handleSubmit={handleSubmit} isLoading={isLoading} />;
+  const handleSetCity = (city: string) => {
+    setFormData((prev) => ({ ...prev, city }));
+  };
+
+  return (
+    <RegisterForm 
+      states={states} 
+      cities={cities}
+      citiesLoading={citiesLoading}
+      formData={formData} 
+      handleChange={handleChange} 
+      handleFileChange={handleFileChange}
+      handleSetCity={handleSetCity}
+      handleSubmit={handleSubmit} 
+      isLoading={isLoading} 
+    />
+  );
 };
 
 export default RegisterPage;

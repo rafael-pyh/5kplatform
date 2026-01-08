@@ -5,6 +5,18 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { registerAction } from '../app/actions/register';
 import api from '../lib/api';
+import { getStates, getCitiesByState } from '@/lib/actions/locationActions';
+
+interface StateOption {
+  id: string;
+  name: string;
+  abbreviation: string;
+}
+
+interface CityOption {
+  id: string;
+  name: string;
+}
 
 type FormData = {
   name: string;
@@ -20,8 +32,10 @@ type FormData = {
 
 export function useRegister(initial: Partial<FormData> = {}) {
   const router = useRouter();
-  const [states, setStates] = useState<string[]>([]);
+  const [states, setStates] = useState<StateOption[]>([]);
+  const [cities, setCities] = useState<CityOption[]>([]);
   const [statesLoading, setStatesLoading] = useState(true);
+  const [citiesLoading, setCitiesLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -40,14 +54,11 @@ export function useRegister(initial: Partial<FormData> = {}) {
   useEffect(() => {
     const fetchStates = async () => {
       try {
-        const response = await api.get<any>('/person/states');
-        if (response.data?.data) {
-          setStates(response.data.data);
-        }
+        const statesData = await getStates();
+        setStates(statesData);
       } catch (error) {
         console.error('Erro ao buscar estados:', error);
-        // Fallback para estados estáticos
-        setStates(['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']);
+        toast.error('Erro ao carregar estados');
       } finally {
         setStatesLoading(false);
       }
@@ -55,6 +66,29 @@ export function useRegister(initial: Partial<FormData> = {}) {
 
     fetchStates();
   }, []);
+
+  // Buscar cidades quando estado muda
+  useEffect(() => {
+    const fetchCities = async () => {
+      if (!formData.state) {
+        setCities([]);
+        return;
+      }
+
+      setCitiesLoading(true);
+      try {
+        const citiesData = await getCitiesByState(formData.state);
+        setCities(citiesData);
+      } catch (error) {
+        console.error('Erro ao buscar cidades:', error);
+        toast.error('Erro ao carregar cidades');
+      } finally {
+        setCitiesLoading(false);
+      }
+    };
+
+    fetchCities();
+  }, [formData.state]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target as HTMLInputElement;
@@ -144,6 +178,8 @@ export function useRegister(initial: Partial<FormData> = {}) {
   return {
     states,
     statesLoading,
+    cities,
+    citiesLoading,
     formData,
     setFormData,
     handleChange,

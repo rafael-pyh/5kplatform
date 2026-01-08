@@ -4,17 +4,42 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import PasswordField from '@/components/ui/PasswordField';
+import CityAutocomplete from '@/components/ui/CityAutocomplete';
+
+interface StateOption {
+  id: string;
+  name: string;
+  abbreviation: string;
+}
+
+interface CityOption {
+  id: string;
+  name: string;
+}
 
 type Props = {
-  states: string[];
+  states: StateOption[];
+  cities: CityOption[];
+  citiesLoading: boolean;
   formData: Record<string, any>;
   handleChange: (e: React.ChangeEvent<any>) => void;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSetCity: (city: string) => void;
   handleSubmit: (e?: React.FormEvent<HTMLFormElement>) => Promise<void> | void;
   isLoading: boolean;
 };
 
-export default function RegisterForm({ states, formData, handleChange, handleFileChange, handleSubmit, isLoading }: Props) {
+export default function RegisterForm({ 
+  states, 
+  cities, 
+  citiesLoading,
+  formData, 
+  handleChange, 
+  handleFileChange,
+  handleSetCity,
+  handleSubmit, 
+  isLoading 
+}: Props) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50 px-4 text-slate-700 mb-4">
       <div className="w-full max-w-4xl mt-4">
@@ -62,16 +87,38 @@ export default function RegisterForm({ states, formData, handleChange, handleFil
             </div>
 
             <div>
-              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-0.5">Cidade</label>
-              <input id="city" type="text" name="city" value={formData.city} onChange={handleChange} maxLength={100} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="Sua cidade" required />
-            </div>
-
-            <div>
               <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-0.5">Estado</label>
               <select id="state" name="state" value={formData.state} onChange={handleChange} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" required>
                 <option value="">Selecione um estado</option>
-                {states.map((s) => <option key={s} value={s}>{s}</option>)}
+                {states.map((state) => (
+                  <option key={state.abbreviation} value={state.abbreviation}>
+                    {state.name} ({state.abbreviation})
+                  </option>
+                ))}
               </select>
+            </div>
+
+            <div>
+              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-0.5">Cidade</label>
+              {formData.state ? (
+                citiesLoading ? (
+                  <div className="w-full px-2 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 text-sm flex items-center justify-center">
+                    Carregando cidades...
+                  </div>
+                ) : (
+                  <CityAutocomplete
+                    cities={cities}
+                    value={formData.city}
+                    onChange={handleSetCity}
+                    placeholder="Digite para filtrar a cidade"
+                    disabled={cities.length === 0 || citiesLoading}
+                  />
+                )
+              ) : (
+                <div className="w-full px-2 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 text-sm">
+                  Selecione um estado primeiro
+                </div>
+              )}
             </div>
 
             <div className="md:col-span-2">

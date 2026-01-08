@@ -42,6 +42,7 @@ export const rejectSeller = async (req: Request, res: Response) => {
     }
 
     seller.approvalStatus = 'rejected';
+    seller.active = false;
     await seller.save();
 
     if (!seller.email || !seller.name) {
