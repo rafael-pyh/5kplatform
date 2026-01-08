@@ -16,23 +16,11 @@ module.exports = {
 
     try {
       // Passo 1: Adicionar valor AFFILIATE ao enum PersonRole
-      // Verificar se AFFILIATE já existe
-      const checkAffiliateResult = await queryInterface.sequelize.query(
-        `SELECT e.enumlabel FROM pg_enum e
-         JOIN pg_type t ON e.enumtypid = t.oid
-         WHERE t.typname = 'PersonRole' AND e.enumlabel = 'AFFILIATE'`
+      await queryInterface.sequelize.query(
+        `ALTER TYPE "PersonRole" ADD VALUE 'AFFILIATE' AFTER 'SELLER'`,
+        { transaction }
       );
-
-      if (checkAffiliateResult[0].length === 0) {
-        // Apenas adicionar se não existir
-        await queryInterface.sequelize.query(
-          `ALTER TYPE "PersonRole" ADD VALUE 'AFFILIATE'`,
-          { transaction }
-        );
-        console.log('✅ Valor AFFILIATE adicionado ao enum PersonRole');
-      } else {
-        console.log('✅ AFFILIATE já existe no enum PersonRole');
-      }
+      console.log('✅ Valor AFFILIATE adicionado ao enum PersonRole');
 
       // Passo 2: Adicionar coluna registration_type
       await queryInterface.addColumn(

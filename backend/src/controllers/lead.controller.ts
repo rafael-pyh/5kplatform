@@ -108,7 +108,7 @@ export const getMyLeads = async (req: Request, res: Response, next: NextFunction
     const userRole = (req.user as any)?.role;
 
     if (!userId) {
-      throw new Error('Usuário não autenticado');
+      return ResponseBuilder.error(res, 'Usuário não autenticado', 401);
     }
 
     const data = await service.getLeadsByPersonRole(userId, userRole);
