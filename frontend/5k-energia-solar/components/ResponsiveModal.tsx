@@ -216,26 +216,18 @@ function DesktopModal({
   );
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/50 transition-opacity"
-        onClick={handleBackdropClick}
-      />
-
+    <div
+      className="fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 flex items-center justify-center p-4"
+      onClick={handleBackdropClick}
+      aria-hidden="true"
+    >
       {/* Modal */}
-      <div className="fixed inset-0 z-50 overflow-y-auto">
-        <div className="flex min-h-full items-center justify-center p-4">
-          <div
-            className={cn(
-              'relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto',
-              className
-            )}
-          >
-            {children}
-          </div>
-        </div>
+      <div
+        className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
       </div>
-    </>
+    </div>
   );
 }
