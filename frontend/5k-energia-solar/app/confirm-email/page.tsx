@@ -5,6 +5,7 @@ import { useEffect, useState, Suspense } from "react";
 import { toast } from "react-hot-toast";
 import { confirmEmailAction, resendVerificationEmailAction } from "../actions/auth";
 import { Button } from "@/components/ui";
+import Image from "next/image";
 
 function ConfirmEmailContent() {
   const router = useRouter();
@@ -86,14 +87,21 @@ function ConfirmEmailContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-blue-50 to-green-50 text-white p-4">
+    <div className="text-slate-800 min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-blue-50 to-green-50 p-4">
+      <Image
+        src="/5klogo.png"
+        alt="5K Energia Solar"
+        width={160}
+        height={160}
+        className="mb-8"
+      />
       <h1 className="text-3xl font-bold mb-4">Erro ao confirmar email</h1>
       {error && (
-        <div className="mb-6 p-4 bg-red-500 bg-opacity-75 rounded-lg max-w-md w-full">
-          <p className="text-white font-semibold">{error}</p>
+        <div className="mb-6 p-4 text-red-500 border border-red-500 bg-opacity-75 rounded-lg max-w-md w-full text-center">
+          <p className="text-red-500">Erro ao confirmar email:</p>
+          <p className="font-medium">Token inválido ou expirado.</p>
         </div>
       )}
-      <p className="text-lg mb-8">O token pode ter expirado ou já foi utilizado.</p>
       
       <div className="bg-white text-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full">
         <h2 className="text-xl font-bold mb-4 text-center">Resolicitar email de verificação</h2>
@@ -118,7 +126,8 @@ function ConfirmEmailContent() {
         <Button
           onClick={handleResendEmail}
           disabled={resendingEmail || !email.trim()}
-          variant="success"
+          variant="gradient"
+          className="w-full"
         >
           {resendingEmail ? "Enviando..." : "Resolicitar email"}
         </Button>
@@ -127,6 +136,7 @@ function ConfirmEmailContent() {
       <Button
         onClick={() => router.push("/login")}
         variant="outline-green"
+        className="mt-6"
       >
         Ir para o Login
       </Button>
