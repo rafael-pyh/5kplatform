@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { createLeadFromQR, scanQRCode } from '@/app/actions/lead';
+import { getStates, getCitiesByState } from '@/lib/actions/locationActions';
 
 export type LeadFormData = {
   name: string;
@@ -16,6 +17,17 @@ export type LeadFormData = {
   state?: string;
 };
 
+interface StateOption {
+  id: string;
+  name: string;
+  abbreviation: string;
+}
+
+interface CityOption {
+  id: string;
+  name: string;
+}
+
 export default function useNewLeadForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -26,8 +38,49 @@ export default function useNewLeadForm() {
   const [sellerName, setSellerName] = useState<string>('');
   const [energyBill, setEnergyBill] = useState<string>('');
   const [roofPhoto, setRoofPhoto] = useState<string>('');
+  const [states, setStates] = useState<StateOption[]>([]);
+  const [cities, setCities] = useState<CityOption[]>([]);
+  const [formState, setFormState] = useState<{ state: string; city: string }>({
+    state: '',
+    city: '',
+  });
 
   const methods = useForm<LeadFormData>();
+
+  // Buscar estados da API
+  useEffect(() => {
+    const fetchStates = async () => {
+      try {
+        const statesData = await getStates();
+        setStates(statesData);
+      } catch (error) {
+        console.error('Erro ao buscar estados:', error);
+      }
+    };
+
+    fetchStates();
+  }, []);
+
+  // Buscar cidades quando estado muda
+  useEffect(() => {
+    const fetchCities = async () => {
+      if (!formState.state) {
+        setCities([]);
+        setFormState(prev => ({ ...prev, city: '' }));
+        return;
+      }
+
+      try {
+        const citiesData = await getCitiesByState(formState.state);
+        setCities(citiesData);
+      } catch (error) {
+        console.error('Erro ao buscar cidades:', error);
+        toast.error('Erro ao carregar cidades');
+      }
+    };
+
+    fetchCities();
+  }, [formState.state]);
 
   useEffect(() => {
     const validateQR = async () => {
@@ -63,6 +116,16 @@ export default function useNewLeadForm() {
       return;
     }
 
+    if (!formState.state) {
+      toast.error('Estado é obrigatório');
+      return;
+    }
+
+    if (!formState.city) {
+      toast.error('Cidade é obrigatória');
+      return;
+    }
+
     const maxBase64Size = 2 * 1024 * 1024; // 2MB approx
     if (energyBill && energyBill.length > maxBase64Size) {
       toast.error('Foto da conta de energia muito grande. Por favor, selecione uma imagem menor.');
@@ -81,8 +144,8 @@ export default function useNewLeadForm() {
         phone: data.phone,
         energyBill: energyBill || undefined,
         roofPhoto: roofPhoto || undefined,
-        city: data.city || undefined,
-        state: data.state || undefined,
+        city: formState.city,
+        state: formState.state,
       };
 
       const response = await createLeadFromQR(qrCode, leadData);
@@ -111,5 +174,9 @@ export default function useNewLeadForm() {
     roofPhoto,
     setRoofPhoto,
     onSubmit,
+    states,
+    cities,
+    formState,
+    setFormState,
   };
 }

@@ -2,6 +2,7 @@
 
 import ImageUpload from '@/components/ImageUpload';
 import LeadHeader from '@/components/lead/LeadHeader';
+import CityAutocomplete from '@/components/ui/CityAutocomplete';
 import useNewLeadForm from '@/hooks/useNewLeadForm';
 
 export default function NewLeadForm() {
@@ -15,6 +16,10 @@ export default function NewLeadForm() {
     roofPhoto,
     setRoofPhoto,
     onSubmit,
+    states,
+    cities,
+    formState,
+    setFormState,
   } = useNewLeadForm();
 
   const { register, handleSubmit, formState: { errors } } = methods;
@@ -37,30 +42,32 @@ export default function NewLeadForm() {
           <LeadHeader sellerName={sellerName} />
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Nome completo <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="name"
-                type="text"
-                {...register('name', { required: 'Nome é obrigatório', minLength: { value: 3, message: 'Nome deve ter no mínimo 3 caracteres' } })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                placeholder="João da Silva"
-              />
-              {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
-            </div>
+            <div className="flex w-full gap-2">
+              <div className="w-1/2">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Nome completo <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  {...register('name', { required: 'Nome é obrigatório', minLength: { value: 3, message: 'Nome deve ter no mínimo 3 caracteres' } })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  placeholder="João da Silva"
+                />
+                {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
+              </div>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              <input
-                id="email"
-                type="email"
-                {...register('email', { pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, message: 'Email inválido' } })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                placeholder="seu@email.com"
-              />
-              {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
+              <div className="w-1/2">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input
+                  id="email"
+                  type="email"
+                  {...register('email', { pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, message: 'Email inválido' } })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  placeholder="seu@email.com"
+                />
+                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
+              </div>
             </div>
 
             <div>
@@ -75,15 +82,34 @@ export default function NewLeadForm() {
               {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>}
               <p className="mt-1 text-xs text-gray-500">* Forneça pelo menos um meio de contato (email ou telefone)</p>
             </div>
-
-            <div>
-              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">Cidade</label>
-              <input id="city" type="text" {...register('city')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="Digite a cidade" />
-            </div>
-
-            <div>
-              <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-              <input id="state" type="text" {...register('state')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="Digite o estado" />
+            <div className="grid grid-cols-2 gap-4">  
+              <div>
+                <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">Estado <span className="text-red-500">*</span></label>
+                <select
+                  id="state"
+                  value={formState.state}
+                  onChange={(e) => setFormState({ ...formState, state: e.target.value, city: '' })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                >
+                  <option value="">Selecione um estado</option>
+                  {states.map((state) => (
+                    <option key={state.id} value={state.abbreviation}>
+                      {state.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">Cidade <span className="text-red-500">*</span></label>
+                <CityAutocomplete
+                  cities={cities}
+                  value={formState.city}
+                  onChange={(cityName) => setFormState({ ...formState, city: cityName })}
+                  placeholder="Selecione uma cidade"
+                  disabled={!formState.state}
+                />
+              </div>
             </div>
 
             <ImageUpload label="Foto da conta de energia" value={energyBill} onChange={setEnergyBill} />
