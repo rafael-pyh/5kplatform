@@ -206,6 +206,33 @@ export interface PaginatedResponse<T> {
   limit: number;
 }
 
+// ========== WHATSAPP TEMPLATES ==========
+export interface WhatsappTemplate {
+  id: string;
+  name: string;
+  message: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateWhatsappTemplateDto {
+  name: string;
+  message: string;
+}
+
+export interface UpdateWhatsappTemplateDto {
+  name?: string;
+  message?: string;
+  isActive?: boolean;
+}
+
+export interface ProcessedMessage {
+  templateId: string;
+  customerName: string;
+  message: string;
+}
+
 // ========== FILTERS ==========
 export interface LeadFilters {
   status?: LeadStatus;

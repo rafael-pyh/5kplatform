@@ -4,7 +4,7 @@ import React from 'react';
 import Button from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 
-const LeadsPageHeader = ({ onExport, disabled }: { onExport: () => void; disabled: boolean }) => {
+const LeadsPageHeader = ({ onExport, disabled, onManageTemplates }: { onExport: () => void; disabled: boolean; onManageTemplates?: () => void }) => {
   return (
     <div className="flex items-start justify-between">
       <div className="mb-4 flex items-center justify-between">
@@ -14,6 +14,12 @@ const LeadsPageHeader = ({ onExport, disabled }: { onExport: () => void; disable
         </div>
       </div>
       <div className="flex gap-4 h-full items-start self-start">
+        {onManageTemplates && (
+          <Button onClick={onManageTemplates} variant="outline-green" className="w-full md:w-auto" title="Gerenciar templates de WhatsApp">
+            <Icon icon="bi-chat-dots" className="w-5 h-5 mr-2" />
+            Templates WhatsApp
+          </Button>
+        )}
         <Button onClick={onExport} variant="outline-blue" disabled={disabled} className="w-full md:w-auto">
           <Icon icon="bi-filetype-csv" className="w-5 h-5 mr-2" />
           Exportar CSV

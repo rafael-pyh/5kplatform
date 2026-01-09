@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
 import { exportToCSV } from '@/lib/utils/exportToCSV';
 import LeadsPageHeader from '@/components/leads/LeadsPageHeader';
@@ -7,6 +9,7 @@ import LeadsContent from '@/components/leads/LeadsContent';
 import useLeadsPage from '@/hooks/useLeadsPage';
 
 export default function LeadsPage() {
+  const router = useRouter();
   const {
     leads,
     loading,
@@ -26,6 +29,10 @@ export default function LeadsPage() {
     handleStatusUpdateSuccess,
   } = useLeadsPage();
 
+  const handleManageTemplates = () => {
+    router.push('/dashboard/whatsapp-templates');
+  };
+
   if (error) {
     return (
       <DashboardLayout>
@@ -39,7 +46,11 @@ export default function LeadsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-4 w-full min-w-0">
-        <LeadsPageHeader onExport={() => exportToCSV(finalFilteredLeads, 'leads.csv')} disabled={finalFilteredLeads.length === 0} />
+        <LeadsPageHeader 
+          onExport={() => exportToCSV(finalFilteredLeads, 'leads.csv')} 
+          disabled={finalFilteredLeads.length === 0}
+          onManageTemplates={handleManageTemplates}
+        />
 
         <LeadsContent
           leads={leads}

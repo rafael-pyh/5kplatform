@@ -14,6 +14,7 @@ import manualRegisterRoutes from "./routes/manualRegister.routes";
 import approvalRoutes from "./routes/approval.routes";
 import migrationRoutes from "./routes/migration.routes";
 import emailActivationRouter from "./routes/emailActivation.routes";
+import whatsappTemplateRoutes from "./routes/whatsapp-template.routes";
 import { errorHandler } from "./shared/errorHandler";
 import { initializeMinIOBucket } from "./services/storage.service";
 import { authenticate } from "./middlewares/auth.middleware";
@@ -58,6 +59,7 @@ app.use("/api/approval", approvalRoutes);
 app.use("/api/admin", authenticate, migrationRoutes);
 app.use("/api/admin", authenticate, migrationRoutes);
 app.use("/api", emailActivationRouter);
+app.use("/api/whatsapp-templates", whatsappTemplateRoutes);
 
 // Rota 404
 app.use((req, res) => {

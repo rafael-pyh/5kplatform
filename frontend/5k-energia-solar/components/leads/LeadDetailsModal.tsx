@@ -2,11 +2,16 @@
 
 import { useEffect, useCallback, memo, useState } from 'react';
 import { cn } from '@/lib/utils/cn';
-import { Lead } from '@/lib/types';
+import { Lead, WhatsappTemplate } from '@/lib/types';
 import Button from '@/components/ui/Button';
 import { Icon } from '../ui/Icon';
 import toast from 'react-hot-toast';
 import ResponsiveModal from '@/components/ResponsiveModal';
+import {
+  getActiveTemplates,
+  processMessage,
+  generateWhatsappLink,
+} from '@/lib/services/whatsapp-template.service';
 
 interface LeadDetailsModalProps {
   isOpen: boolean;
@@ -27,6 +32,8 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
+      // Carregar templates de WhatsApp
+      loadWhatsappTemplates();
     }
 
     return () => {
@@ -34,6 +41,18 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
       document.body.style.overflow = 'unset';
     };
   }, [isOpen, handleEscape]);
+
+  const loadWhatsappTemplates = async () => {
+    setIsLoadingTemplates(true);
+    try {
+      const templates = await getActiveTemplates();
+      setWhatsappTemplates(templates);
+    } catch (error) {
+      console.error('Erro ao carregar templates:', error);
+    } finally {
+      setIsLoadingTemplates(false);
+    }
+  };
 
   const openFile = (url: string) => {
     window.open(url, '_blank');
@@ -104,6 +123,9 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
   // UX improvements
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [whatsappTemplates, setWhatsappTemplates] = useState<WhatsappTemplate[]>([]);
+  const [showWhatsappTemplateSelector, setShowWhatsappTemplateSelector] = useState(false);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   // normalize different field names returned by backend
   const rawEnergy: string | null = (lead as any).energyBillUrl || (lead as any).energyBill || null;
   const rawRoof: string | null = (lead as any).roofPhotoUrl || (lead as any).roofPhoto || null;
@@ -132,10 +154,27 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
     }
   };
 
+  const handleSendWhatsapp = async (template: WhatsappTemplate) => {
+    try {
+      const processed = await processMessage(template.id, lead.name);
+      if (processed) {
+        const whatsappLink = generateWhatsappLink(lead.phone, processed.message);
+        window.open(whatsappLink, '_blank');
+        toast.success('Abrindo conversa do WhatsApp...');
+        setShowWhatsappTemplateSelector(false);
+      }
+    } catch (error) {
+      console.error('Erro ao processar mensagem:', error);
+      toast.error('Erro ao processar mensagem');
+    }
+  };
+
   if (!isOpen) return null;
 
   const modalContent = (
-    <div onClick={(e) => e.stopPropagation()}>
+    <div onClick={(e) => {
+      e.stopPropagation()
+    }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
         <div>
@@ -171,6 +210,15 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
               <div className="flex items-center gap-2">
                 <p className="text-sm text-gray-800">{lead.phone || '-'}</p>
                 <Button variant="ghost" size="sm" onClick={() => copyToClipboard(lead.phone)}><Icon icon="bi-clipboard" /></Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowWhatsappTemplateSelector(true)}
+                  title="Enviar via WhatsApp"
+                  className="text-green-600 hover:text-green-700"
+                >
+                  <Icon icon="bi-whatsapp" />
+                </Button>
               </div>
             </div>
             <div>
@@ -314,6 +362,77 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
             <img src={ensureDataUrl(selectedImage) || undefined} alt="Lightbox" className="w-full max-h-[80vh] object-contain rounded"/>
+          </div>
+        </div>
+      )}
+
+      {/* WhatsApp Template Selector Modal */}
+      {showWhatsappTemplateSelector && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowWhatsappTemplateSelector(false)}>
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  <Icon icon="bi-whatsapp" className="inline mr-2 text-green-600" />
+                  Enviar via WhatsApp
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">Selecione um template de mensagem</p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {isLoadingTemplates ? (
+                <div className="flex items-center justify-center py-8">
+                  <p className="text-gray-600">Carregando templates...</p>
+                </div>
+              ) : whatsappTemplates.length === 0 ? (
+                <div className="text-center py-8">
+                  <Icon icon="bi-info-circle" className="text-gray-400 text-3xl mx-auto mb-2" />
+                  <p className="text-gray-600">Nenhum template disponível</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {whatsappTemplates.map((template) => (
+                    <div
+                      key={template.id}
+                      className="p-4 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition cursor-pointer group"
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {template.name}
+                          </p>
+                          <p className="text-xs text-gray-600 mt-2 line-clamp-3 whitespace-pre-wrap">
+                            {template.message.replace(/{{NOME_CLIENTE}}/g, lead.name)}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          onClick={() => handleSendWhatsapp(template)}
+                          className="whitespace-nowrap flex-shrink-0 bg-green-600 hover:bg-green-700"
+                        >
+                          <Icon icon="bi-send" className="mr-1" />
+                          Enviar
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end gap-2 p-6 pt-4 border-t border-gray-200">
+              <Button
+                variant="secondary"
+                onClick={() => setShowWhatsappTemplateSelector(false)}
+              >
+                Cancelar
+              </Button>
+            </div>
           </div>
         </div>
       )}

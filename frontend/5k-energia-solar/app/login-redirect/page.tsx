@@ -44,7 +44,7 @@ export default function LoginRedirectPage() {
   }, [user, isLoading, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50">
       <div className="text-center max-w-md">
         <div className="mb-6">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>

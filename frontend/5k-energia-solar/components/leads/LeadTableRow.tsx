@@ -43,7 +43,7 @@ function LeadTableRow({ lead, onViewDetails, onUpdateStatus, className }: LeadTa
   };
 
     return (
-      <tr className={cn('hover:bg-gray-50 border-b border-slate-200', className)}>
+      <tr className={cn('hover:bg-gray-50 border-b border-slate-200', className)} onClick={() => onViewDetails(lead)}>
         <td className="p-4 align-top max-w-[18rem] min-w-0">
           <div title={lead.name || '-'} className="text-sm font-medium text-gray-900 truncate wrap-break-words">{lead.name}</div>
           <div title={lead.email || '-'} className="text-sm text-gray-500 truncate wrap-break-words">{lead.email}</div>
