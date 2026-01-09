@@ -2,6 +2,7 @@
 
 import ImageUpload from '@/components/ImageUpload';
 import LeadHeader from '@/components/lead/LeadHeader';
+import { Button } from '@/components/ui';
 import CityAutocomplete from '@/components/ui/CityAutocomplete';
 import useNewLeadForm from '@/hooks/useNewLeadForm';
 
@@ -119,9 +120,9 @@ export default function NewLeadForm() {
               <p className="text-sm text-blue-800"><strong>🔒 Seus dados estão seguros:</strong> As informações fornecidas serão utilizadas apenas para entrar em contato sobre a instalação de energia solar.</p>
             </div>
 
-            <button type="submit" disabled={isLoading} className="w-full bg-linear-to-r from-blue-500 via-blue-400 to-green-500 text-white py-4 rounded-lg font-medium text-lg hover:from-blue-600 hover:via-blue-500 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg">
+            <Button type="submit" disabled={isLoading} variant="gradient" className="w-full py-4 rounded-lg font-medium text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg">
               {isLoading ? 'Enviando...' : 'Enviar cadastro'}
-            </button>
+            </Button>
           </form>
         </div>
 

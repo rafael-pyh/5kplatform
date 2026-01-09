@@ -412,7 +412,7 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
                           size="sm"
                           variant="primary"
                           onClick={() => handleSendWhatsapp(template)}
-                          className="whitespace-nowrap flex-shrink-0 bg-green-600 hover:bg-green-700"
+                          className="whitespace-nowrap shrink-0 bg-green-600 hover:bg-green-700"
                         >
                           <Icon icon="bi-send" className="mr-1" />
                           Enviar

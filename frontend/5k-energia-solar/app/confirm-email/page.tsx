@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { toast } from "react-hot-toast";
 import { confirmEmailAction, resendVerificationEmailAction } from "../actions/auth";
+import { Button } from "@/components/ui";
 
 function ConfirmEmailContent() {
   const router = useRouter();
@@ -74,12 +75,12 @@ function ConfirmEmailContent() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-blue-500 to-green-500 text-white">
         <h1 className="text-3xl font-bold mb-4">Email confirmado com sucesso!</h1>
         <p className="text-lg mb-6">Seu perfil está em análise em breve você receberá um e-mail com mais informações</p>
-        <button
+        <Button
           onClick={() => router.push("/login")}
-          className="px-6 py-3 bg-white text-blue-500 font-semibold rounded-lg shadow-md hover:bg-gray-100"
+          variant="gradient"
         >
           Ir para o Login
-        </button>
+        </Button>
       </div>
     );
   }
@@ -114,21 +115,21 @@ function ConfirmEmailContent() {
           />
         </div>
 
-        <button
+        <Button
           onClick={handleResendEmail}
           disabled={resendingEmail || !email.trim()}
-          className="w-full px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed mb-4"
+          variant="success"
         >
           {resendingEmail ? "Enviando..." : "Resolicitar email"}
-        </button>
+        </Button>
       </div>
 
-      <button
+      <Button
         onClick={() => router.push("/login")}
-        className="mt-6 px-6 py-3 bg-white text-blue-500 font-semibold rounded-lg shadow-md hover:bg-gray-100"
+        variant="gradient"
       >
         Ir para o Login
-      </button>
+      </Button>
     </div>
   );
 }

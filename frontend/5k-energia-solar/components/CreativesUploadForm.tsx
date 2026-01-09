@@ -4,6 +4,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import QRPositioningModal from './QRPositioningModal';
+import { Button } from './ui';
 
 interface CreativesUploadFormProps {
   onSuccess?: () => void;
@@ -169,18 +170,18 @@ export default function CreativesUploadForm({ onSuccess }: CreativesUploadFormPr
             alt="Preview"
             className="w-full h-full object-cover"
           />
-          <button
+          <Button
             type="button"
             onClick={() => {
               setPreview(null);
               setFile(null);
             }}
-            className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-lg hover:bg-red-600 transition-colors"
+            variant="outline-danger"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
         </div>
       ) : (
         <label className="flex flex-col items-center justify-center w-full h-40 rounded-lg border-2 border-dashed border-gray-300 cursor-pointer hover:bg-gray-50 transition-colors">
@@ -256,10 +257,11 @@ export default function CreativesUploadForm({ onSuccess }: CreativesUploadFormPr
       </div>
 
       {/* Botão de envio */}
-      <button
+      <Button
         type="submit"
         disabled={isLoading || !file}
-        className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        variant='gradient'
+        className='w-full'
       >
         {isLoading ? (
           <>
@@ -267,7 +269,7 @@ export default function CreativesUploadForm({ onSuccess }: CreativesUploadFormPr
             <span>Enviando...</span>
           </>
         ) : (
-          <>
+          <div className="flex items-center justify-center gap-2">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -277,9 +279,9 @@ export default function CreativesUploadForm({ onSuccess }: CreativesUploadFormPr
               />
             </svg>
             <span>Criar Criativo</span>
-          </>
+          </div>
         )}
-      </button>
+      </Button>
 
       {/* QR Positioning Modal */}
       {createdCreativeId && creativeImageUrl && (

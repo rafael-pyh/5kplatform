@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEditProfile } from '@/hooks/useEditProfile';
 import CityAutocomplete from '@/components/ui/CityAutocomplete';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { Button } from '@/components/ui';
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -44,15 +45,16 @@ export default function EditProfilePage() {
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <button
+          <Button
             onClick={() => router.back()}
+            variant='none'
             className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium mb-4"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Voltar
-          </button>
+          </Button>
           <div className="flex items-center gap-4">
             <div className="relative w-16 h-16 rounded-full overflow-hidden">
               <Image
@@ -191,20 +193,20 @@ export default function EditProfilePage() {
             </div>
 
             <div className="md:col-span-2 flex gap-4 justify-end border-t border-gray-200 pt-6">
-              <button
+              <Button
                 type="button"
                 onClick={() => router.back()}
-                className="px-6 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition"
+                variant="outline-danger"
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 disabled={isLoading}
-                className="px-6 py-2 bg-linear-to-r from-blue-500 to-green-500 text-white rounded-lg font-medium hover:from-blue-600 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                variant="gradient"
               >
                 {isLoading ? 'Salvando...' : 'Salvar Alterações'}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

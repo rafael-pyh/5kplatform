@@ -42,10 +42,11 @@ function ConfirmationModal({
         <div className="flex min-h-full items-center justify-center p-4">
           <div className="relative bg-white rounded-lg shadow-xl max-w-sm w-full">
             {/* Close Button */}
-            <button
+            <Button
               onClick={onCancel}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              variant='none'
               aria-label="Fechar"
+              className="absolute top-3 right-3 text-red-400 hover:text-red-600 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -55,7 +56,7 @@ function ConfirmationModal({
                   d="M6 18L18 6M6 6l12 12"
                 />
               </svg>
-            </button>
+            </Button>
 
             {/* Content */}
             <div className="p-6">
@@ -72,7 +73,7 @@ function ConfirmationModal({
                   {cancelText}
                 </Button>
                 <Button
-                  variant={isDangerous ? 'danger' : 'success'}
+                  variant={isDangerous ? 'danger' : 'gradient'}
                   onClick={onConfirm}
                   disabled={isLoading}
                 >

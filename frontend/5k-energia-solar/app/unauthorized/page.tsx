@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
+import { Button } from '@/components/ui';
 
 export default function UnauthorizedPage() {
   const router = useRouter();
@@ -56,7 +57,7 @@ export default function UnauthorizedPage() {
           <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
         </div>
 
-        <button
+        <Button
           onClick={() => {
             if (user?.role === 'SELLER' || user?.role === 'AFFILIATE') {
               router.push('/seller/dashboard');
@@ -66,10 +67,11 @@ export default function UnauthorizedPage() {
               router.push('/login');
             }
           }}
-          className="mt-8 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          variant="gradient"
+          className="mt-8 px-6 py-2"
         >
           Voltar ao Dashboard
-        </button>
+        </Button>
       </div>
     </div>
   );
