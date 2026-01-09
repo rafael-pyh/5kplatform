@@ -117,17 +117,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await api.post<{ data: AuthResponse }>('/auth/login', credentials);
       const { token, user: userData, rememberMeToken } = response.data.data;
 
-
       // Salva no localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
       
+      // Salva o token também em cookie para o middleware validar
+      // Validade de 1 dia (86400 segundos)
+      document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Strict`;
+      
       // Salva o token de "lembrar de mim" se foi marcado o checkbox
       if (rememberMeToken && credentials.rememberMe) {
         localStorage.setItem('rememberMeToken', rememberMeToken);
+        document.cookie = `rememberMeToken=${rememberMeToken}; path=/; max-age=2592000; SameSite=Strict`;
       } else {
         // Remove se desmarcou o checkbox
         localStorage.removeItem('rememberMeToken');
+        document.cookie = 'rememberMeToken=; path=/; max-age=0';
       }
 
       // Atualiza o estado
@@ -135,12 +140,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       toast.success('Login realizado com sucesso!');
 
-      // Redireciona baseado no role
-      if (userData.role === 'SELLER') {
-        router.push('/seller/dashboard');
-      } else {
-        router.push('/dashboard');
-      }
+      // Redireciona para a página de redirect que vai fazer o direcionamento correto
+      router.push('/login-redirect');
     } catch (error: any) {
       console.error('[AuthContext] Erro no login:', error.response?.status, error.response?.data);
       const message = error.response?.data?.message || 'Erro ao fazer login';
@@ -153,6 +154,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('token');
     localStorage.removeItem('rememberMeToken');
     localStorage.removeItem('user');
+
+    // Limpa os cookies
+    document.cookie = 'token=; path=/; max-age=0';
+    document.cookie = 'rememberMeToken=; path=/; max-age=0';
 
     // Limpa o estado
     setUser(null);

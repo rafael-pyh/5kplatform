@@ -9,6 +9,14 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const pathname = request.nextUrl.pathname;
 
+  // Não redirecionar páginas públicas (login, register, etc.)
+  const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/confirm-email', '/verify-email', '/unauthorized', '/login-redirect'];
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
+
+  if (isPublicRoute) {
+    return NextResponse.next();
+  }
+
   // Rotas que necessitam autenticação
   const protectedRoutes = ['/admin', '/seller', '/dashboard'];
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
@@ -32,3 +40,4 @@ export const config = {
     '/dashboard/:path*',
   ],
 };
+
