@@ -2,11 +2,7 @@
 
 import Image from 'next/image';
 
-interface Props {
-  remaining: number;
-}
-
-export default function LeadSuccessContent({ remaining }: Props) {
+export default function LeadSuccessContent() {
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-transparent to-green-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
@@ -51,10 +47,6 @@ export default function LeadSuccessContent({ remaining }: Props) {
               mensal de energia e o tipo de telhado da sua residência!
             </p>
           </div>
-
-          <p className="text-sm text-gray-500">
-            Você será redirecionado em alguns segundos{typeof remaining === 'number' ? ` (${remaining})` : ''}...
-          </p>
         </div>
       </div>
     </div>
