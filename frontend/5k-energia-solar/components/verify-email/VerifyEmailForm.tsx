@@ -1,14 +1,28 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import PasswordField from '@/components/ui/PasswordField';
+import CityAutocomplete from '@/components/ui/CityAutocomplete';
+import { getStates, getCitiesByState } from '@/lib/actions/locationActions';
+import { Button } from '../ui';
 
 interface SetPasswordForm {
   password: string;
   confirmPassword: string;
   city: string;
   state: string;
+}
+
+interface StateOption {
+  id: string;
+  name: string;
+  abbreviation: string;
+}
+
+interface CityOption {
+  id: string;
+  name: string;
 }
 
 type Props = {
@@ -19,7 +33,54 @@ type Props = {
 };
 
 export default function VerifyEmailForm({ form, verifying, sellerInfo, onSubmit }: Props) {
-  const { register, formState: { errors }, handleSubmit } = form;
+  const { register, formState: { errors }, handleSubmit, setValue } = form;
+  const [states, setStates] = useState<StateOption[]>([]);
+  const [cities, setCities] = useState<CityOption[]>([]);
+  const [selectedState, setSelectedState] = useState<string>('');
+  const [selectedCity, setSelectedCity] = useState<string>('');
+
+  // Buscar estados da API
+  useEffect(() => {
+    const fetchStates = async () => {
+      try {
+        const statesData = await getStates();
+        setStates(statesData);
+      } catch (error) {
+        console.error('Erro ao buscar estados:', error);
+      }
+    };
+
+    fetchStates();
+  }, []);
+
+  // Buscar cidades quando estado muda
+  useEffect(() => {
+    const fetchCities = async () => {
+      if (!selectedState) {
+        setCities([]);
+        setSelectedCity('');
+        return;
+      }
+
+      try {
+        const citiesData = await getCitiesByState(selectedState);
+        setCities(citiesData);
+      } catch (error) {
+        console.error('Erro ao buscar cidades:', error);
+      }
+    };
+
+    fetchCities();
+  }, [selectedState]);
+
+  // Atualizar valores no form quando os estados locais mudam
+  useEffect(() => {
+    setValue('state', selectedState);
+  }, [selectedState, setValue]);
+
+  useEffect(() => {
+    setValue('city', selectedCity);
+  }, [selectedCity, setValue]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-500 to-green-500 p-4">
@@ -78,18 +139,43 @@ export default function VerifyEmailForm({ form, verifying, sellerInfo, onSubmit 
           </div>
 
           <div>
-            <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">Cidade *</label>
-            <input id="city" type="text" {...register('city', { required: 'Cidade é obrigatória' })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="São Paulo" />
-            {errors.city && <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>}
-          </div>
-
-          <div>
             <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">Estado *</label>
-            <input id="state" type="text" {...register('state', { required: 'Estado é obrigatório', maxLength: { value: 2, message: 'Estado deve ter 2 caracteres (ex: SP)' } })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase" placeholder="SP" maxLength={2} />
+            <select
+              id="state"
+              value={selectedState}
+              onChange={(e) => {
+                setSelectedState(e.target.value);
+                setSelectedCity('');
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Selecione um estado</option>
+              {states.map((state) => (
+                <option key={state.id} value={state.abbreviation}>
+                  {state.name}
+                </option>
+              ))}
+            </select>
             {errors.state && <p className="mt-1 text-sm text-red-600">{errors.state.message}</p>}
           </div>
 
-          <button type="submit" disabled={verifying} className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors">{verifying ? 'Ativando conta...' : 'Ativar Conta'}</button>
+          <div>
+            <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">Cidade *</label>
+            <CityAutocomplete
+              cities={cities}
+              value={selectedCity}
+              onChange={(cityName) => {
+                setSelectedCity(cityName);
+              }}
+              placeholder="Selecione uma cidade"
+              disabled={!selectedState}
+            />
+            {errors.city && <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>}
+          </div>
+
+
+
+          <Button type="submit" disabled={verifying} variant="gradient">{verifying ? 'Ativando conta...' : 'Ativar Conta'}</Button>
         </form>
       </div>
     </div>

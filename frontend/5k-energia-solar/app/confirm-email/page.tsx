@@ -86,7 +86,7 @@ function ConfirmEmailContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-blue-500 to-green-500 text-white p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-blue-50 to-green-50 text-white p-4">
       <h1 className="text-3xl font-bold mb-4">Erro ao confirmar email</h1>
       {error && (
         <div className="mb-6 p-4 bg-red-500 bg-opacity-75 rounded-lg max-w-md w-full">
@@ -126,7 +126,7 @@ function ConfirmEmailContent() {
 
       <Button
         onClick={() => router.push("/login")}
-        variant="gradient"
+        variant="outline-green"
       >
         Ir para o Login
       </Button>

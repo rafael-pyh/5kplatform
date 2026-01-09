@@ -56,7 +56,8 @@ export const sendVerificationEmail = async (
         <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .header { background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); color: #333; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .header img { max-width: 150px; height: auto; margin-bottom: 15px; }
           .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
           .button { display: inline-block; padding: 12px 30px; background: #3B82F6; color: white !important; text-decoration: none; border-radius: 5px; margin: 20px 0; }
           .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
@@ -65,8 +66,7 @@ export const sendVerificationEmail = async (
       <body>
         <div class="container">
           <div class="header">
-            <h1>🌞 5K Energia Solar</h1>
-            <p>Bem-vindo à Plataforma de Vendedores</p>
+            <img src="https://f005.backblazeb2.com/file/5k-storage/logo/5klogo.png" alt="5K Energia Solar">
           </div>
           <div class="content">
             <h2>Olá, ${name}!</h2>
@@ -125,7 +125,8 @@ export const sendPasswordResetEmail = async (
         <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .header { background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); color: #333; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .header img { max-width: 150px; height: auto; margin-bottom: 15px; }
           .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
           .button { display: inline-block; padding: 12px 30px; background: #3B82F6; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
           .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
@@ -134,7 +135,7 @@ export const sendPasswordResetEmail = async (
       <body>
         <div class="container">
           <div class="header">
-            <h1>🔒 Redefinir Senha</h1>
+            <img src="https://f005.backblazeb2.com/file/5k-storage/logo/5klogo.png" alt="5K Energia Solar">
           </div>
           <div class="content">
             <h2>Olá, ${name}!</h2>
@@ -179,7 +180,8 @@ export const sendEmailConfirmation = async (
         <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .header { background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); color: #333; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .header img { max-width: 150px; height: auto; margin-bottom: 15px; }
           .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
           .button { display: inline-block; padding: 12px 30px; background: #3B82F6; color: white !important; text-decoration: none; border-radius: 5px; margin: 20px 0; }
           .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
@@ -188,8 +190,7 @@ export const sendEmailConfirmation = async (
       <body>
         <div class="container">
           <div class="header">
-            <h1>🌞 5K Energia Solar</h1>
-            <p>Confirme seu Email</p>
+            <img src="https://f005.backblazeb2.com/file/5k-storage/logo/5klogo.png" alt="5K Energia Solar">
           </div>
           <div class="content">
             <h2>Olá, ${name}!</h2>
@@ -248,7 +249,8 @@ export const sendEmailVerificationOnly = async (
         <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .header { background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); color: #333; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .header img { max-width: 150px; height: auto; margin-bottom: 15px; }
           .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
           .button { display: inline-block; padding: 12px 30px; background: #3B82F6; color: white !important; text-decoration: none; border-radius: 5px; margin: 20px 0; }
           .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
@@ -257,8 +259,7 @@ export const sendEmailVerificationOnly = async (
       <body>
         <div class="container">
           <div class="header">
-            <h1>🌞 5K Energia Solar</h1>
-            <p>Bem-vindo à Plataforma de Vendedores</p>
+            <img src="https://f005.backblazeb2.com/file/5k-storage/logo/5klogo.png" alt="5K Energia Solar">
           </div>
           <div class="content">
             <h2>Olá, ${name}!</h2>
@@ -315,7 +316,8 @@ export const sendApprovalOrRejectionEmail = async (
         <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .header { background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); color: #333; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .header img { max-width: 150px; height: auto; margin-bottom: 15px; }
           .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
           .button { display: inline-block; padding: 12px 30px; background: #3B82F6; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
           .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
@@ -324,7 +326,7 @@ export const sendApprovalOrRejectionEmail = async (
       <body>
         <div class="container">
           <div class="header">
-            <h1>🌞 5K Energia Solar</h1>
+            <img src="https://f005.backblazeb2.com/file/5k-storage/logo/5klogo.png" alt="5K Energia Solar">
           </div>
           <div class="content">
             <h2>Olá, ${name}!</h2>
