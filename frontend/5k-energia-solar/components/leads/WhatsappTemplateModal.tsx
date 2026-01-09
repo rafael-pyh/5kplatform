@@ -172,7 +172,7 @@ function WhatsappTemplateModal({
             </label>
             <Button
               type="button"
-              variant="ghost"
+              variant="none"
               size="sm"
               onClick={handleInsertPlaceholder}
               disabled={isLoading}
