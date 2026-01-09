@@ -315,8 +315,18 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
       setSharing(true);
       const nav: any = navigator;
       const isMobile = isMobileDevice();
+
+      // Web (desktop): enviar link do QR code via WhatsApp
+      if (!isMobile) {
+        const shareUrl = getQRShareUrl();
+        const message = encodeURIComponent(`🔗 Link para o cadastro pelo vendedor ${personName}\n\n${shareUrl}`);
+        window.open(`https://wa.me/?text=${message}`, '_blank');
+        toast.success('Abrindo WhatsApp...');
+        setSharing(false);
+        return;
+      }
       
-      // Se em modo poster, compartilhar a placa completa
+      // Se em modo poster, compartilhar a placa completa (mobile)
       if (previewMode === 'poster') {
         const options: any = {
           outputWidth: 2048,
@@ -363,7 +373,7 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
         return;
       }
       
-      // Modo QR: compartilhar apenas o QR code
+      // Modo QR (mobile): compartilhar apenas o QR code
       const file = base64ToFile(qrCodeWithVendor, `qrcode-${personName.replace(/\s+/g, '-')}.png`);
 
       // Mobile: usar Web Share API para enviar a imagem
@@ -381,7 +391,7 @@ export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName,
         }
       }
 
-      // Web (desktop): copiar imagem para clipboard e abrir WhatsApp Web
+      // Mobile fallback: copiar imagem para clipboard e abrir WhatsApp
       try {
         const blob = await new Promise<Blob>((resolve, reject) => {
           const img = document.createElement('img');
