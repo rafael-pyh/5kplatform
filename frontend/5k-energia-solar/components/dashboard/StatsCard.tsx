@@ -55,7 +55,7 @@ function StatsCard({
               </p>
             )}
           </div>
-          <div className={cn('p-3 rounded-full', iconBgColor)}>
+          <div className={cn('p-3 rounded-full hidden md:inline-flex', iconBgColor)}>
             <div className={cn('w-8 h-8', iconColor)}>{icon}</div>
           </div>
         </div>

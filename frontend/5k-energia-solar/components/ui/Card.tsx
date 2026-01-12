@@ -9,10 +9,10 @@ export interface CardProps {
 export default function Card({ children, className, padding = 'md' }: CardProps) {
   const paddings = {
     none: '',
-    xs: 'p-2',
-    sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8',
+    xs: 'p-1 md:p-2',
+    sm: 'p-2 md:p-4',
+    md: 'p-4 md:p-6',
+    lg: 'p-6 md:p-8',
   };
 
   return (
