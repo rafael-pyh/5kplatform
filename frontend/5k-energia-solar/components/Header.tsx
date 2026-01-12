@@ -205,7 +205,7 @@ export default function Header({ className }: { className?: string }) {
 
         {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
-          <nav className="md:hidden mt-4 pt-4 border-t border-gray-200 space-y-1">
+          <nav className="md:hidden pt-4 border-t grid grid-cols-2 border-gray-200">
             {menuItems.map((item) => {
               const isActive = pathname === item.href;
               return (
