@@ -140,7 +140,7 @@ function RecentLeadsTable({ leads = [], sellers = [] }: RecentLeadsTableProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto hidden sm:block">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className='bg-gray-50'>
               <tr>
@@ -162,6 +162,50 @@ function RecentLeadsTable({ leads = [], sellers = [] }: RecentLeadsTableProps) {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="sm:hidden space-y-3">
+          {currentItems.map((item: any) => (
+            <div
+              key={item.id}
+              className="bg-gray-50 rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+            >
+              {/* Name and Email */}
+              <div className="mb-3">
+                <h3 className="text-sm font-semibold text-gray-900 truncate" title={item.name}>
+                  {item.name || '-'}
+                </h3>
+                {item.email && (
+                  <p className="text-xs text-gray-500 truncate" title={item.email}>
+                    {item.email}
+                  </p>
+                )}
+              </div>
+
+              {/* Phone and Date */}
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <p className="text-gray-500 font-medium mb-1">Telefone</p>
+                  <p className="text-gray-900 font-medium" title={item.phone}>
+                    {item.phone || '-'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-500 font-medium mb-1">Data</p>
+                  <p className="text-gray-900 font-medium">
+                    {item.createdAt
+                      ? new Date(item.createdAt).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: '2-digit',
+                        })
+                      : '-'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>

@@ -25,7 +25,7 @@ function LeadTabs({ activeTab, onTabChange, counts, className }: LeadTabsProps) 
 
   return (
     <div className={cn('border-b border-gray-200', className)}>
-      <nav className="-mb-px flex space-x-8">
+      <nav className="-mb-px flex md:space-x-8 overflow-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
