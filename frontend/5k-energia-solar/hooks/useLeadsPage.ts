@@ -44,11 +44,13 @@ export default function useLeadsPage() {
   const handleViewDetails = useCallback((lead: Lead) => {
     setSelectedLead(lead);
     setIsDetailsModalOpen(true);
+    setIsStatusModalOpen(false);
   }, []);
 
   const handleUpdateStatus = useCallback((lead: Lead) => {
     setSelectedLead(lead);
     setIsStatusModalOpen(true);
+    setIsDetailsModalOpen(false);
   }, []);
 
   const handleStatusUpdateSuccess = useCallback(() => {

@@ -12,6 +12,7 @@ import {
   processMessage,
   generateWhatsappLink,
 } from '@/lib/services/whatsapp-template.service';
+import { useIsMobile } from '@/hooks/useMediaQuery';
 
 interface LeadDetailsModalProps {
   isOpen: boolean;
@@ -126,6 +127,7 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
   const [whatsappTemplates, setWhatsappTemplates] = useState<WhatsappTemplate[]>([]);
   const [showWhatsappTemplateSelector, setShowWhatsappTemplateSelector] = useState(false);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+  const isMobile = useIsMobile();
   // normalize different field names returned by backend
   const rawEnergy: string | null = (lead as any).energyBillUrl || (lead as any).energyBill || null;
   const rawRoof: string | null = (lead as any).roofPhotoUrl || (lead as any).roofPhoto || null;
@@ -174,16 +176,18 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
   const modalContent = (
     <div onClick={(e) => {
       e.stopPropagation()
-    }}>
+    }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+      <div className="flex items-center justify-between md:mb-6 pb-4 border-b border-gray-200">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Detalhes do Lead</h2>
+          <h2 className="text-xl md:text-2xl font-semibold text-gray-700">Detalhes do Lead</h2>
           <p className="text-sm text-gray-500">Informações detalhadas e anexos</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={downloadAll} className="hidden sm:inline-flex">
-            <Icon icon="bi-download" className="mr-2" /> Baixar tudo
+          <Button variant="outline-blue" onClick={downloadAll} className="hidden sm:inline-flex">
+            <Icon icon="bi-download" className="md:mr-2" /> 
+            <p className="hidden md:block">Baixar tudo</p>
           </Button>
         </div>
       </div>
@@ -231,26 +235,6 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
         {/* Attachments */}
         <div>
           <h3 className="text-sm font-medium text-gray-500 mb-3">Anexos</h3>
-
-          <div className="flex items-center gap-2 mb-3">
-            <div className="flex-1">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs text-gray-500">Email</label>
-                  <div className="flex items-center gap-0.5">
-                    <p className="text-sm font-medium text-gray-900">{lead.email || '-'}</p>
-                    <Button variant="ghost" size="sm" onClick={() => copyToClipboard(lead.email)}><Icon icon="bi-copy" /></Button>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500">Telefone</label>
-                  <div className="flex items-center gap-0.5">
-                    <p className="text-sm font-medium text-gray-900">{lead.phone || '-'}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <div className="space-y-3">
             <div>
@@ -350,10 +334,13 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
 
       {/* Footer */}
       <div className="mt-6 flex justify-end pt-4 border-t border-gray-200">
-        <Button onClick={onClose} variant="secondary">
+        <Button onClick={onClose} variant="outline-danger">
           Fechar
         </Button>
       </div>
+
+      {/* Padding para mobile */}
+      <div className="h-4 sm:h-0" />
 
       {lightboxOpen && selectedImage && (
         <div className="fixed inset-0 z-60 bg-black/70 flex items-center justify-center p-4">
@@ -382,7 +369,7 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
             </div>
 
             {/* Content */}
-            <div className="p-6">
+            <div className="md:p-2">
               {isLoadingTemplates ? (
                 <div className="flex items-center justify-center py-8">
                   <p className="text-gray-600">Carregando templates...</p>
@@ -397,25 +384,25 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
                   {whatsappTemplates.map((template) => (
                     <div
                       key={template.id}
-                      className="p-4 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition cursor-pointer group"
+                      className="p-2 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition cursor-pointer group"
                     >
                       <div className="flex justify-between items-start gap-3">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-900">
                             {template.name}
                           </p>
-                          <p className="text-xs text-gray-600 mt-2 line-clamp-3 whitespace-pre-wrap">
+                          <p className="text-xs text-gray-600 mt-2 line-clamp-3 whitespace-wrap">
                             {template.message.replace(/{{NOME_CLIENTE}}/g, lead.name)}
                           </p>
                         </div>
                         <Button
-                          size="sm"
-                          variant="primary"
+                          size={isMobile ? 'md' : 'sm'}
+                          variant="gradient"
                           onClick={() => handleSendWhatsapp(template)}
-                          className="whitespace-nowrap shrink-0 bg-green-600 hover:bg-green-700"
+                          className="whitespace-nowrap shrink-0"
                         >
-                          <Icon icon="bi-send" className="mr-1" />
-                          Enviar
+                          <Icon icon="bi-send" className="md:mr-1" />
+                          <p className="hidden md:block">Enviar</p>
                         </Button>
                       </div>
                     </div>
@@ -427,7 +414,7 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
             {/* Footer */}
             <div className="flex justify-end gap-2 p-6 pt-4 border-t border-gray-200">
               <Button
-                variant="secondary"
+                variant="outline-danger"
                 onClick={() => setShowWhatsappTemplateSelector(false)}
               >
                 Cancelar
@@ -441,7 +428,7 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
 
   return (
     <ResponsiveModal isOpen={isOpen} onClose={onClose} className={className}>
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         {modalContent}
       </div>
     </ResponsiveModal>

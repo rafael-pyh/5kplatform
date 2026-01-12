@@ -68,6 +68,7 @@ export default function LeadsPage() {
           selectedLead={selectedLead}
           onDetailsClose={handleDetailsModalClose}
           onStatusSuccess={handleStatusUpdateSuccess}
+          onUpdateClose={handleDetailsModalClose}
         />
       </div>
     </DashboardLayout>

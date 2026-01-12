@@ -7,6 +7,7 @@ import { adminService } from '@/lib/services';
 import { User, UpdateAdminDto } from '@/lib/types';
 import PasswordField from '@/components/ui/PasswordField';
 import ResponsiveModal from '@/components/ResponsiveModal';
+import { Button } from '../ui';
 
 interface EditAdminModalProps {
   isOpen: boolean;
@@ -118,8 +119,8 @@ export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: Ed
     <ResponsiveModal isOpen={isOpen} onClose={handleClose}>
       <div className="p-4">
         {/* Header */}
-        <div className="text-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Editar Administrador</h2>
+        <div className="text-start mb-2 md:mb-4">
+          <h2 className="text-xl font-semibold text-gray-700">Editar Administrador</h2>
           <p className="text-sm text-gray-600 mt-1">Atualize as informações do administrador</p>
         </div>
 
@@ -246,22 +247,23 @@ export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: Ed
           </div>
 
           {/* Actions - Full Width */}
-          <div className="md:col-span-2 flex flex-col gap-2 pt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="cursor-pointer w-full px-4 py-2 bg-linear-to-r from-blue-500 to-green-500 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-            >
-              {loading ? 'Salvando...' : 'Salvar Alterações'}
-            </button>
-            <button
+          <div className="md:col-span-2 flex gap-2 pt-2">
+            <Button
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="cursor-pointer w-full px-4 py-2 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              variant="outline-danger"
+              className="cursor-pointer w-full"
             >
               Cancelar
-            </button>
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="cursor-pointer w-full"
+            >
+              {loading ? 'Salvando...' : 'Salvar Alterações'}
+            </Button>
           </div>
         </form>
       </div>

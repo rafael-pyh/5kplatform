@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils/cn';
 
 interface SelectProps {
   label: string;
@@ -6,11 +7,12 @@ interface SelectProps {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   children: React.ReactNode;
+  className?: string;
 }
 
-const Select: React.FC<SelectProps> = ({ label, name, value, onChange, children }) => {
+const Select: React.FC<SelectProps> = ({ label, name, value, onChange, children, className }) => {
   return (
-    <div className="flex flex-col">
+    <div className={cn("flex flex-col", className)}>
       <label htmlFor={name} className="text-sm text-slate-500 mb-1 font-bold">
         {label}
       </label>

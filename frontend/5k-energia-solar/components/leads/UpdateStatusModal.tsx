@@ -104,6 +104,9 @@ if (!isOpen) return null;
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">
+            <Button type="button" variant="outline-danger" onClick={onClose} disabled={loading}>
+              Cancelar
+            </Button>
             <Button
               type="submit"
               variant="primary"
@@ -112,9 +115,6 @@ if (!isOpen) return null;
               disabled={loading}
             >
               Salvar
-            </Button>
-            <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
-              Cancelar
             </Button>
           </div>
         </form>

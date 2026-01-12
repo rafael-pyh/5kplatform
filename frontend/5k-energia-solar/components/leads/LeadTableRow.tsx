@@ -71,7 +71,10 @@ function LeadTableRow({ lead, onViewDetails, onUpdateStatus, className }: LeadTa
         <td className="p-4 text-right text-sm font-medium w-48">
           <div className="flex items-center justify-end gap-2">
             <button
-              onClick={() => onViewDetails(lead)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetails(lead);
+              }}
               className="text-blue-600 hover:text-blue-900 transition-colors p-1"
               title="Ver Detalhes"
             >
@@ -98,7 +101,10 @@ function LeadTableRow({ lead, onViewDetails, onUpdateStatus, className }: LeadTa
             <Button
               variant="outline-blue"
               size="sm"
-              onClick={() => onUpdateStatus(lead)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onUpdateStatus(lead);
+              }}
               className="hidden md:inline-flex"
             >
               Atualizar

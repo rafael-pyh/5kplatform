@@ -26,6 +26,7 @@ const LeadsContent = ({
   selectedLead,
   onDetailsClose,
   onStatusSuccess,
+  onUpdateClose,
 }: any) => {
   return (
     <>
@@ -60,16 +61,16 @@ const LeadsContent = ({
       </Card>
 
       {/* Modals */}
-      {isDetailsModalOpen && selectedLead && (
-        <Suspense fallback={null}>
-          <LeadDetailsModal isOpen={isDetailsModalOpen} onClose={onDetailsClose} lead={selectedLead} className="max-w-full sm:max-w-lg mx-auto" />
-        </Suspense>
-      )}
+      {selectedLead && (
+        <>
+          <Suspense fallback={null}>
+            <LeadDetailsModal isOpen={isDetailsModalOpen} onClose={onDetailsClose} lead={selectedLead} className="max-w-full sm:max-w-lg mx-auto" />
+          </Suspense>
 
-      {isStatusModalOpen && selectedLead && (
-        <Suspense fallback={null}>
-          <UpdateStatusModal isOpen={isStatusModalOpen} onClose={() => {}} onSuccess={onStatusSuccess} lead={selectedLead} className="max-w-full sm:max-w-lg mx-auto" />
-        </Suspense>
+          <Suspense fallback={null}>
+            <UpdateStatusModal isOpen={isStatusModalOpen} onClose={onUpdateClose} onSuccess={onStatusSuccess} lead={selectedLead} className="max-w-full sm:max-w-lg mx-auto" />
+          </Suspense>
+        </>
       )}
     </>
   );

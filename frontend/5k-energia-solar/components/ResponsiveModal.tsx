@@ -143,15 +143,15 @@ function MobileBottomSheet({ onClose, children, snapPoints = [50, 100] }: Mobile
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - cobre toda a tela */}
       <div
         className="fixed inset-0 z-40 bg-black/40 transition-opacity duration-300"
         onClick={handleBackdropClick}
         aria-hidden="true"
       />
 
-      {/* Bottom Sheet Container */}
-      <div className="fixed inset-x-0 bottom-0 z-50 pointer-events-none">
+      {/* Bottom Sheet Container - fixado no bottom */}
+      <div className="fixed -bottom-4 left-0 right-0 z-50 pointer-events-none">
         {/* Content */}
         <div
           data-sheet-content

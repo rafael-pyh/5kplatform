@@ -226,6 +226,7 @@ function LeadFilters({
           <Select
             label="Vendedor"
             name="owner"
+            className="w-full"
             value={tempFilters.owner || ''}
             onChange={handleMobileOwnerChange}
           >
@@ -236,80 +237,90 @@ function LeadFilters({
               </option>
             ))}
           </Select>
-          <Select
-            label="Cidade"
-            name="city"
-            value={tempFilters.city}
-            onChange={handleMobileSelectChange}
-          >
-            <option value="">Todas</option>
-            {cities.map((city) => (
-              <option key={city} value={city}>
-                {city}
-              </option>
-            ))}
-          </Select>
-          <Select
-            label="Estado"
-            name="state"
-            value={tempFilters.state}
-            onChange={handleMobileSelectChange}
-          >
-            <option value="">Todos</option>
-            {states.map((state) => (
-              <option key={state} value={state}>
-                {state}
-              </option>
-            ))}
-          </Select>
-          <Select
-            label="Mês"
-            name="month"
-            value={tempFilters.month || ''}
-            onChange={handleMobileMonthChange}
-          >
-            <option value="">Todos</option>
-            <option value="1">Janeiro</option>
-            <option value="2">Fevereiro</option>
-            <option value="3">Março</option>
-            <option value="4">Abril</option>
-            <option value="5">Maio</option>
-            <option value="6">Junho</option>
-            <option value="7">Julho</option>
-            <option value="8">Agosto</option>
-            <option value="9">Setembro</option>
-            <option value="10">Outubro</option>
-            <option value="11">Novembro</option>
-            <option value="12">Dezembro</option>
-          </Select>
-          <Select
-            label="Ano"
-            name="year"
-            value={tempFilters.year || ''}
-            onChange={handleMobileYearChange}
-          >
-            <option value="">Todos</option>
-            {(years && years.length > 0 ? years : Array.from({ length: 6 }).map((_, idx) => String(new Date().getFullYear() - idx))).map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </Select>
+          <div className="w-full flex gap-1">
+            <Select
+              label="Cidade"
+              name="city"
+              className="w-1/2"
+              value={tempFilters.city}
+              onChange={handleMobileSelectChange}
+            >
+              <option value="">Todas</option>
+              {cities.map((city) => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+            </Select>
+            <Select
+              label="Estado"
+              name="state"
+              className="w-1/2"
+              value={tempFilters.state}
+              onChange={handleMobileSelectChange}
+            >
+              <option value="">Todos</option>
+              {states.map((state) => (
+                <option key={state} value={state}>
+                  {state}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="w-full flex gap-1">
+            <Select
+              label="Mês"
+              name="month"
+              className="w-1/2"
+              value={tempFilters.month || ''}
+              onChange={handleMobileMonthChange}
+            >
+              <option value="">Todos</option>
+              <option value="1">Janeiro</option>
+              <option value="2">Fevereiro</option>
+              <option value="3">Março</option>
+              <option value="4">Abril</option>
+              <option value="5">Maio</option>
+              <option value="6">Junho</option>
+              <option value="7">Julho</option>
+              <option value="8">Agosto</option>
+              <option value="9">Setembro</option>
+              <option value="10">Outubro</option>
+              <option value="11">Novembro</option>
+              <option value="12">Dezembro</option>
+            </Select>
+            <Select
+              label="Ano"
+              name="year"
+              value={tempFilters.year || ''}
+              onChange={handleMobileYearChange}
+              className="w-1/2"
+            >
+              <option value="">Todos</option>
+              {(years && years.length > 0 ? years : Array.from({ length: 6 }).map((_, idx) => String(new Date().getFullYear() - idx))).map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </Select>
+          </div>
 
           {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-200">
-            <button
+            <Button
               onClick={resetMobileFilters}
-              className="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              variant="outline-danger"
+              className="font-medium"
             >
               Limpar
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={applyMobileFilters}
-              className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              variant="gradient"
+              className="font-medium"
             >
               Aplicar
-            </button>
+            </Button>
           </div>
         </div>
       </BottomSheet>

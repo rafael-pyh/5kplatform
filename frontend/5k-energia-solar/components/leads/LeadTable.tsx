@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils/cn';
 import { Lead } from '@/lib/types';
 import LeadTableRow from './LeadTableRow';
 import EmptyState from '@/components/ui/EmptyState';
+import { Button } from '../ui';
 
 interface LeadTableProps {
   leads: Lead[];
@@ -177,12 +178,13 @@ function LeadTable({ leads, onViewDetails, onUpdateStatus, className }: LeadTabl
 
             {/* Actions */}
             <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
-              <button
+              <Button
                 onClick={(e) => {
                   e.stopPropagation();
                   onViewDetails(lead);
                 }}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded transition-colors font-medium text-sm"
+                variant="outline-blue"
+                className="flex-1 flex items-center justify-center gap-2 font-medium text-sm"
               >
                 <svg
                   className="w-4 h-4"
@@ -204,16 +206,17 @@ function LeadTable({ leads, onViewDetails, onUpdateStatus, className }: LeadTabl
                   />
                 </svg>
                 Detalhes
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline-blue"
                 onClick={(e) => {
                   e.stopPropagation();
                   onUpdateStatus(lead);
                 }}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-blue-600 text-blue-600 hover:bg-blue-50 rounded transition-colors font-medium text-sm"
+                className="flex-1 flex items-center justify-center gap-2 font-medium text-sm"
               >
                 Atualizar
-              </button>
+              </Button>
             </div>
           </div>
         ))}

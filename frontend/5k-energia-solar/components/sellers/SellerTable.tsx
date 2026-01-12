@@ -6,6 +6,7 @@ import SellerTableRow from './SellerTableRow';
 import EmptyState from '@/components/ui/EmptyState';
 import { approveSeller, rejectSeller, resendActivationEmail } from '@/lib/actions/sellerActions';
 import toast from 'react-hot-toast';
+import { Button } from '../ui';
 
 interface SellerTableProps {
   persons: Person[];
@@ -205,68 +206,72 @@ function SellerTable({ persons, onViewQRCode, onEdit, onDeactivate, onActivate, 
                   )}
                 </div>
                 {person.approvalStatus === 'approved' && !person.emailVerified && (
-                  <button
+                  <Button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleResendActivationEmail(person.id);
                     }}
-                    className="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                    variant="outline-blue"
+                    className="text-xs"
                     title="Reenviar email de ativação"
                   >
                     Reenviar
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
 
             {/* Actions */}
             <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
-              <button
+              <Button
                 onClick={() => onViewQRCode(person)}
-                className="flex-1 flex items-center justify-center gap-1 px-2 py-2 text-blue-600 hover:bg-blue-50 rounded transition-colors font-medium text-xs"
+                variant="outline-blue"
+                className="font-medium text-xs w-1/3"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
                 QR Code
-              </button>
+              </Button>
               {person.approvalStatus === 'pending' ? (
                 <>
-                  <button
+                  <Button
                     onClick={() => handleApprove(person.id)}
-                    className="flex-1 flex items-center justify-center px-2 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded transition-colors font-medium text-xs"
+                    variant="outline-green"
+                    className="font-medium text-xs w-1/3"
                   >
                     Aprovar
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => handleReject(person.id)}
-                    className="flex-1 flex items-center justify-center px-2 py-2 border border-red-600 text-red-600 hover:bg-red-50 rounded transition-colors font-medium text-xs"
+                    variant="outline-danger"
+                    className="font-medium text-xs w-1/3"
                   >
                     Rejeitar
-                  </button>
+                  </Button>
                 </>
               ) : (
                 <>
-                  <button
+                  <Button
                     onClick={() => onEdit(person)}
-                    className="flex-1 flex items-center justify-center px-2 py-2 text-blue-600 hover:bg-blue-50 rounded transition-colors font-medium text-xs"
+                    variant="outline-blue"
+                    className="font-medium text-xs w-1/3"
                   >
                     Editar
-                  </button>
+                  </Button>
                   {person.active ? (
-                    <button
+                    <Button
                       onClick={() => onDeactivate(person.id)}
-                      className="flex-1 flex items-center justify-center px-2 py-2 border border-red-600 text-red-600 hover:bg-red-50 rounded transition-colors font-medium text-xs"
+                      variant="outline-danger"
+                      className="font-medium text-xs w-1/3"
                     >
                       Desativar
-                    </button>
+                    </Button>
                   ) : (
-                    <button
+                    <Button
                       onClick={() => onActivate(person.id)}
-                      className="flex-1 flex items-center justify-center px-2 py-2 border border-green-600 text-green-600 hover:bg-green-50 rounded transition-colors font-medium text-xs"
+                      variant="outline-green"
+                      className="font-medium text-xs w-1/3"
                     >
                       Ativar
-                    </button>
+                    </Button>
                   )}
                 </>
               )}
