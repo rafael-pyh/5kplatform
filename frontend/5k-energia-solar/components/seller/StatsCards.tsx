@@ -4,7 +4,7 @@ import React from 'react';
 
 const StatsCards = ({ stats }: { stats: any }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-6 mb-8">
       <div className="bg-white rounded-lg shadow p-6">
         <p className="text-sm font-medium text-gray-600">Total de Leads</p>
         <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.total || 0}</p>

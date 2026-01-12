@@ -23,7 +23,7 @@ export default function LoginForm({ form, onSubmit, isLoading }: Props) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50 px-4 text-slate-700">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8">
           <div className="text-center mb-6">
             <Image src="/5klogo.png" alt="5K Energia Logo" width={200} height={80} className="mx-auto mb-4" />
             <p className="text-gray-600 mt-2">Faça login para acessar o sistema</p>
@@ -96,7 +96,7 @@ export default function LoginForm({ form, onSubmit, isLoading }: Props) {
               {isLoading ? 'Entrando...' : 'Entrar'}
             </button>
 
-            <div className="w-full flex justify-between">
+            <div className="w-full flex flex-col md:flex-row justify-between">
               <p>Gostaria de se tornar um parceiro?</p>
               <Link href="/register" className="text-blue-600 hover:cursor-pointer">
                 Cadastre-se
