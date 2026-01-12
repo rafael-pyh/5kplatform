@@ -8,6 +8,7 @@ import { CreatePersonDto } from '@/lib/types';
 import ResponsiveModal from '@/components/ResponsiveModal';
 import CityAutocomplete from '@/components/ui/CityAutocomplete';
 import { getStates, getCitiesByState } from '@/lib/actions/locationActions';
+import { Button } from './ui';
 
 interface NewSellerModalProps {
   isOpen: boolean;
@@ -160,10 +161,10 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
 
   return (
     <ResponsiveModal isOpen={isOpen} onClose={handleClose}>
-      <div className="bg-white rounded-2xl px-6 py-6">
+      <div className="bg-white rounded-2xl px-4 py-6">
         {/* Header */}
-        <div className="text-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 mb-1">Novo Vendedor</h2>
+        <div className="text-start mb-4">
+          <h2 className="text-xl font-semibold text-gray-700 mb-1">Novo Vendedor</h2>
           <p className="text-sm text-gray-600">Preencha os dados para criar um novo vendedor</p>
         </div>
 
@@ -346,33 +347,37 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
           </div>
 
           {/* Submit Button - full width */}
-          <div className="md:col-span-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="cursor-pointer w-full bg-linear-to-r from-blue-500 to-green-500 text-white py-2 rounded-lg font-medium hover:from-blue-600 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Criando...
-                </>
-              ) : (
-                'Criar Vendedor'
-              )}
-            </button>
-          </div>
+          <div className="w-full flex gap-2 justify-between md:col-span-2 mt-4">
+            {/* Cancel Button - full width */}
+            <div className="w-1/2 md:col-span-2">
+              <Button
+                type="button"
+                onClick={handleClose}
+                disabled={loading}
+                variant="outline-danger"
+                className="w-full justify-center"
+              >
+                Cancelar
+              </Button>
+            </div>
+            <div className="w-1/2 md:col-span-2">
+              <Button
+                type="submit"
+                disabled={loading}
+                variant="gradient"
+                className="w-full justify-center"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Criando...
+                  </>
+                ) : (
+                  'Criar Vendedor'
+                )}
+              </Button>
+            </div>
 
-          {/* Cancel Button - full width */}
-          <div className="md:col-span-2">
-            <button
-              type="button"
-              onClick={handleClose}
-              disabled={loading}
-              className="cursor-pointer w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Cancelar
-            </button>
           </div>
         </form>
       </div>

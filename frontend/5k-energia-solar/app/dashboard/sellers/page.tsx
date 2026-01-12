@@ -177,7 +177,7 @@ export default function SellersPage() {
     <DashboardLayout>
       <div className="space-y-4">
         <div className="flex items-start justify-between">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="md:mb-4 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-slate-700">Vendedores</h1>
               <p className="mt-1 text-gray-600">
@@ -188,7 +188,7 @@ export default function SellersPage() {
           <div className="flex gap-4 h-full items-start self-start">
             <Button onClick={() => setIsModalOpen(true)} size="md" variant="outline-green">
               <svg
-                className="w-5 h-5 mr-2"
+                className="w-5 h-5 md:mr-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -200,15 +200,15 @@ export default function SellersPage() {
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              Novo Vendedor
+              <p className="hidden md:inline-block">Novo Vendedor</p>
             </Button>
             <Button
               onClick={exportFilteredDataToCSV}
               variant='outline-blue'
               disabled={persons.length === 0}
             >
-              <Icon icon="bi-filetype-csv" className="w-5 h-5 mr-2" />
-              Exportar CSV
+              <Icon icon="bi-filetype-csv" className="w-5 h-5 md:mr-2" />
+              <p className="hidden md:inline-block">Exportar CSV</p>
             </Button>
           </div>
         </div>

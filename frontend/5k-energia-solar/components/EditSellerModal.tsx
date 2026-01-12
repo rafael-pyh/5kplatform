@@ -209,8 +209,8 @@ export default function EditSellerModal({
     <ResponsiveModal isOpen={isOpen} onClose={onClose}>
       <div className="p-4">
         {/* Header */}
-        <div className="text-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Editar Vendedor</h2>
+        <div className="text-start mb-4">
+          <h2 className="text-xl font-semibold text-gray-700">Editar Vendedor</h2>
           <p className="text-sm text-gray-600 mt-1">Atualize as informações do vendedor</p>
         </div>
 
@@ -403,7 +403,7 @@ export default function EditSellerModal({
                 )}
               </div>
               <label className="cursor-pointer">
-                <span className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block text-sm font-medium">
+                <span className="px-3 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-700 hover:text-white transition inline-block text-sm font-medium">
                   Alterar Foto
                 </span>
                 <input

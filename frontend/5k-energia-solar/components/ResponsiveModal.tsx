@@ -168,7 +168,7 @@ function MobileBottomSheet({ onClose, children, snapPoints = [50, 100] }: Mobile
           </div>
 
           {/* Content Wrapper */}
-          <div className="p-4">{children}</div>
+          <div>{children}</div>
         </div>
       </div>
 
