@@ -169,8 +169,8 @@ self.addEventListener('push', (event) => {
     const data = event.data.json();
     const options = {
       body: data.body || 'Nova notificação',
-      icon: '/5klogo.png',
-      badge: '/5klogo.png',
+      icon: '/5klogo2.png',
+      badge: '/5klogo2.png',
       tag: data.tag || 'notification',
       requireInteraction: data.requireInteraction || false,
     };
