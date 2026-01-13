@@ -1,0 +1,31 @@
+{
+  "env": {
+    "NEXT_PUBLIC_APP_VERSION": "1.0.0",
+    "NEXT_PUBLIC_ENABLE_PWA": "true"
+  },
+  "caching": {
+    "static_assets": {
+      "max_age": "31536000",
+      "immutable": true
+    },
+    "html_documents": {
+      "max_age": "0",
+      "must_revalidate": true
+    },
+    "api_responses": {
+      "max_age": "300"
+    },
+    "images": {
+      "max_age": "86400"
+    }
+  },
+  "pwa": {
+    "enabled": true,
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "background_sync": true,
+    "push_notifications": true,
+    "shortcuts": true
+  }
+}
