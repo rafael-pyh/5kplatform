@@ -10,7 +10,7 @@ export default function VerifyEmailClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-500 to-green-500">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-100 to-green-100">
         <LoadingSpinner size="lg" text="Verificando..." />
       </div>
     );

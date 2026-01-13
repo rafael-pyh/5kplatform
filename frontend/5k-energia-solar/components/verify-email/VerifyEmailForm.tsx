@@ -83,7 +83,7 @@ export default function VerifyEmailForm({ form, verifying, sellerInfo, onSubmit 
   }, [selectedCity, setValue]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-500 to-green-500 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-100 to-green-100 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-8">
         <div className="text-center mb-6">
           <div className="inline-block p-3 bg-green-100 rounded-full mb-4">

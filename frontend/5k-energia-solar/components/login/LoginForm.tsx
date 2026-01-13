@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { UseFormReturn } from 'react-hook-form';
 import PasswordField from '@/components/ui/PasswordField';
 import { LoginCredentials } from '@/lib/types';
+import { Button } from '../ui';
 
 interface Props {
   form: UseFormReturn<LoginCredentials>;
@@ -21,7 +22,7 @@ export default function LoginForm({ form, onSubmit, isLoading }: Props) {
   } = form;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50 px-4 text-slate-700">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-100 to-green-100 px-4 text-slate-700">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8">
           <div className="text-center mb-6">
@@ -88,13 +89,13 @@ export default function LoginForm({ form, onSubmit, isLoading }: Props) {
               </Link>
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-linear-to-r from-blue-500 to-green-500 text-white py-3 rounded-lg font-medium hover:from-blue-600 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="w-full "
             >
               {isLoading ? 'Entrando...' : 'Entrar'}
-            </button>
+            </Button>
 
             <div className="w-full flex flex-col md:flex-row justify-between">
               <p>Gostaria de se tornar um parceiro?</p>

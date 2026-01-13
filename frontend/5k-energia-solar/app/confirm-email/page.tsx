@@ -36,7 +36,6 @@ function ConfirmEmailContent() {
         console.error("[ConfirmEmailContent] Erro ao confirmar email:", error);
         const errorMessage = error.message || "Erro ao confirmar email. Tente novamente.";
         setError(errorMessage);
-        toast.error(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -65,7 +64,7 @@ function ConfirmEmailContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50 text-white">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50 p-4 text-slate-800">
         <p className="text-lg">Confirmando seu email...</p>
       </div>
     );
@@ -73,7 +72,7 @@ function ConfirmEmailContent() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-blue-500 to-green-500 text-white">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-blue-50 to-green-50 p-4 text-slate-800">
         <h1 className="text-3xl font-bold mb-4">Email confirmado com sucesso!</h1>
         <p className="text-lg mb-6">Seu perfil está em análise em breve você receberá um e-mail com mais informações</p>
         <Button
@@ -148,7 +147,7 @@ export default function ConfirmEmailPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-500 to-green-500 text-white">
+        <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50 p-4 text-slate-800">
           <p className="text-lg">Carregando...</p>
         </div>
       }

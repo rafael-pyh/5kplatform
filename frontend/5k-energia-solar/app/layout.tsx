@@ -5,6 +5,9 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "5K Energia Solar - Plataforma Administrativa",
+  icons: {
+    icon: "/5klogo.ico",
+  },
   description: "Sistema de gestão de vendedores e leads",
 };
 

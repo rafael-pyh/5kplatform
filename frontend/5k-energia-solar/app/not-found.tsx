@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 via-transparent to-green-50 flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-linear-to-br from-blue-100 via-transparent to-green-100 flex flex-col items-center justify-center px-4">
       <div className="text-center max-w-md">
         {/* Logo */}
         <div className="mb-8 flex justify-center">

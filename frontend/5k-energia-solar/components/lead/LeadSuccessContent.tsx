@@ -4,7 +4,7 @@ import Image from 'next/image';
 
 export default function LeadSuccessContent() {
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 via-transparent to-green-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-linear-to-br from-blue-100 via-transparent to-green-100 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">

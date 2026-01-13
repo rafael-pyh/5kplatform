@@ -41,7 +41,7 @@ export default function RegisterForm({
   isLoading 
 }: Props) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-green-50 px-4 text-slate-700 mb-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-100 to-green-100 px-4 text-slate-700 mb-4">
       <div className="w-full max-w-4xl mt-4">
         <div className="bg-white rounded-2xl shadow-xl px-8 py-4">
           <div className="text-center mb-4">
@@ -127,7 +127,7 @@ export default function RegisterForm({
             </div>
 
             <div className="md:col-span-2">
-              <button type="submit" disabled={isLoading} className="w-full bg-linear-to-r from-blue-500 to-green-500 text-white py-3 rounded-lg font-medium hover:from-blue-600 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition">{isLoading ? 'Cadastrando...' : 'Cadastrar'}</button>
+              <button type="submit" disabled={isLoading} className="w-full bg-linear-to-r from-blue-100 to-green-100 text-white py-3 rounded-lg font-medium hover:from-blue-600 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition">{isLoading ? 'Cadastrando...' : 'Cadastrar'}</button>
             </div>
 
             <div className="md:col-span-2 w-full flex justify-between">
