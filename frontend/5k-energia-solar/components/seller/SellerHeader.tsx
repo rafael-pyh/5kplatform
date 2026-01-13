@@ -35,7 +35,7 @@ const SellerHeader = ({ seller, onOpenQR, onLogout, blocked }: any) => {
   };
 
   return (
-    <header className="bg-linear-to-br from-blue-100 to-green-100 shadow-md border-b border-gray-200">
+    <header className="bg-linear-to-br from-blue-50 to-green-50 shadow-md border-b border-gray-300">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
