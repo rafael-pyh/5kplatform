@@ -2,6 +2,7 @@
 
 import { usePWA } from '@/hooks/usePWA';
 import { useState, useEffect } from 'react';
+import { Button } from './ui';
 
 export function PWAInstallPrompt() {
   const { installPrompt, install, isInstalled, isOnline } = usePWA();
@@ -9,8 +10,14 @@ export function PWAInstallPrompt() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
+    const savedDismissed = localStorage.getItem('pwa_install_dismissed');
+    if (savedDismissed === 'true') {
+      setDismissed(true);
+    }
+  }, []);
+
+  useEffect(() => {
     if (installPrompt && !isInstalled && !dismissed) {
-      // Mostrar prompt após 3 segundos de uso
       const timer = setTimeout(() => {
         setShowPrompt(true);
       }, 3000);
@@ -27,6 +34,9 @@ export function PWAInstallPrompt() {
   const handleDismiss = () => {
     setShowPrompt(false);
     setDismissed(true);
+    // Salvar a dismissão no localStorage por 30 dias
+    localStorage.setItem('pwa_install_dismissed', 'true');
+    localStorage.setItem('pwa_install_dismissed_date', new Date().toISOString());
   };
 
   if (!showPrompt || !installPrompt) {
@@ -35,36 +45,38 @@ export function PWAInstallPrompt() {
 
   return (
     <div
-      className="fixed bottom-4 left-4 right-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-2xl p-4 z-50 max-w-sm mx-auto"
+      className="fixed bottom-4 left-4 right-4 bg-linear-to-r from-blue-50 to-green-50 text-gray-800 border border-gray-300 rounded-lg shadow-2xl p-4 z-50 max-w-sm mx-auto"
       role="dialog"
       aria-label="Prompt de instalação do aplicativo"
     >
       <div className="flex items-start gap-3">
         <div className="flex-1">
-          <h3 className="font-semibold text-white mb-1">
+          <h3 className="font-semibold mb-1">
             Instalar 5K Energia Solar
           </h3>
-          <p className="text-sm text-blue-100">
-            Baixe nosso app para acessar offline e rápido como um app nativo
+          <p className="text-sm text-gray-700">
+            Baixe nosso app para acessar rápido como um app nativo
           </p>
         </div>
       </div>
 
-      <div className="flex gap-2 mt-4">
-        <button
+      <div className="w-full flex gap-2 mt-4">
+        <Button
           onClick={handleInstall}
-          className="flex-1 bg-white text-blue-600 font-semibold px-4 py-2 rounded hover:bg-blue-50 transition-colors"
+          variant="gradient"
           aria-label="Instalar aplicativo"
+          className="w-1/2"
         >
           Instalar
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={handleDismiss}
-          className="px-4 py-2 text-blue-100 hover:text-white transition-colors rounded hover:bg-blue-500 bg-blue-600"
+          variant="outline-blue"
           aria-label="Descartar prompt"
+          className="w-1/2"
         >
           Depois
-        </button>
+        </Button>
       </div>
 
       {!isOnline && (
