@@ -17,10 +17,22 @@ const MAX_ITEM_SIZE = 500 * 1024;
 const MAX_TOTAL_CACHE = 2 * 1024 * 1024;
 
 /**
+ * Check if running in browser environment
+ */
+function isBrowser(): boolean {
+  return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+}
+
+/**
  * Calculate size of object in bytes
  */
 function estimateSize(obj: any): number {
-  return new Blob([JSON.stringify(obj)]).size;
+  if (!isBrowser()) return 0;
+  try {
+    return new Blob([JSON.stringify(obj)]).size;
+  } catch {
+    return JSON.stringify(obj).length * 2; // fallback: rough estimate
+  }
 }
 
 /**
@@ -29,6 +41,8 @@ function estimateSize(obj: any): number {
  * @returns Cached data or null if expired/not found
  */
 export function getCachedData<T>(key: string): T | null {
+  if (!isBrowser()) return null;
+  
   try {
     const item = localStorage.getItem(key);
     if (!item) return null;
@@ -53,6 +67,8 @@ export function getCachedData<T>(key: string): T | null {
  * Clean up oldest cached items when quota is exceeded
  */
 function cleanupOldestCache(): void {
+  if (!isBrowser()) return;
+  
   try {
     const allKeys = Object.keys(localStorage).filter(key => 
       key.startsWith('cache_') || key.includes('dashboard_') || key.includes('persons') || key.includes('leads')
@@ -91,6 +107,8 @@ function cleanupOldestCache(): void {
  * @param ttlMs - Time to live in milliseconds (default: 5 minutes)
  */
 export function setCacheData<T>(key: string, data: T, ttlMs: number = 5 * 60 * 1000): void {
+  if (!isBrowser()) return;
+  
   try {
     const size = estimateSize(data);
     
@@ -135,6 +153,8 @@ export function setCacheData<T>(key: string, data: T, ttlMs: number = 5 * 60 * 1
  * @param key - Cache key
  */
 export function clearCache(key: string): void {
+  if (!isBrowser()) return;
+  
   try {
     localStorage.removeItem(key);
   } catch (error) {
@@ -146,6 +166,8 @@ export function clearCache(key: string): void {
  * Clear all dashboard cache
  */
 export function clearDashboardCache(): void {
+  if (!isBrowser()) return;
+  
   clearCache('dashboard_stats');
   clearCache('dashboard_persons');
   clearCache('dashboard_recent_leads');
@@ -163,6 +185,8 @@ export function clearDashboardCache(): void {
  * @returns true if cache exists and is valid
  */
 export function isCacheValid(key: string): boolean {
+  if (!isBrowser()) return false;
+  
   try {
     const item = localStorage.getItem(key);
     if (!item) return false;

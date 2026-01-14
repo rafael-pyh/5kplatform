@@ -121,7 +121,7 @@ export function SimpleInstallButton() {
   return (
     <button
       onClick={install}
-      className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-shadow"
+      className="bg-linear-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-shadow"
     >
       ⬇️ Instalar App
     </button>
