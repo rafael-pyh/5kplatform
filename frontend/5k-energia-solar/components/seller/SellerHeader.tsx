@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import React, { useState } from 'react';
 import { Button } from '../ui';
+import { useGlobalRefresh } from '@/hooks/useGlobalRefresh';
 
 const SellerHeader = ({ seller, onOpenQR, onLogout, blocked }: any) => {
   const router = useRouter();
   const { user } = useAuth();
+  const { handleRefresh, isRefreshing } = useGlobalRefresh();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -45,6 +47,29 @@ const SellerHeader = ({ seller, onOpenQR, onLogout, blocked }: any) => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-4">
+            {/* Refresh Button */}
+            <Button
+              onClick={() => handleRefresh()}
+              disabled={isRefreshing}
+              variant='none'
+              title="Atualizar dados do servidor"
+              className="p-2"
+            >
+              <svg
+                className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </Button>
+
             {seller?.qrCodeUrl && (
               <Button
                 onClick={onOpenQR}
@@ -148,6 +173,32 @@ const SellerHeader = ({ seller, onOpenQR, onLogout, blocked }: any) => {
             </div>
 
             <div className="space-y-2">
+              {/* Refresh Button Mobile */}
+              <button
+                onClick={() => {
+                  handleRefresh();
+                  setIsMobileMenuOpen(false);
+                }}
+                disabled={isRefreshing}
+                className="w-full px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors flex items-center gap-2"
+                title="Atualizar dados do servidor"
+              >
+                <svg
+                  className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                <span className="font-medium">{isRefreshing ? 'Atualizando...' : 'Atualizar'}</span>
+              </button>
+
               {seller?.qrCodeUrl && (
                 <button
                   onClick={() => {
