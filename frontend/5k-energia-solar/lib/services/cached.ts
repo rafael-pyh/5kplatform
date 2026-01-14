@@ -8,9 +8,10 @@
 import { cacheApiCall } from '../apiCache';
 import { 
   personService as originalPersonService, 
-  leadService as originalLeadService 
+  leadService as originalLeadService,
+  adminService as originalAdminService
 } from './index';
-import type { Person, Lead, CreatePersonDto, UpdatePersonDto, LeadFilters, CreateLeadDto, LeadStatus, UpdateLeadDto } from '../types';
+import type { Person, Lead, CreatePersonDto, UpdatePersonDto, LeadFilters, CreateLeadDto, LeadStatus, UpdateLeadDto, User } from '../types';
 
 // Cache TTL configurations
 const CACHE_TTLS = {
@@ -19,6 +20,8 @@ const CACHE_TTLS = {
   leads: 3 * 60 * 1000,        // 3 minutes
   leadById: 5 * 60 * 1000,     // 5 minutes
   newLeads: 2 * 60 * 1000,     // 2 minutes (more frequent updates)
+  admins: 5 * 60 * 1000,       // 5 minutes
+  adminById: 5 * 60 * 1000,    // 5 minutes
 };
 
 /**
@@ -133,5 +136,41 @@ export const cachedLeadService = {
       () => originalLeadService.getMyLeads(),
       { ttlMs: CACHE_TTLS.leads }
     );
+  },
+};
+
+/**
+ * Cached Admin Service
+ */
+export const cachedAdminService = {
+  async getAll(): Promise<User[]> {
+    return cacheApiCall(
+      'api_cache_admins_all',
+      () => originalAdminService.getAll(),
+      { ttlMs: CACHE_TTLS.admins }
+    );
+  },
+
+  async getById(id: string): Promise<User> {
+    return cacheApiCall(
+      `api_cache_admin_${id}`,
+      () => originalAdminService.getById(id),
+      { ttlMs: CACHE_TTLS.adminById }
+    );
+  },
+
+  async create(data: any): Promise<User> {
+    // Don't cache POST requests
+    return originalAdminService.create(data);
+  },
+
+  async update(id: string, data: any): Promise<User> {
+    // Don't cache PUT requests
+    return originalAdminService.update(id, data);
+  },
+
+  async delete(id: string): Promise<void> {
+    // Don't cache DELETE requests
+    return originalAdminService.delete(id);
   },
 };

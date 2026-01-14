@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { adminService } from '@/lib/services';
+import { cachedAdminService } from '@/lib/services/cached';
 import { toast } from 'react-hot-toast';
 import { User } from '@/lib/types';
 
@@ -20,7 +20,7 @@ export default function useAdmins() {
   const loadAdmins = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await adminService.getAll();
+      const data = await cachedAdminService.getAll();
       setAdmins(data);
     } catch (error: any) {
       console.error('Error loading admins:', error);
@@ -68,7 +68,7 @@ export default function useAdmins() {
     async (id: string) => {
       if (!confirm('Tem certeza que deseja excluir este administrador?')) return;
       try {
-        await adminService.delete(id);
+        await cachedAdminService.delete(id);
         toast.success('Administrador excluído com sucesso!');
         await loadAdmins();
       } catch (error: any) {

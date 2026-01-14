@@ -11,10 +11,10 @@ interface CacheItem<T> {
   size: number;
 }
 
-// Max size per item: 500KB
-const MAX_ITEM_SIZE = 500 * 1024;
-// Max total cache size: 2MB
-const MAX_TOTAL_CACHE = 2 * 1024 * 1024;
+// Max size per item: 10MB (increased for large datasets like persons list)
+const MAX_ITEM_SIZE = 10 * 1024 * 1024;
+// Max total cache size: 20MB
+const MAX_TOTAL_CACHE = 20 * 1024 * 1024;
 
 /**
  * Check if running in browser environment
@@ -114,7 +114,7 @@ export function setCacheData<T>(key: string, data: T, ttlMs: number = 5 * 60 * 1
     
     // Skip caching if data is too large
     if (size > MAX_ITEM_SIZE) {
-      console.warn(`Data for key ${key} is too large (${(size / 1024).toFixed(2)}KB), skipping cache`);
+      console.warn(`Data for key ${key} is too large (${(size / 1024 / 1024).toFixed(2)}MB), skipping cache. Max: ${(MAX_ITEM_SIZE / 1024 / 1024).toFixed(2)}MB`);
       return;
     }
 
