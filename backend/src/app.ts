@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
 import authRoutes from "./routes/auth.routes";
 import personRoutes from "./routes/person.routes";
 import leadRoutes from "./routes/lead.routes";
@@ -18,6 +19,7 @@ import whatsappTemplateRoutes from "./routes/whatsapp-template.routes";
 import { errorHandler } from "./shared/errorHandler";
 import { initializeMinIOBucket } from "./services/storage.service";
 import { authenticate } from "./middlewares/auth.middleware";
+import { swaggerSpec } from "./config/swagger.config";
 
 const app = express();
 
@@ -26,8 +28,21 @@ initializeMinIOBucket().catch(error => {
   console.error("Erro ao inicializar MinIO:", error);
 });
 
+// Configuração de CORS
+const corsOptions = {
+  origin: [
+    'https://5kenergiasolar.up.railway.app',
+    'https://5kplatform.vercel.app',
+    'http://localhost:3000',
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
 // Middlewares globais
-app.use(cors());
+app.use(cors(corsOptions));
 // Aumenta limite para suportar imagens base64 (10MB)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -43,6 +58,9 @@ app.get("/health", (req, res) => {
   });
 });
 
+// Swagger Documentation
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // Rotas da API
 app.use("/api/auth", authRoutes);
 app.use("/api/auth", registrationRoutes);
@@ -56,7 +74,6 @@ app.use("/api/seller", sellerLeadsRoutes);
 app.use("/api/seller", authenticate, sellerRoutes);
 app.use("/api", manualRegisterRoutes);
 app.use("/api/approval", approvalRoutes);
-app.use("/api/admin", authenticate, migrationRoutes);
 app.use("/api/admin", authenticate, migrationRoutes);
 app.use("/api", emailActivationRouter);
 app.use("/api/whatsapp-templates", whatsappTemplateRoutes);
