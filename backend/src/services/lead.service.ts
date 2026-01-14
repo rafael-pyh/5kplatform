@@ -6,18 +6,7 @@ import { env } from "../config/env";
 import { Validator } from "../shared/Validator";
 import { CachedService, CacheInvalidationManager } from "../cache/cache-invalidation";
 
-/**
- * Lead Service com suporte a Cache automático e queries otimizadas
- * Herda de CachedService para funcionalidades de cache reutilizáveis
- */
-export class LeadService extends CachedService {
-  protected modelName = 'Lead';
-  
-  // TTLs específicas por operação
-  private readonly ttlStats = 5 * 60 * 1000; // 5 minutos para estatísticas
-  private readonly ttlLists = 10 * 60 * 1000; // 10 minutos para listas
-  private readonly ttlDetail = 10 * 60 * 1000; // 10 minutos para detalhes
-
+// ===================== TIPOS =====================
 export interface CreateLeadDto {
   name: string;
   email?: string;
@@ -35,6 +24,23 @@ export interface UpdateLeadDto {
   roofPhoto?: string;
   status?: LeadStatus;
   notes?: string;
+}
+
+/**
+ * Lead Service com suporte a Cache automático e queries otimizadas
+ * Herda de CachedService para funcionalidades de cache reutilizáveis
+ */
+export class LeadService extends CachedService {
+  protected modelName = 'Lead';
+  
+  // TTLs específicas por operação
+  private readonly ttlStats = 5 * 60 * 1000; // 5 minutos para estatísticas
+  private readonly ttlLists = 10 * 60 * 1000; // 10 minutos para listas
+  private readonly ttlDetail = 10 * 60 * 1000; // 10 minutos para detalhes
+
+  getTtlStats() { return this.ttlStats; }
+  getTtlLists() { return this.ttlLists; }
+  getTtlDetail() { return this.ttlDetail; }
 }
 
 /**
@@ -110,7 +116,7 @@ async function getAllLeads(filters?: {
       offset,
       raw: false, // Mantém instâncias para suportar includes
     });
-  }, service['ttlLists']);
+  }, service.getTtlLists());
 }
 
 /**
@@ -133,7 +139,7 @@ async function getLeadsByOwner(ownerId: string, limit?: number, offset?: number)
       limit: limit || 50,
       offset: offset || 0,
     });
-  }, service['ttlLists']);
+  }, service.getTtlLists());
 }
 
 /**
@@ -162,7 +168,7 @@ async function getLeadById(id: string) {
     }
 
     return lead;
-  }, service['ttlDetail']);
+  }, service.getTtlDetail());
 }
 
 /**
@@ -284,7 +290,7 @@ async function getLeadsStats() {
       cancelled,
       conversionRate: total > 0 ? ((bought / total) * 100).toFixed(2) + "%" : "0%",
     };
-  }, service['ttlStats']);
+  }, service.getTtlStats());
 }
 
 /**
@@ -316,7 +322,7 @@ async function getNewLeads(days: number = 7) {
       }],
       order: [['createdAt', 'DESC']],
     });
-  }, service['ttlStats']);
+  }, service.getTtlStats());
 }
 
 /**
@@ -345,7 +351,7 @@ async function getSellerLeads(sellerId: string, filters?: {
       limit: filters?.limit || 50,
       offset: filters?.offset || 0,
     });
-  }, service['ttlLists']);
+  }, service.getTtlLists());
 }
 
 /**
@@ -369,7 +375,7 @@ async function getSellerLeadById(sellerId: string, leadId: string) {
     }
 
     return lead;
-  }, service['ttlDetail']);
+  }, service.getTtlDetail());
 }
 
 /**
@@ -396,7 +402,7 @@ async function getSellerLeadsStats(sellerId: string) {
       cancelled,
       conversionRate: total > 0 ? ((bought / total) * 100).toFixed(2) + "%" : "0%",
     };
-  }, service['ttlStats']);
+  }, service.getTtlStats());
 }
 
 /**
@@ -422,7 +428,7 @@ async function getLeadsByPersonRole(userId: string, userRole: string, limit?: nu
       limit: limit || 50,
       offset: offset || 0,
     });
-  }, service['ttlLists']);
+  }, service.getTtlLists());
 }
 
 // ===================== EXPORTAR FUNÇÕES DO SERVIÇO =====================

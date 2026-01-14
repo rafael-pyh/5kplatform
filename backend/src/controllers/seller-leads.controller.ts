@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import * as leadService from "../services/lead.service";
+import { LeadServiceFunctions } from "../services/lead.service";
 import { ResponseBuilder } from "../shared/ResponseBuilder";
 
 // ==================== SELLER LEADS CONTROLLER ====================
@@ -12,7 +12,7 @@ export const getMyLeads = async (req: Request, res: Response, next: NextFunction
     }
 
     const { status } = req.query;
-    const leads = await leadService.getSellerLeads(sellerId, {
+    const leads = await LeadServiceFunctions.getSellerLeads(sellerId, {
       status: status as any,
     });
     const jsonData = Array.isArray(leads) ? leads.map((item: any) => item.toJSON ? item.toJSON() : item) : leads;
@@ -30,7 +30,7 @@ export const getMyLeadById = async (req: Request, res: Response, next: NextFunct
     }
 
     const { id } = req.params;
-    const lead = await leadService.getSellerLeadById(sellerId, id);
+    const lead = await LeadServiceFunctions.getSellerLeadById(sellerId, id);
     const jsonData = (lead as any).toJSON ? (lead as any).toJSON() : lead;
     return ResponseBuilder.success(res, jsonData);
   } catch (error) {
@@ -45,7 +45,7 @@ export const getMyStats = async (req: Request, res: Response, next: NextFunction
       return res.status(401).json({ success: false, message: "Não autenticado" });
     }
 
-    const stats = await leadService.getSellerLeadsStats(sellerId);
+    const stats = await LeadServiceFunctions.getSellerLeadsStats(sellerId);
     return ResponseBuilder.success(res, stats);
   } catch (error) {
     next(error);

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import * as qrcodeService from "../services/qrcode.service";
 import * as personService from "../services/person.service";
-import * as leadService from "../services/lead.service";
+import { LeadServiceFunctions } from "../services/lead.service";
 import { ResponseBuilder } from "../shared/ResponseBuilder";
 import { NotFoundError } from "../shared/errors";
 
@@ -51,7 +51,7 @@ export const createLeadFromQR = async (req: Request, res: Response, next: NextFu
       ownerId: person.id,
     };
 
-    const lead = await leadService.createLead(leadData);
+    const lead = await LeadServiceFunctions.createLead(leadData);
     const jsonData = (lead as any).toJSON ? (lead as any).toJSON() : lead;
 
     return ResponseBuilder.created(res, jsonData, "Cadastro realizado com sucesso!");

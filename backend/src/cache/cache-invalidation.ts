@@ -133,7 +133,7 @@ export abstract class CachedService {
   /**
    * Obtém chave de cache padronizada
    */
-  protected getCacheKey(operation: string, ...params: any[]): string {
+  public getCacheKey(operation: string, ...params: any[]): string {
     const paramStr = params.length > 0 ? `:${params.join(':')}` : '';
     return `${this.modelName}:${operation}${paramStr}`;
   }
@@ -141,7 +141,7 @@ export abstract class CachedService {
   /**
    * Obtém do cache ou executa função
    */
-  protected async getCachedOrExecute<T>(
+  public async getCachedOrExecute<T>(
     cacheKey: string,
     fn: () => Promise<T>,
     ttlMs?: number

@@ -4,6 +4,7 @@
  */
 
 import { CachedService, CacheInvalidationManager } from '../cache/cache-invalidation';
+import { Person } from '../models/Person';
 
 /**
  * Base Service Template
