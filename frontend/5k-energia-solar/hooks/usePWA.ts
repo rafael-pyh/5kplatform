@@ -33,7 +33,6 @@ export function usePWA() {
     };
 
     const handleAppInstalled = () => {
-      console.log('PWA instalado com sucesso');
       setInstallPrompt(null);
       setIsInstalled(true);
     };
@@ -68,13 +67,7 @@ export function usePWA() {
     
     try {
       await installPrompt.prompt();
-      const choice = await installPrompt.userChoice;
-      
-      if (choice.outcome === 'accepted') {
-        console.log('Usuário aceitou a instalação');
-      } else {
-        console.log('Usuário rejeitou a instalação');
-      }
+      const _choice = await installPrompt.userChoice;
       
       setInstallPrompt(null);
     } catch (error) {
@@ -84,7 +77,6 @@ export function usePWA() {
 
   const requestNotificationPermission = async () => {
     if (!('Notification' in window)) {
-      console.log('Notificações não suportadas');
       return false;
     }
 
@@ -103,7 +95,6 @@ export function usePWA() {
   const subscribePushNotifications = async () => {
     try {
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.log('Push notifications não suportadas');
         return null;
       }
 
@@ -124,8 +115,6 @@ export function usePWA() {
       // });
 
       // return newSubscription;
-
-      console.log('Configure as VAPID keys no backend para ativar push notifications');
       return null;
     } catch (error) {
       console.error('Erro ao se inscrever em notificações:', error);

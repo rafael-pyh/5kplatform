@@ -107,8 +107,6 @@ export async function confirmEmailAction(token: string): Promise<{ message: stri
       body: JSON.stringify({ token }),
     });
 
-    console.log('[confirmEmailAction] Resposta status:', response.status);
-
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[confirmEmailAction] Erro da API:', errorText);
@@ -122,7 +120,6 @@ export async function confirmEmailAction(token: string): Promise<{ message: stri
     }
 
     const result = await response.json();
-    console.log('[confirmEmailAction] Sucesso:', result);
     return result.data || result;
   } catch (error: any) {
     console.error('Error in confirmEmailAction:', error);
@@ -139,8 +136,6 @@ export async function resendVerificationEmailAction(email: string): Promise<{ me
       throw new Error("API_URL não configurada. Verifique variáveis de ambiente.");
     }
 
-    console.log('[resendVerificationEmailAction] Chamando API:', `${apiUrl}/api/seller/resend-verification-email`);
-
     const response = await fetch(`${apiUrl}/api/seller/resend-verification-email`, {
       method: "POST",
       headers: {
@@ -148,8 +143,6 @@ export async function resendVerificationEmailAction(email: string): Promise<{ me
       },
       body: JSON.stringify({ email }),
     });
-
-    console.log('[resendVerificationEmailAction] Resposta status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -164,7 +157,6 @@ export async function resendVerificationEmailAction(email: string): Promise<{ me
     }
 
     const result = await response.json();
-    console.log('[resendVerificationEmailAction] Sucesso:', result);
     return result.data || result;
   } catch (error: any) {
     console.error('[resendVerificationEmailAction] Erro:', error);

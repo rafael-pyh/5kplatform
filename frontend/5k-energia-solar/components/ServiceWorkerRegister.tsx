@@ -9,7 +9,6 @@ export function ServiceWorkerRegister() {
         navigator.serviceWorker
           .register('/sw.js', { scope: '/' })
           .then((registration) => {
-            console.log('Service Worker registrado com sucesso:', registration);
 
             // Verificar por atualizações a cada 1 hora
             const updateCheckInterval = setInterval(() => {
@@ -19,8 +18,8 @@ export function ServiceWorkerRegister() {
             // Limpar interval ao desmontar
             return () => clearInterval(updateCheckInterval);
           })
-          .catch((error) => {
-            console.log('Erro ao registrar Service Worker:', error);
+          .catch((_error) => {
+            console.error('Erro ao registrar Service Worker:', "Cors policy");
           });
 
         // Detectar atualização do Service Worker

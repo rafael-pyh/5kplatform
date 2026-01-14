@@ -14,12 +14,10 @@ const STATIC_ASSETS = [
 
 // Instalar e cachear assets estáticos
 self.addEventListener('install', (event) => {
-  console.log('Service Worker instalado');
-  event.waitUntil(
+    event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Cacheando assets estáticos');
       return cache.addAll(STATIC_ASSETS).catch((err) => {
-        console.log('Alguns assets não puderam ser cacheados:', err);
+        console.error('Alguns assets não puderam ser cacheados:', "Cors policy");
       });
     })
   );
@@ -28,13 +26,11 @@ self.addEventListener('install', (event) => {
 
 // Ativar e limpar caches antigos
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker ativado');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE && cacheName !== IMAGE_CACHE) {
-            console.log('Deletando cache antigo:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -153,7 +149,6 @@ self.addEventListener('fetch', (event) => {
 
 // Sincronização de background
 self.addEventListener('sync', (event) => {
-  console.log('Background sync:', event.tag);
   if (event.tag === 'sync-data') {
     event.waitUntil(
       // Implementar lógica de sincronização de dados
@@ -164,7 +159,6 @@ self.addEventListener('sync', (event) => {
 
 // Notificações push
 self.addEventListener('push', (event) => {
-  console.log('Push recebido:', event);
   if (event.data) {
     const data = event.data.json();
     const options = {
@@ -182,7 +176,6 @@ self.addEventListener('push', (event) => {
 
 // Clique em notificação
 self.addEventListener('notificationclick', (event) => {
-  console.log('Notificação clicada:', event.notification);
   event.notification.close();
   
   const urlToOpen = event.notification.data?.url || '/';

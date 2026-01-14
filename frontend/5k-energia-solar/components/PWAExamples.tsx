@@ -26,7 +26,6 @@ export function PWAStatusExample() {
     if (granted) {
       const subscription = await subscribePushNotifications();
       if (subscription) {
-        console.log('Subscrito em notificações:', subscription);
         // Aqui você poderia enviar a subscription para seu backend
         // await fetch('/api/notifications/subscribe', {
         //   method: 'POST',
