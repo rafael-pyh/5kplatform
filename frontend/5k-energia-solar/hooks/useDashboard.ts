@@ -31,8 +31,8 @@ export default function useDashboard() {
     recentLeads: 'dashboard_recent_leads',
   };
 
-  // TTL: 5 minutes for stats and leads (balance between freshness and cost reduction)
-  const CACHE_TTL_MS = 5 * 60 * 1000;
+  // TTL: 15 minutes for stats and leads (balance between freshness and cost reduction)
+  const CACHE_TTL_MS = 15 * 60 * 1000;
 
   const loadDashboardData = useCallback(async (forceRefresh: boolean = false) => {
     try {
@@ -84,7 +84,7 @@ export default function useDashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [CACHE_KEYS.stats, CACHE_KEYS.persons, CACHE_KEYS.recentLeads, CACHE_TTL_MS]);
 
   // Usar o hook global de refresh com callback do dashboard
   const { isRefreshing } = useGlobalRefresh(async () => {
@@ -102,7 +102,7 @@ export default function useDashboard() {
     
     if (!isAuthenticated) return;
     loadDashboardData();
-  }, [isAuthenticated, authLoading, loadDashboardData, user?.role, router]);
+  }, [isAuthenticated, authLoading, user?.role, router]);
 
   return {
     loading,
