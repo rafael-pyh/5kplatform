@@ -1,10 +1,22 @@
-import sequelize from "../database/sequelize";
 import { Lead, LeadStatus } from "../models/Lead";
 import { Person } from "../models/Person";
 import { Op } from "sequelize";
 import { sendApprovalOrRejectionEmail } from "../utils/email";
 import { env } from "../config/env";
 import { Validator } from "../shared/Validator";
+import { CachedService, CacheInvalidationManager } from "../cache/cache-invalidation";
+
+/**
+ * Lead Service com suporte a Cache automático e queries otimizadas
+ * Herda de CachedService para funcionalidades de cache reutilizáveis
+ */
+export class LeadService extends CachedService {
+  protected modelName = 'Lead';
+  
+  // TTLs específicas por operação
+  private readonly ttlStats = 5 * 60 * 1000; // 5 minutos para estatísticas
+  private readonly ttlLists = 10 * 60 * 1000; // 10 minutos para listas
+  private readonly ttlDetail = 10 * 60 * 1000; // 10 minutos para detalhes
 
 export interface CreateLeadDto {
   name: string;
@@ -25,7 +37,15 @@ export interface UpdateLeadDto {
   notes?: string;
 }
 
-export const createLead = async (data: CreateLeadDto) => {
+/**
+ * Cria um novo lead com validação e invalidação automática de cache
+ * 
+ * Validações:
+ * - Images em base64 (max 2MB)
+ * 
+ * Cache invalidado após criação
+ */
+async function createLead(data: CreateLeadDto) {
   const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
   if (data.energyBill) {
     Validator.isBase64DataUrl(data.energyBill, 'Conta de energia');
@@ -37,6 +57,10 @@ export const createLead = async (data: CreateLeadDto) => {
   }
 
   const lead = await Lead.create(data as any);
+  
+  // Invalida cache de listas após criação
+  CacheInvalidationManager.invalidateAfterCreate('Lead');
+
   await lead.reload({
     include: [{
       model: Person,
@@ -45,61 +69,120 @@ export const createLead = async (data: CreateLeadDto) => {
     }],
   });
   return lead;
-};
+}
 
-// Buscar todos os leads (admin)
-export const getAllLeads = async (filters?: {
+/**
+ * Busca todos os leads com filtros opcionais
+ * 
+ * Otimizações:
+ * - Usa attributes específicas (sem SELECT *)
+ * - Cacheia resultado por 10 minutos
+ * - Suporta filtros por status e ownerId
+ */
+async function getAllLeads(filters?: {
   status?: LeadStatus;
   ownerId?: string;
-}) => {
+  limit?: number;
+  offset?: number;
+}) {
+  const service = new LeadService();
   const where: any = {};
   if (filters?.status) where.status = filters.status;
   if (filters?.ownerId) where.ownerId = filters.ownerId;
 
-  return Lead.findAll({
-    where,
-    include: [{
-      model: Person,
-      as: 'owner',
-      attributes: ['id', 'name'],
-    }],
-    order: [['createdAt', 'DESC']],
-  });
-};
+  // Cria chave de cache com filtros
+  const cacheKey = service.getCacheKey('list', JSON.stringify(filters || {}));
 
-// Buscar leads de um vendedor específico (para o vendedor ver)
-export const getLeadsByOwner = async (ownerId: string) => {
-  return Lead.findAll({
-    where: { ownerId },
-    attributes: ['id', 'name', 'status', 'createdAt'],
-    order: [['createdAt', 'DESC']],
-  });
-};
+  return service.getCachedOrExecute(cacheKey, async () => {
+    const limit = filters?.limit || 50; // Padrão: 50 itens
+    const offset = filters?.offset || 0;
 
-// Buscar um lead específico
-export const getLeadById = async (id: string) => {
-  const lead = await Lead.findByPk(id, {
-    include: [{
-      model: Person,
-      as: 'owner',
-      attributes: ['id', 'name', 'email', 'phone'],
-    }],
-  });
+    return Lead.findAll({
+      where,
+      attributes: ['id', 'name', 'status', 'createdAt', 'email', 'phone', 'ownerId'],
+      include: [{
+        model: Person,
+        as: 'owner',
+        attributes: ['id', 'name'],
+      }],
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset,
+      raw: false, // Mantém instâncias para suportar includes
+    });
+  }, service['ttlLists']);
+}
 
-  if (!lead) {
-    throw new Error("Lead não encontrado");
-  }
+/**
+ * Busca leads de um vendedor específico
+ * 
+ * Otimizações:
+ * - Attributes limitados
+ * - Cache por 10 minutos
+ * - Paginação
+ */
+async function getLeadsByOwner(ownerId: string, limit?: number, offset?: number) {
+  const service = new LeadService();
+  const cacheKey = service.getCacheKey('by-owner', ownerId, limit, offset);
 
-  return lead;
-};
+  return service.getCachedOrExecute(cacheKey, async () => {
+    return Lead.findAll({
+      where: { ownerId },
+      attributes: ['id', 'name', 'status', 'createdAt', 'email', 'phone'],
+      order: [['createdAt', 'DESC']],
+      limit: limit || 50,
+      offset: offset || 0,
+    });
+  }, service['ttlLists']);
+}
 
-// Atualizar um lead
-export const updateLead = async (id: string, data: UpdateLeadDto) => {
+/**
+ * Busca um lead específico pelo ID
+ * 
+ * Otimizações:
+ * - Cache por 10 minutos
+ * - Detalhes completos com owner
+ */
+async function getLeadById(id: string) {
+  const service = new LeadService();
+  const cacheKey = service.getCacheKey('by-id', id);
+
+  return service.getCachedOrExecute(cacheKey, async () => {
+    const lead = await Lead.findByPk(id, {
+      attributes: ['id', 'name', 'status', 'createdAt', 'email', 'phone', 'energyBill', 'roofPhoto', 'notes'],
+      include: [{
+        model: Person,
+        as: 'owner',
+        attributes: ['id', 'name', 'email', 'phone'],
+      }],
+    });
+
+    if (!lead) {
+      throw new Error("Lead não encontrado");
+    }
+
+    return lead;
+  }, service['ttlDetail']);
+}
+
+/**
+ * Atualiza um lead com invalidação de cache automática
+ * 
+ * Otimizações:
+ * - Invalida apenas caches relacionados
+ * - Evita reloads desnecessários
+ */
+async function updateLead(id: string, data: UpdateLeadDto) {
   const lead = await Lead.findByPk(id);
   if (!lead) throw new Error("Lead não encontrado");
   
   await lead.update(data);
+  
+  // Invalida caches específicos deste lead e de listas
+  CacheInvalidationManager.invalidateAfterUpdate('Lead', id);
+
   await lead.reload({
+    attributes: ['id', 'name', 'status', 'email', 'phone', 'energyBill', 'roofPhoto', 'notes'],
     include: [{
       model: Person,
       as: 'owner',
@@ -108,10 +191,15 @@ export const updateLead = async (id: string, data: UpdateLeadDto) => {
   });
   
   return lead;
-};
+}
 
-// Atualizar apenas o status do lead
-export const updateLeadStatus = async (id: string, status: LeadStatus) => {
+/**
+ * Atualiza apenas o status de um lead
+ * 
+ * Inclusões:
+ * - Notifica vendedor se mudou para BOUGHT
+ */
+async function updateLeadStatus(id: string, status: LeadStatus) {
   const lead = await Lead.findByPk(id, {
     include: [{
       model: Person,
@@ -134,6 +222,9 @@ export const updateLeadStatus = async (id: string, status: LeadStatus) => {
     }],
   });
 
+  // Invalida caches
+  CacheInvalidationManager.invalidateAfterUpdate('Lead', id);
+
   // Se o status mudou para BOUGHT, notifica o vendedor (caso tenha email)
   try {
     if (previousStatus !== LeadStatus.BOUGHT && status === LeadStatus.BOUGHT) {
@@ -152,117 +243,201 @@ export const updateLeadStatus = async (id: string, status: LeadStatus) => {
   }
 
   return lead;
-};
+}
 
-// Deletar um lead
-export const deleteLead = async (id: string) => {
+/**
+ * Deleta um lead com invalidação de cache
+ */
+async function deleteLead(id: string) {
   const lead = await Lead.findByPk(id);
   if (!lead) throw new Error("Lead não encontrado");
   
   await lead.destroy();
+  
+  // Invalida caches relacionados
+  CacheInvalidationManager.invalidateAfterDestroy('Lead', id);
+  
   return lead;
-};
+}
 
-// Estatísticas gerais de leads
-export const getLeadsStats = async () => {
-  const [total, bought, negotiation, cancelled] = await Promise.all([
-    Lead.count(),
-    Lead.count({ where: { status: LeadStatus.BOUGHT } }),
-    Lead.count({ where: { status: LeadStatus.NEGOTIATION } }),
-    Lead.count({ where: { status: LeadStatus.CANCELLED } }),
-  ]);
+/**
+ * Retorna estatísticas de leads com cache
+ * 
+ * Cache: 5 minutos
+ */
+async function getLeadsStats() {
+  const service = new LeadService();
+  const cacheKey = service.getCacheKey('stats');
 
-  return {
-    total,
-    bought,
-    negotiation,
-    cancelled,
-    conversionRate: total > 0 ? ((bought / total) * 100).toFixed(2) + "%" : "0%",
-  };
-};
+  return service.getCachedOrExecute(cacheKey, async () => {
+    const [total, bought, negotiation, cancelled] = await Promise.all([
+      Lead.count(),
+      Lead.count({ where: { status: LeadStatus.BOUGHT } }),
+      Lead.count({ where: { status: LeadStatus.NEGOTIATION } }),
+      Lead.count({ where: { status: LeadStatus.CANCELLED } }),
+    ]);
 
-// Novos leads (últimos 7 dias)
-export const getNewLeads = async (days: number = 7) => {
-  const date = new Date();
-  date.setDate(date.getDate() - days);
+    return {
+      total,
+      bought,
+      negotiation,
+      cancelled,
+      conversionRate: total > 0 ? ((bought / total) * 100).toFixed(2) + "%" : "0%",
+    };
+  }, service['ttlStats']);
+}
 
-  return Lead.findAll({
-    where: {
-      createdAt: {
-        [Op.gte]: date,
-      },
-    },
-    include: [{
-      model: Person,
-      as: 'owner',
-      attributes: ['id', 'name'],
-    }],
-    order: [['createdAt', 'DESC']],
-  });
-};
+/**
+ * Retorna novos leads dos últimos N dias
+ * 
+ * Otimizações:
+ * - Attributes específicas
+ * - Cache por 5 minutos
+ */
+async function getNewLeads(days: number = 7) {
+  const service = new LeadService();
+  const cacheKey = service.getCacheKey('new', days);
 
-// Buscar leads de um vendedor com detalhes completos (para área do vendedor)
-export const getSellerLeads = async (sellerId: string, filters?: { status?: LeadStatus }) => {
-  const where: any = { ownerId: sellerId };
-  if (filters?.status) where.status = filters.status;
+  return service.getCachedOrExecute(cacheKey, async () => {
+    const date = new Date();
+    date.setDate(date.getDate() - days);
 
-  return Lead.findAll({
-    where,
-    attributes: ['id', 'name', 'email', 'phone', 'status', 'createdAt', 'updatedAt'],
-    order: [['createdAt', 'DESC']],
-  });
-};
-
-// Buscar lead específico de um vendedor
-export const getSellerLeadById = async (sellerId: string, leadId: string) => {
-  const lead = await Lead.findOne({
-    where: {
-      id: leadId,
-      ownerId: sellerId,
-    },
-    attributes: ['id', 'name', 'email', 'phone', 'status', 'createdAt', 'updatedAt'],
-  });
-
-  if (!lead) {
-    throw new Error("Lead não encontrado");
-  }
-
-  return lead;
-};
-
-// Estatísticas de leads de um vendedor
-export const getSellerLeadsStats = async (sellerId: string) => {
-  const [total, bought, negotiation, cancelled] = await Promise.all([
-    Lead.count({ where: { ownerId: sellerId } }),
-    Lead.count({ where: { ownerId: sellerId, status: LeadStatus.BOUGHT } }),
-    Lead.count({ where: { ownerId: sellerId, status: LeadStatus.NEGOTIATION } }),
-    Lead.count({ where: { ownerId: sellerId, status: LeadStatus.CANCELLED } }),
-  ]);
-
-  return {
-    total,
-    bought,
-    negotiation,
-    cancelled,
-    conversionRate: total > 0 ? ((bought / total) * 100).toFixed(2) + "%" : "0%",
-  };
-};
-
-// Buscar leads do vendedor/afiliado autenticado com filtragem por role
-export const getLeadsByPersonRole = async (userId: string, userRole: string) => {
-  // Se for AFFILIATE: retorna apenas seus leads com dados limitados
-  if (userRole === 'AFFILIATE') {
     return Lead.findAll({
-      where: { ownerId: userId },
-      attributes: ['id', 'name', 'status', 'createdAt'],
+      where: {
+        createdAt: {
+          [Op.gte]: date,
+        },
+      },
+      attributes: ['id', 'name', 'status', 'createdAt', 'email', 'phone', 'ownerId'],
+      include: [{
+        model: Person,
+        as: 'owner',
+        attributes: ['id', 'name'],
+      }],
       order: [['createdAt', 'DESC']],
     });
-  }
+  }, service['ttlStats']);
+}
 
-  // Se for SELLER ou superior: retorna todos os dados dos seus leads
-  return Lead.findAll({
-    where: { ownerId: userId },
-    attributes: ['id', 'name', 'email', 'phone', 'status', 'createdAt', 'updatedAt', 'energyBill', 'roofPhoto', 'notes'],
-    order: [['createdAt', 'DESC']],
-  });
+/**
+ * Retorna leads de um vendedor com detalhes
+ * 
+ * Otimizações:
+ * - Attributes limitadas
+ * - Paginação
+ */
+async function getSellerLeads(sellerId: string, filters?: { 
+  status?: LeadStatus;
+  limit?: number;
+  offset?: number;
+}) {
+  const service = new LeadService();
+  const cacheKey = service.getCacheKey('seller', sellerId, JSON.stringify(filters || {}));
+
+  return service.getCachedOrExecute(cacheKey, async () => {
+    const where: any = { ownerId: sellerId };
+    if (filters?.status) where.status = filters.status;
+
+    return Lead.findAll({
+      where,
+      attributes: ['id', 'name', 'email', 'phone', 'status', 'createdAt', 'updatedAt'],
+      order: [['createdAt', 'DESC']],
+      limit: filters?.limit || 50,
+      offset: filters?.offset || 0,
+    });
+  }, service['ttlLists']);
+}
+
+/**
+ * Retorna um lead específico de um vendedor
+ */
+async function getSellerLeadById(sellerId: string, leadId: string) {
+  const service = new LeadService();
+  const cacheKey = service.getCacheKey('seller-by-id', sellerId, leadId);
+
+  return service.getCachedOrExecute(cacheKey, async () => {
+    const lead = await Lead.findOne({
+      where: {
+        id: leadId,
+        ownerId: sellerId,
+      },
+      attributes: ['id', 'name', 'email', 'phone', 'status', 'createdAt', 'updatedAt', 'energyBill', 'roofPhoto', 'notes'],
+    });
+
+    if (!lead) {
+      throw new Error("Lead não encontrado");
+    }
+
+    return lead;
+  }, service['ttlDetail']);
+}
+
+/**
+ * Retorna estatísticas de leads de um vendedor específico
+ * 
+ * Cache: 5 minutos
+ */
+async function getSellerLeadsStats(sellerId: string) {
+  const service = new LeadService();
+  const cacheKey = service.getCacheKey('seller-stats', sellerId);
+
+  return service.getCachedOrExecute(cacheKey, async () => {
+    const [total, bought, negotiation, cancelled] = await Promise.all([
+      Lead.count({ where: { ownerId: sellerId } }),
+      Lead.count({ where: { ownerId: sellerId, status: LeadStatus.BOUGHT } }),
+      Lead.count({ where: { ownerId: sellerId, status: LeadStatus.NEGOTIATION } }),
+      Lead.count({ where: { ownerId: sellerId, status: LeadStatus.CANCELLED } }),
+    ]);
+
+    return {
+      total,
+      bought,
+      negotiation,
+      cancelled,
+      conversionRate: total > 0 ? ((bought / total) * 100).toFixed(2) + "%" : "0%",
+    };
+  }, service['ttlStats']);
+}
+
+/**
+ * Retorna leads do usuário autenticado com filtro por role
+ * 
+ * Otimizações:
+ * - Atributos limitados por role
+ * - Cache por 10 minutos
+ */
+async function getLeadsByPersonRole(userId: string, userRole: string, limit?: number, offset?: number) {
+  const service = new LeadService();
+  const cacheKey = service.getCacheKey('by-role', userId, userRole, limit, offset);
+
+  return service.getCachedOrExecute(cacheKey, async () => {
+    const attributes = userRole === 'AFFILIATE'
+      ? ['id', 'name', 'status', 'createdAt']
+      : ['id', 'name', 'email', 'phone', 'status', 'createdAt', 'updatedAt', 'energyBill', 'roofPhoto', 'notes'];
+
+    return Lead.findAll({
+      where: { ownerId: userId },
+      attributes,
+      order: [['createdAt', 'DESC']],
+      limit: limit || 50,
+      offset: offset || 0,
+    });
+  }, service['ttlLists']);
+}
+
+// ===================== EXPORTAR FUNÇÕES DO SERVIÇO =====================
+export const LeadServiceFunctions = {
+  createLead,
+  getAllLeads,
+  getLeadsByOwner,
+  getLeadById,
+  updateLead,
+  updateLeadStatus,
+  deleteLead,
+  getLeadsStats,
+  getNewLeads,
+  getSellerLeads,
+  getSellerLeadById,
+  getSellerLeadsStats,
+  getLeadsByPersonRole,
 };
