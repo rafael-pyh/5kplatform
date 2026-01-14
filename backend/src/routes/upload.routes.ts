@@ -30,6 +30,103 @@ const upload = multer({
   },
 });
 
+/**
+ * @swagger
+ * /api/upload/profile:
+ *   post:
+ *     summary: Upload de foto de perfil (Admin)
+ *     description: Faz upload da foto de perfil de um usuário
+ *     tags:
+ *       - Upload
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Upload realizado com sucesso
+ *       413:
+ *         description: Arquivo muito grande (máx 5MB)
+ * 
+ * @swagger
+ * /api/upload/energy-bill:
+ *   post:
+ *     summary: Upload de conta de energia
+ *     description: Faz upload da conta de energia para um lead
+ *     tags:
+ *       - Upload
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Upload realizado com sucesso
+ * 
+ * @swagger
+ * /api/upload/roof-photo:
+ *   post:
+ *     summary: Upload de foto do telhado
+ *     tags:
+ *       - Upload
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Upload realizado com sucesso
+ * 
+ * @swagger
+ * /api/upload/poster:
+ *   post:
+ *     summary: Upload de poster para QR Code
+ *     tags:
+ *       - Upload
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Upload realizado com sucesso
+ */
 // Rotas protegidas (requerem autenticação de administrador)
 router.post(
   "/profile",

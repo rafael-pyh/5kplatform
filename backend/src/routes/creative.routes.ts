@@ -58,19 +58,95 @@ const checkAdminRole = (req: any, res: any, next: any) => {
 // ============== ROTAS PÚBLICAS ==============
 
 /**
- * GET /api/creatives - Listar todos os criativos ativos
- * Query params: type, limit, offset
+ * @swagger
+ * /api/creatives:
+ *   get:
+ *     summary: Listar todos os criativos ativos
+ *     description: Retorna lista de todos os criativos ativos
+ *     tags:
+ *       - Creatives
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Lista de criativos
+ *   post:
+ *     summary: Criar novo criativo (Admin)
+ *     tags:
+ *       - Creatives
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       201:
+ *         description: Criativo criado com sucesso
+ *       403:
+ *         description: Permissão negada
  */
 router.get('/', listCreatives);
 
 /**
- * GET /api/creatives/type/:type - Buscar criativos por tipo
+ * @swagger
+ * /api/creatives/type/{type}:
+ *   get:
+ *     summary: Buscar criativos por tipo
+ *     tags:
+ *       - Creatives
+ *     parameters:
+ *       - in: path
+ *         name: type
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Criativos do tipo especificado
  */
 router.get('/type/:type', getCreativesByTypeController);
 
 /**
- * GET /api/creatives/search - Buscar criativos por tags
- * Query params: tags (separadas por vírgula), limit, offset
+ * @swagger
+ * /api/creatives/search/tags:
+ *   get:
+ *     summary: Buscar criativos por tags
+ *     tags:
+ *       - Creatives
+ *     parameters:
+ *       - in: query
+ *         name: tags
+ *         schema:
+ *           type: string
+ *         description: Tags separadas por vírgula
+ *     responses:
+ *       200:
+ *         description: Criativos com as tags especificadas
  */
 router.get('/search/tags', searchCreatives);
 
