@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from 'react';
-import { useLeads } from '@/lib/hooks/useLeads';
+import { useLeads } from '@/hooks/useLeads';
 import { Lead, LeadStatus } from '@/lib/types';
 
 type TabType = 'all' | 'bought' | 'negotiation' | 'cancelled';
