@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { personService, leadService } from '@/lib/services';
+import { cachedPersonService, cachedLeadService } from '@/lib/services/cached';
 import { getCachedData, setCacheData, clearDashboardCache } from '@/lib/cache';
 import { toast } from 'react-hot-toast';
 import { useGlobalRefresh } from '@/hooks/useGlobalRefresh';
@@ -55,9 +55,9 @@ export default function useDashboard() {
 
       // Fetch fresh data from API
       const [personsRes, allLeads, newLeads] = await Promise.all([
-        personService.getAll(),
-        leadService.getAll(),
-        leadService.getNewLeads(),
+        cachedPersonService.getAll(),
+        cachedLeadService.getAll(),
+        cachedLeadService.getNewLeads(),
       ]);
 
       const newStats: DashboardStats = {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { personService } from '@/lib/services';
+import { cachedPersonService } from '@/lib/services/cached';
 import { Person } from '@/lib/types';
 import { toast } from 'react-hot-toast';
 
@@ -12,7 +12,7 @@ export function usePersons(activeOnly: boolean = false) {
     try {
       setLoading(true);
       setError(null);
-      const data = await personService.getAll(activeOnly);
+      const data = await cachedPersonService.getAll(activeOnly);
       setPersons(data);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Erro ao carregar vendedores');

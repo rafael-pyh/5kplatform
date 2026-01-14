@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Lead, LeadStatus } from '@/lib/types';
-import { leadService } from '@/lib/services';
+import { cachedLeadService } from '@/lib/services/cached';
 
 export function useLeads() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -13,7 +13,7 @@ export function useLeads() {
     try {
       setLoading(true);
       setError(null);
-      const data = await leadService.getAll();
+      const data = await cachedLeadService.getAll();
       setLeads(data);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao carregar leads');
