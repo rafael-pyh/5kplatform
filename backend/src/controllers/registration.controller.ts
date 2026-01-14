@@ -128,7 +128,7 @@ export const createSellerAsAdmin = async (
       name: seller.name,
       email: seller.email,
       role: seller.role,
-      registration_type: seller.registration_type,
+      registrationType: seller.registrationType,
       tempPassword: tempPassword, // ← Retornar apenas uma vez
       message: 'Uma senha temporária foi enviada para o email do vendedor'
     }, 'Vendedor criado com sucesso!');

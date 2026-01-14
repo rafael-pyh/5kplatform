@@ -165,7 +165,7 @@ export const login = async (data: LoginDto) => {
       email: user.email,
       name: user.name,
       role: user.role || PersonRole.SELLER,
-      registration_type: user.registration_type,
+      registrationType: user.registrationType,
       active: user.active,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

@@ -49,19 +49,31 @@ export class Person extends Model {
   phone?: string;
 
   @AllowNull(true)
-  @Column(DataType.STRING)
+  @Column({
+    type: DataType.STRING,
+    field: 'pixKey'
+  })
   pixKey?: string;
 
   @AllowNull(true)
-  @Column(DataType.TEXT)
+  @Column({
+    type: DataType.TEXT,
+    field: 'photoBase64'
+  })
   photoBase64?: string; // Base64 data URL da foto de perfil
 
   @Unique
-  @Column(DataType.STRING)
+  @Column({
+    type: DataType.STRING,
+    field: 'qrCode'
+  })
   qrCode!: string;
 
   @AllowNull(true)
-  @Column(DataType.STRING)
+  @Column({
+    type: DataType.STRING,
+    field: 'qrCodeUrl'
+  })
   qrCodeUrl?: string; // URL do QR code armazenado no Minio
 
   @Default(true)
@@ -69,7 +81,10 @@ export class Person extends Model {
   active!: boolean;
 
   @Default(0)
-  @Column(DataType.INTEGER)
+  @Column({
+    type: DataType.INTEGER,
+    field: 'scanCount'
+  })
   scanCount!: number;
 
   @Default(PersonRole.SELLER)
@@ -77,19 +92,28 @@ export class Person extends Model {
   role!: PersonRole;
 
   @Default('ADMIN')
-  @Column(DataType.ENUM('PUBLIC', 'ADMIN'))
-  registration_type!: 'PUBLIC' | 'ADMIN';
+  @Column({
+    type: DataType.ENUM('PUBLIC', 'ADMIN'),
+    field: 'registration_type'
+  })
+  registrationType!: 'PUBLIC' | 'ADMIN';
 
   @AllowNull(true)
-  @Column(DataType.UUID)
-  created_by?: string; // ID do admin que criou este usuário
+  @Column({
+    type: DataType.UUID,
+    field: 'created_by'
+  })
+  createdBy?: string; // ID do admin que criou este usuário
 
   @AllowNull(true)
   @Column(DataType.STRING)
   password?: string;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column({
+    type: DataType.BOOLEAN,
+    field: 'emailVerified'
+  })
   emailVerified!: boolean;
 
   @Column(DataType.STRING)
@@ -100,35 +124,59 @@ export class Person extends Model {
 
   @Unique
   @AllowNull(true)
-  @Column(DataType.STRING)
+  @Column({
+    type: DataType.STRING,
+    field: 'verificationToken'
+  })
   verificationToken?: string;
 
   @AllowNull(true)
-  @Column(DataType.DATE)
+  @Column({
+    type: DataType.DATE,
+    field: 'tokenExpiry'
+  })
   tokenExpiry?: Date;
 
   @AllowNull(true)
-  @Column(DataType.STRING)
+  @Column({
+    type: DataType.STRING,
+    field: 'rememberMeToken'
+  })
   rememberMeToken?: string;
 
   @AllowNull(true)
-  @Column(DataType.DATE)
+  @Column({
+    type: DataType.DATE,
+    field: 'rememberMeExpiry'
+  })
   rememberMeExpiry?: Date;
 
   @AllowNull(true)
-  @Column(DataType.STRING)
+  @Column({
+    type: DataType.STRING,
+    field: 'resetPasswordToken'
+  })
   resetPasswordToken?: string;
 
   @AllowNull(true)
-  @Column(DataType.DATE)
+  @Column({
+    type: DataType.DATE,
+    field: 'resetPasswordExpiry'
+  })
   resetPasswordExpiry?: Date;
 
   @CreatedAt
-  @Column(DataType.DATE)
+  @Column({
+    type: DataType.DATE,
+    field: 'createdAt'
+  })
   createdAt!: Date;
 
   @UpdatedAt
-  @Column(DataType.DATE)
+  @Column({
+    type: DataType.DATE,
+    field: 'updatedAt'
+  })
   updatedAt!: Date;
 
   @HasMany(() => Lead)
@@ -138,7 +186,10 @@ export class Person extends Model {
   qrCodeScans?: QRCodeScan[];
 
   @Default('pending')
-  @Column(DataType.ENUM('pending', 'approved', 'rejected'))
+  @Column({
+    type: DataType.ENUM('pending', 'approved', 'rejected'),
+    field: 'approvalStatus'
+  })
   approvalStatus!: 'pending' | 'approved' | 'rejected';
 }
 
