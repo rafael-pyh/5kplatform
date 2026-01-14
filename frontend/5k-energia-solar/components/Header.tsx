@@ -133,7 +133,7 @@ export default function Header({ className }: { className?: string }) {
                 disabled={isRefreshing}
                 variant='none'
                 title="Atualizar dados do servidor"
-                className="p-2"
+                className="p-2 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
               >
                 <svg
                   className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`}
