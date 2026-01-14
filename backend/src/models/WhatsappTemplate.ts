@@ -35,12 +35,21 @@ export class WhatsappTemplate extends Model {
   @Column({
     type: DataType.BOOLEAN,
     defaultValue: true,
+    field: 'isActive'
   })
   isActive!: boolean;
 
   @CreatedAt
+  @Column({
+    type: DataType.DATE,
+    field: 'createdAt'
+  })
   createdAt!: Date;
 
   @UpdatedAt
+  @Column({
+    type: DataType.DATE,
+    field: 'updatedAt'
+  })
   updatedAt!: Date;
 }

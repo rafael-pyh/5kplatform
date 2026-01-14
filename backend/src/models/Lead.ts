@@ -41,11 +41,17 @@ export class Lead extends Model {
   phone?: string;
 
   @AllowNull(true)
-  @Column(DataType.TEXT)
+  @Column({
+    type: DataType.TEXT,
+    field: 'energyBill'
+  })
   energyBill?: string;
 
   @AllowNull(true)
-  @Column(DataType.TEXT)
+  @Column({
+    type: DataType.TEXT,
+    field: 'roofPhoto'
+  })
   roofPhoto?: string;
 
   @Default(LeadStatus.NEGOTIATION)
@@ -53,7 +59,10 @@ export class Lead extends Model {
   status!: LeadStatus;
 
   @ForeignKey(() => Person)
-  @Column(DataType.UUID)
+  @Column({
+    type: DataType.UUID,
+    field: 'ownerId'
+  })
   ownerId!: string;
 
   @BelongsTo(() => Person)
@@ -72,10 +81,16 @@ export class Lead extends Model {
   state?: string;
 
   @CreatedAt
-  @Column(DataType.DATE)
+  @Column({
+    type: DataType.DATE,
+    field: 'createdAt'
+  })
   createdAt!: Date;
 
   @UpdatedAt
-  @Column(DataType.DATE)
+  @Column({
+    type: DataType.DATE,
+    field: 'updatedAt'
+  })
   updatedAt!: Date;
 }

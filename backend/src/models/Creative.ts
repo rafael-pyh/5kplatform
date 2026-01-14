@@ -46,7 +46,10 @@ export class Creative extends Model {
   type!: CreativeType;
 
   @ForeignKey(() => Person)
-  @Column(DataType.UUID)
+  @Column({
+    type: DataType.UUID,
+    field: 'uploadedByUserId'
+  })
   uploadedByUserId!: string;
 
   @BelongsTo(() => Person, 'uploadedByUserId')
@@ -57,7 +60,10 @@ export class Creative extends Model {
   active!: boolean;
 
   @AllowNull(true)
-  @Column(DataType.INTEGER)
+  @Column({
+    type: DataType.INTEGER,
+    field: 'downloadCount'
+  })
   downloadCount!: number; // Quantas vezes foi baixado
 
   @AllowNull(true)
@@ -65,22 +71,37 @@ export class Creative extends Model {
   tags?: string; // Tags separadas por vírgula para busca
 
   @AllowNull(true)
-  @Column(DataType.FLOAT)
+  @Column({
+    type: DataType.FLOAT,
+    field: 'qrBoxCenterXRatio'
+  })
   qrBoxCenterXRatio?: number; // Posição X do QR code (0-1, relativo ao criativo)
 
   @AllowNull(true)
-  @Column(DataType.FLOAT)
+  @Column({
+    type: DataType.FLOAT,
+    field: 'qrBoxCenterYRatio'
+  })
   qrBoxCenterYRatio?: number; // Posição Y do QR code (0-1, relativo ao criativo)
 
   @AllowNull(true)
-  @Column(DataType.FLOAT)
+  @Column({
+    type: DataType.FLOAT,
+    field: 'qrBoxSizeRatio'
+  })
   qrBoxSizeRatio?: number; // Tamanho do QR code em relação ao criativo (0-1)
 
   @CreatedAt
-  @Column(DataType.DATE)
+  @Column({
+    type: DataType.DATE,
+    field: 'createdAt'
+  })
   createdAt!: Date;
 
   @UpdatedAt
-  @Column(DataType.DATE)
+  @Column({
+    type: DataType.DATE,
+    field: 'updatedAt'
+  })
   updatedAt!: Date;
 }
