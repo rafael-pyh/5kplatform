@@ -67,9 +67,11 @@ function initializeSequelize(): Sequelize {
         statement_timeout: isProduction ? 30000 : undefined,
       },
       // Desabilita sincronização automática em produção
+      // Usamos camelCase nas migrations/colunas existentes, então desativamos
+      // a conversão automática para snake_case (underscored).
       define: {
         timestamps: true,
-        underscored: true,
+        underscored: false,
       },
     });
   } else {
@@ -86,7 +88,7 @@ function initializeSequelize(): Sequelize {
       pool: poolConfig,
       define: {
         timestamps: true,
-        underscored: true,
+        underscored: false,
       },
     });
   }
