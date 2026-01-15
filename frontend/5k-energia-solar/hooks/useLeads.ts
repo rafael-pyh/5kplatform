@@ -3,8 +3,17 @@
 import { useState, useEffect } from 'react';
 import { Lead, LeadStatus } from '@/lib/types';
 import { cachedLeadService } from '@/lib/services/cached';
+import { useDashboardContext } from '@/contexts/DashboardContext';
 
 export function useLeads() {
+  // Tentar usar dados do context se disponível
+  let contextData;
+  try {
+    contextData = useDashboardContext();
+  } catch {
+    contextData = null;
+  }
+  
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -13,6 +22,15 @@ export function useLeads() {
     try {
       setLoading(true);
       setError(null);
+      
+      // Se temos dados de leads no context, use do context
+      if (contextData?.allLeads && Array.isArray(contextData.allLeads) && contextData.allLeads.length > 0) {
+        setLeads(contextData.allLeads);
+        setLoading(false);
+        return;
+      }
+      
+      // Caso contrário, buscar da API
       const data = await cachedLeadService.getAll();
       setLeads(data);
     } catch (err: any) {

@@ -3,10 +3,11 @@
 import { useDashboardContext } from '@/contexts/DashboardContext';
 
 export function useLeadsData() {
-  const { recentLeads, stats, loading, refreshData } = useDashboardContext();
+  const { recentLeads, allLeads, stats, loading, refreshData } = useDashboardContext();
 
   return {
     recentLeads,
+    allLeads,
     totalLeads: stats.totalLeads,
     newLeads: stats.newLeads,
     loading,

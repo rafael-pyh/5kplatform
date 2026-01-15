@@ -75,7 +75,7 @@ function RecentLeadsTable({ leads = [], sellers = [] }: RecentLeadsTableProps) {
               </svg>
             }
             title="Nenhum item"
-            description="Não há itens para exibir nesta aba."
+            description="Sem dados para os últimos 7 dias."
           />
         </CardContent>
       </Card>

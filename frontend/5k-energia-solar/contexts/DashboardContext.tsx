@@ -15,6 +15,7 @@ interface DashboardContextType {
   // Data
   stats: DashboardStats;
   recentLeads: any[];
+  allLeads: any[];
   persons: any[];
   
   // State
@@ -37,6 +38,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     newLeads: 0,
   });
   const [recentLeads, setRecentLeads] = useState<any[]>([]);
+  const [allLeads, setAllLeads] = useState<any[]>([]);
   const [persons, setPersons] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +52,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setError(null);
 
       // Fetch all data in parallel
-      const [personsRes, allLeads, newLeads] = await Promise.all([
+      const [personsRes, allLeadsRes, newLeads] = await Promise.all([
         cachedPersonService.getAll(),
         cachedLeadService.getAll(),
         cachedLeadService.getNewLeads(),
@@ -60,13 +62,14 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       const newStats: DashboardStats = {
         totalPersons: personsRes.length,
         activePersons: personsRes.filter((p: any) => p.active).length,
-        totalLeads: allLeads.length,
+        totalLeads: allLeadsRes.length,
         newLeads: newLeads.length,
       };
 
       // Update state
       setStats(newStats);
       setPersons(personsRes);
+      setAllLeads(allLeadsRes);
       setRecentLeads(newLeads.slice(0, 5));
       setIsInitialized(true);
     } catch (err: any) {
@@ -91,6 +94,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       newLeads: 0,
     });
     setRecentLeads([]);
+    setAllLeads([]);
     setPersons([]);
     setError(null);
   }, []);
@@ -105,6 +109,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const value: DashboardContextType = {
     stats,
     recentLeads,
+    allLeads,
     persons,
     loading,
     error,
