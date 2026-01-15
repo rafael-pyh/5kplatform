@@ -14,26 +14,39 @@ export default function useAdmins() {
   
   // Tentar usar dados do context se disponível
   let contextData;
+  let contextLoading = false;
   try {
     contextData = useDashboardContext();
+    contextLoading = contextData?.loading || false;
   } catch {
     contextData = null;
   }
 
-  const [loading, setLoading] = useState(true);
+  const [localLoading, setLocalLoading] = useState(true);
   const [admins, setAdmins] = useState<User[]>([]);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<User | null>(null);
 
+  // Usar loading do context se estiver carregando, senão usar loading local
+  const loading = contextLoading || localLoading;
+
+  // Sincronizar dados do context quando forem atualizados
+  useEffect(() => {
+    if (contextData?.admins && Array.isArray(contextData.admins)) {
+      setAdmins(contextData.admins);
+      setLocalLoading(false);
+    }
+  }, [contextData?.admins]);
+
   const loadAdmins = useCallback(async () => {
     try {
-      setLoading(true);
+      setLocalLoading(true);
       
       // Se temos dados no context, use do context
       if (contextData?.admins && Array.isArray(contextData.admins) && contextData.admins.length > 0) {
         setAdmins(contextData.admins);
-        setLoading(false);
+        setLocalLoading(false);
         return;
       }
       
@@ -45,7 +58,7 @@ export default function useAdmins() {
         toast.error('Erro ao carregar administradores');
       }
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   }, [contextData?.admins]);
 

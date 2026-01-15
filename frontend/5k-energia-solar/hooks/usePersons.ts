@@ -7,25 +7,38 @@ import { useDashboardContext } from '@/contexts/DashboardContext';
 export function usePersons(activeOnly: boolean = false) {
   // Tentar usar dados do context se disponível
   let contextData;
+  let contextLoading = false;
   try {
     contextData = useDashboardContext();
+    contextLoading = contextData?.loading || false;
   } catch {
     contextData = null;
   }
   
   const [persons, setPersons] = useState<Person[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [localLoading, setLocalLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
+  // Usar loading do context se estiver carregando, senão usar loading local
+  const loading = contextLoading || localLoading;
+
+  // Sincronizar dados do context quando forem atualizados
+  useEffect(() => {
+    if (contextData?.persons && Array.isArray(contextData.persons) && !activeOnly) {
+      setPersons(contextData.persons);
+      setLocalLoading(false);
+    }
+  }, [contextData?.persons, activeOnly]);
 
   const loadPersons = useCallback(async () => {
     try {
-      setLoading(true);
+      setLocalLoading(true);
       setError(null);
       
       // Se temos dados no context e não precisa filtrar por "active only", use do context
       if (contextData?.persons && !activeOnly) {
         setPersons(contextData.persons);
-        setLoading(false);
+        setLocalLoading(false);
         return;
       }
       
@@ -37,7 +50,7 @@ export function usePersons(activeOnly: boolean = false) {
       setError(error);
       toast.error(error.message);
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   }, [activeOnly, contextData?.persons]);
 

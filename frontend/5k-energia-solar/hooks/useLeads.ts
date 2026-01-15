@@ -8,25 +8,38 @@ import { useDashboardContext } from '@/contexts/DashboardContext';
 export function useLeads() {
   // Tentar usar dados do context se disponível
   let contextData;
+  let contextLoading = false;
   try {
     contextData = useDashboardContext();
+    contextLoading = contextData?.loading || false;
   } catch {
     contextData = null;
   }
   
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [localLoading, setLocalLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Usar loading do context se estiver carregando, senão usar loading local
+  const loading = contextLoading || localLoading;
+
+  // Sincronizar dados do context quando forem atualizados
+  useEffect(() => {
+    if (contextData?.allLeads && Array.isArray(contextData.allLeads)) {
+      setLeads(contextData.allLeads);
+      setLocalLoading(false);
+    }
+  }, [contextData?.allLeads]);
 
   const fetchLeads = async () => {
     try {
-      setLoading(true);
+      setLocalLoading(true);
       setError(null);
       
       // Se temos dados de leads no context, use do context
       if (contextData?.allLeads && Array.isArray(contextData.allLeads) && contextData.allLeads.length > 0) {
         setLeads(contextData.allLeads);
-        setLoading(false);
+        setLocalLoading(false);
         return;
       }
       
@@ -36,7 +49,7 @@ export function useLeads() {
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao carregar leads');
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   };
 
