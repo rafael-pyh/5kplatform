@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { cachedPersonService, cachedLeadService } from '@/lib/services/cached';
-import { toast } from 'react-hot-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardStats {
   totalPersons: number;
@@ -21,6 +21,7 @@ interface DashboardContextType {
   // State
   loading: boolean;
   error: string | null;
+  isAdminDashboard: boolean;
   
   // Actions
   loadDashboardData: (forceRefresh?: boolean) => Promise<void>;
@@ -31,6 +32,8 @@ interface DashboardContextType {
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
 
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  
   const [stats, setStats] = useState<DashboardStats>({
     totalPersons: 0,
     activePersons: 0,
@@ -44,7 +47,16 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Verifica se é dashboard de admin
+  const isAdminDashboard = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+
   const loadDashboardData = useCallback(async (forceRefresh = false) => {
+    // Só carrega dados de dashboard para ADMINs
+    if (!isAdminDashboard) {
+      setIsInitialized(true);
+      return;
+    }
+
     if (loading) return;
 
     try {
@@ -73,14 +85,14 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setRecentLeads(newLeads.slice(0, 5));
       setIsInitialized(true);
     } catch (err: any) {
-      console.error('Error loading dashboard data:', err);
+      // Silently ignore 401 errors (unauthorized for non-admin users)
       if (err.response?.status !== 401) {
         setError('Erro ao carregar dados do dashboard');
       }
     } finally {
       setLoading(false);
     }
-  }, [loading]);
+  }, [loading, isAdminDashboard]);
 
   const refreshData = useCallback(async () => {
     await loadDashboardData(true);
@@ -113,6 +125,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     persons,
     loading,
     error,
+    isAdminDashboard,
     loadDashboardData,
     refreshData,
     clearCache,
