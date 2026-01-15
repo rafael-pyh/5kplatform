@@ -57,7 +57,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (loading) return;
+    if (loading && !forceRefresh) return;
 
     try {
       setLoading(true);
@@ -85,14 +85,16 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setRecentLeads(newLeads.slice(0, 5));
       setIsInitialized(true);
     } catch (err: any) {
+      console.error('Error loading dashboard:', err);
       // Silently ignore 401 errors (unauthorized for non-admin users)
       if (err.response?.status !== 401) {
         setError('Erro ao carregar dados do dashboard');
       }
+      setIsInitialized(true);
     } finally {
       setLoading(false);
     }
-  }, [loading, isAdminDashboard]);
+  }, [isAdminDashboard]);
 
   const refreshData = useCallback(async () => {
     await loadDashboardData(true);
@@ -111,12 +113,24 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     setError(null);
   }, []);
 
-  // Load data on mount
+  // Load data on mount and when user role changes
   useEffect(() => {
-    if (!isInitialized) {
+    // Aguarda até que o usuário esteja carregado
+    if (!user) {
+      return;
+    }
+
+    // Se não é admin, não carrega dados
+    if (!isAdminDashboard) {
+      setIsInitialized(true);
+      return;
+    }
+
+    // Se já foi inicializado e é admin, carrega dados
+    if (!isInitialized && isAdminDashboard) {
       loadDashboardData();
     }
-  }, [isInitialized, loadDashboardData]);
+  }, [user, isAdminDashboard, isInitialized, loadDashboardData]);
 
   const value: DashboardContextType = {
     stats,
