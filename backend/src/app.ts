@@ -16,6 +16,7 @@ import approvalRoutes from "./routes/approval.routes";
 import migrationRoutes from "./routes/migration.routes";
 import emailActivationRouter from "./routes/emailActivation.routes";
 import whatsappTemplateRoutes from "./routes/whatsapp-template.routes";
+import cacheRoutes from "./routes/cache.routes";
 import { errorHandler } from "./shared/errorHandler";
 import { initializeMinIOBucket } from "./services/storage.service";
 import { authenticate } from "./middlewares/auth.middleware";
@@ -77,6 +78,8 @@ app.use("/api/approval", approvalRoutes);
 app.use("/api/admin", authenticate, migrationRoutes);
 app.use("/api", emailActivationRouter);
 app.use("/api/whatsapp-templates", whatsappTemplateRoutes);
+// Admin cache management (protected by authenticate + requireAdmin inside routes)
+app.use("/api/admin/cache", cacheRoutes);
 
 // Rota 404
 app.use((req, res) => {
