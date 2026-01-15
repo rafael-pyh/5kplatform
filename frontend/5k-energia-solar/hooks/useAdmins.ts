@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDashboardContext } from '@/contexts/DashboardContext';
 import { cachedAdminService } from '@/lib/services/cached';
 import { toast } from 'react-hot-toast';
 import { User } from '@/lib/types';
@@ -10,6 +11,14 @@ import { User } from '@/lib/types';
 export default function useAdmins() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  
+  // Tentar usar dados do context se disponível
+  let contextData;
+  try {
+    contextData = useDashboardContext();
+  } catch {
+    contextData = null;
+  }
 
   const [loading, setLoading] = useState(true);
   const [admins, setAdmins] = useState<User[]>([]);
@@ -20,17 +29,25 @@ export default function useAdmins() {
   const loadAdmins = useCallback(async () => {
     try {
       setLoading(true);
+      
+      // Se temos dados no context, use do context
+      if (contextData?.admins && Array.isArray(contextData.admins) && contextData.admins.length > 0) {
+        setAdmins(contextData.admins);
+        setLoading(false);
+        return;
+      }
+      
+      // Caso contrário, buscar da API
       const data = await cachedAdminService.getAll();
       setAdmins(data);
     } catch (error: any) {
-      console.error('Error loading admins:', error);
       if (error.response?.status !== 401) {
         toast.error('Erro ao carregar administradores');
       }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [contextData?.admins]);
 
   useEffect(() => {
     if (authLoading) return; // wait until auth is loaded

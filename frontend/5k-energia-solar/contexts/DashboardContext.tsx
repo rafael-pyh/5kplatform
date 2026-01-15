@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { cachedPersonService, cachedLeadService } from '@/lib/services/cached';
+import { cachedPersonService, cachedLeadService, cachedAdminService } from '@/lib/services/cached';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardStats {
@@ -17,6 +17,7 @@ interface DashboardContextType {
   recentLeads: any[];
   allLeads: any[];
   persons: any[];
+  admins: any[];
   
   // State
   loading: boolean;
@@ -43,6 +44,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [recentLeads, setRecentLeads] = useState<any[]>([]);
   const [allLeads, setAllLeads] = useState<any[]>([]);
   const [persons, setPersons] = useState<any[]>([]);
+  const [admins, setAdmins] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -64,10 +66,11 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setError(null);
 
       // Fetch all data in parallel
-      const [personsRes, allLeadsRes, newLeads] = await Promise.all([
+      const [personsRes, allLeadsRes, newLeads, adminsRes] = await Promise.all([
         cachedPersonService.getAll(),
         cachedLeadService.getAll(),
         cachedLeadService.getNewLeads(),
+        cachedAdminService.getAll(),
       ]);
 
       // Calculate stats
@@ -83,6 +86,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setPersons(personsRes);
       setAllLeads(allLeadsRes);
       setRecentLeads(newLeads.slice(0, 5));
+      setAdmins(adminsRes);
       setIsInitialized(true);
     } catch (err: any) {
       console.error('Error loading dashboard:', err);
@@ -110,6 +114,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     setRecentLeads([]);
     setAllLeads([]);
     setPersons([]);
+    setAdmins([]);
     setError(null);
   }, []);
 
@@ -137,6 +142,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     recentLeads,
     allLeads,
     persons,
+    admins,
     loading,
     error,
     isAdminDashboard,
