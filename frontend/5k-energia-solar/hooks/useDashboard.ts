@@ -3,9 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { cachedPersonService, cachedLeadService } from '@/lib/services/cached';
-import { getCachedData, setCacheData, clearDashboardCache } from '@/lib/cache';
-import { toast } from 'react-hot-toast';
+import { useDashboardContext } from '@/contexts/DashboardContext';
 import { useGlobalRefresh } from '@/hooks/useGlobalRefresh';
 
 interface DashboardStats {
@@ -18,77 +16,11 @@ interface DashboardStats {
 export default function useDashboard() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
-
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats>({ totalPersons: 0, activePersons: 0, totalLeads: 0, newLeads: 0 });
-  const [recentLeads, setRecentLeads] = useState<any[]>([]);
-  const [persons, setPersons] = useState<any[]>([]);
-
-  // Cache keys
-  const CACHE_KEYS = {
-    stats: 'dashboard_stats',
-    persons: 'dashboard_persons',
-    recentLeads: 'dashboard_recent_leads',
-  };
-
-  // TTL: 15 minutes for stats and leads (balance between freshness and cost reduction)
-  const CACHE_TTL_MS = 15 * 60 * 1000;
-
-  const loadDashboardData = useCallback(async (forceRefresh: boolean = false) => {
-    try {
-      setLoading(true);
-
-      // Try to load from cache first if not forcing refresh
-      if (!forceRefresh) {
-        const cachedStats = getCachedData<DashboardStats>(CACHE_KEYS.stats);
-        const cachedPersons = getCachedData<any[]>(CACHE_KEYS.persons);
-        const cachedRecentLeads = getCachedData<any[]>(CACHE_KEYS.recentLeads);
-
-        if (cachedStats && cachedPersons && cachedRecentLeads) {
-          setStats(cachedStats);
-          setPersons(cachedPersons);
-          setRecentLeads(cachedRecentLeads);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Fetch fresh data from API
-      const [personsRes, allLeads, newLeads] = await Promise.all([
-        cachedPersonService.getAll(),
-        cachedLeadService.getAll(),
-        cachedLeadService.getNewLeads(),
-      ]);
-
-      const newStats: DashboardStats = {
-        totalPersons: personsRes.length,
-        activePersons: personsRes.filter((p: any) => p.active).length,
-        totalLeads: allLeads.length,
-        newLeads: newLeads.length,
-      };
-
-      // Cache the data
-      setCacheData(CACHE_KEYS.stats, newStats, CACHE_TTL_MS);
-      setCacheData(CACHE_KEYS.persons, personsRes, CACHE_TTL_MS);
-      setCacheData(CACHE_KEYS.recentLeads, newLeads.slice(0, 5), CACHE_TTL_MS);
-
-      // Update state
-      setStats(newStats);
-      setRecentLeads(newLeads.slice(0, 5));
-      setPersons(personsRes);
-    } catch (error: any) {
-      console.error('Error loading dashboard:', error);
-      if (error.response?.status !== 401) {
-        toast.error('Erro ao carregar dados do dashboard');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [CACHE_KEYS.stats, CACHE_KEYS.persons, CACHE_KEYS.recentLeads, CACHE_TTL_MS]);
+  const { stats, recentLeads, persons, loading, loadDashboardData, refreshData } = useDashboardContext();
 
   // Usar o hook global de refresh com callback do dashboard
   const { isRefreshing } = useGlobalRefresh(async () => {
-    await loadDashboardData(true);
+    await refreshData();
   });
 
   useEffect(() => {
@@ -101,7 +33,6 @@ export default function useDashboard() {
     }
     
     if (!isAuthenticated) return;
-    loadDashboardData();
   }, [isAuthenticated, authLoading, user?.role, router]);
 
   return {

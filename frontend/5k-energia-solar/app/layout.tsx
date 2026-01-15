@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { DashboardProvider } from '@/contexts/DashboardContext';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
 import "./globals.css";
@@ -64,7 +65,9 @@ export default function RootLayout({
           <ServiceWorkerRegister />
           <PWAInstallPrompt />
           <AuthProvider>
-            {children}
+            <DashboardProvider>
+              {children}
+            </DashboardProvider>
           </AuthProvider>
         </div>
         <Toaster position="top-right" />
