@@ -1,7 +1,7 @@
 /**
  * API Cache Wrapper
- * Wraps API calls with automatic caching
- * Reduces API calls and bandwidth usage
+ * Desabilitado: Usar DashboardContext para cache em memória
+ * Este arquivo mantido apenas para compatibilidade
  */
 
 import { getCachedData, setCacheData } from './cache';
@@ -23,24 +23,11 @@ export async function cacheApiCall<T>(
   fetchFn: () => Promise<T>,
   options: CacheOptions = {}
 ): Promise<T> {
-  const { ttlMs = 5 * 60 * 1000 } = options;
-
-  // Try to get from cache first
-  const cached = getCachedData<T>(cacheKey);
-  if (cached) {
-    console.log(`[Cache Hit] ${cacheKey}`);
-    return cached;
-  }
-
-  // Fetch fresh data
-  console.log(`[Cache Miss] ${cacheKey} - Fetching from API`);
-  const data = await fetchFn();
-
-  // Cache the result
-  setCacheData(cacheKey, data, ttlMs);
-
-  return data;
+  // Desabilitado: Cache localStorage desabilitado, usar DashboardContext
+  // Apenas executa a função sem cache
+  return await fetchFn();
 }
+
 
 /**
  * Create a cached wrapper for a service method
@@ -55,16 +42,8 @@ export function createCachedMethod<T, Args extends any[]>(
   ttlMs: number = 5 * 60 * 1000
 ) {
   return async (...args: Args): Promise<T> => {
-    // Build cache key with arguments
-    const fullKey = args.length > 0 
-      ? `${cacheKey}_${JSON.stringify(args)}` 
-      : cacheKey;
-
-    return cacheApiCall(
-      fullKey,
-      () => serviceFn(...args),
-      { ttlMs }
-    );
+    // Desabilitado: Cache localStorage desabilitado
+    return serviceFn(...args);
   };
 }
 
@@ -79,13 +58,8 @@ export async function cacheBatchApiCalls<T extends Record<string, unknown>>(
 
   for (const [key, config] of Object.entries(calls)) {
     try {
-      results[key as keyof T] = await cacheApiCall(
-        config.cacheKey,
-        config.fn,
-        { ttlMs: config.ttlMs }
-      );
+      results[key as keyof T] = await config.fn();
     } catch (error) {
-      console.error(`Error caching ${config.cacheKey}:`, error);
       throw error;
     }
   }

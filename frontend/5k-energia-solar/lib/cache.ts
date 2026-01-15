@@ -114,7 +114,6 @@ export function setCacheData<T>(key: string, data: T, ttlMs: number = 5 * 60 * 1
     
     // Skip caching if data is too large
     if (size > MAX_ITEM_SIZE) {
-      console.warn(`Data for key ${key} is too large (${(size / 1024 / 1024).toFixed(2)}MB), skipping cache. Max: ${(MAX_ITEM_SIZE / 1024 / 1024).toFixed(2)}MB`);
       return;
     }
 
@@ -130,14 +129,13 @@ export function setCacheData<T>(key: string, data: T, ttlMs: number = 5 * 60 * 1
     } catch (e: any) {
       // If quota exceeded, cleanup and retry
       if (e.name === 'QuotaExceededError' || e.code === 22) {
-        console.warn('Cache quota exceeded, cleaning up old items...');
         cleanupOldestCache();
         
         // Try again after cleanup
         try {
           localStorage.setItem(key, JSON.stringify(cacheItem));
         } catch (retryError) {
-          console.error(`Failed to cache ${key} even after cleanup:`, retryError);
+          // Silently fail after cleanup attempt
         }
       } else {
         throw e;
