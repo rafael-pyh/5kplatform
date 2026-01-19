@@ -170,11 +170,118 @@ export function clearDashboardCache(): void {
   clearCache('dashboard_persons');
   clearCache('dashboard_recent_leads');
   
-  // Clear all api cache
+  // Clear all api cache and related data
   const keysToRemove = Object.keys(localStorage).filter(key => 
-    key.startsWith('api_cache_')
+    key.startsWith('api_cache_') ||
+    key.startsWith('cache_') ||
+    key.includes('dashboard_') ||
+    key.includes('persons') ||
+    key.includes('leads') ||
+    key.includes('sellers') ||
+    key.includes('admins') ||
+    key.includes('creatives')
   );
   keysToRemove.forEach(key => localStorage.removeItem(key));
+}
+
+/**
+ * Clear all cache from all storage mechanisms (except auth data)
+ * Limpa cache de dados mas mantém autenticação intacta (como Ctrl+Shift+R)
+ * 
+ * Mantém:
+ * - Auth tokens e dados de login
+ * - Informações de usuário
+ * - Configurações persistidas
+ * 
+ * Limpa:
+ * - Cache de API
+ * - Cache de dashboard
+ * - Cache de dados de leads, vendedores, etc
+ * - IndexedDB
+ * - Service Worker cache
+ */
+export function clearAllCache(): void {
+  if (!isBrowser()) return;
+  
+  try {
+    // Lista de chaves que devem ser mantidas (autenticação e configuração)
+    const keysToPreserve = [
+      'auth_token',
+      'refresh_token',
+      'user_id',
+      'user_email',
+      'user_name',
+      'user_role',
+      'user_photo',
+      'localStorage_auth',
+      'persist:auth', // Para Redux Persist
+    ];
+    
+    // Preserva dados de autenticação
+    const preservedData: Record<string, any> = {};
+    keysToPreserve.forEach(key => {
+      const value = localStorage.getItem(key);
+      if (value) {
+        preservedData[key] = value;
+      }
+    });
+    
+    // Também preserva chaves que começam com auth
+    Object.keys(localStorage).forEach(key => {
+      if (key.toLowerCase().includes('auth')) {
+        preservedData[key] = localStorage.getItem(key);
+      }
+    });
+    
+    // Limpa localStorage completamente
+    localStorage.clear();
+    
+    // Restaura apenas dados de autenticação
+    Object.entries(preservedData).forEach(([key, value]) => {
+      if (value) {
+        localStorage.setItem(key, value as string);
+      }
+    });
+    
+    // Limpa sessionStorage (exceto dados críticos)
+    const sessionKeysToPreserve: Record<string, any> = {};
+    Object.keys(sessionStorage).forEach(key => {
+      if (key.toLowerCase().includes('auth') || key.toLowerCase().includes('token')) {
+        sessionKeysToPreserve[key] = sessionStorage.getItem(key);
+      }
+    });
+    sessionStorage.clear();
+    Object.entries(sessionKeysToPreserve).forEach(([key, value]) => {
+      if (value) {
+        sessionStorage.setItem(key, value as string);
+      }
+    });
+    
+    // Limpa IndexedDB (usado pelo Next.js/React Query)
+    if ('indexedDB' in window) {
+      const databases = ['next-router-cache', 'next-app-cache'];
+      
+      for (const dbName of databases) {
+        try {
+          const request = indexedDB.deleteDatabase(dbName);
+          request.onerror = () => console.warn(`Failed to delete IndexedDB: ${dbName}`);
+        } catch (error) {
+          console.warn(`Error deleting IndexedDB ${dbName}:`, error);
+        }
+      }
+    }
+    
+    // Limpa cache do Service Worker (se existir)
+    if ('serviceWorker' in navigator && 'caches' in window) {
+      caches.keys().then(cacheNames => {
+        cacheNames.forEach(cacheName => {
+          caches.delete(cacheName).catch(() => {});
+        });
+      }).catch(() => {});
+    }
+  } catch (error) {
+    console.error('Error clearing all cache:', error);
+  }
 }
 
 /**
