@@ -19,6 +19,8 @@ export interface Person {
   emailVerified: boolean;
   city: string;
   state: string;
+  cpf?: string;
+  birthDate?: string | Date;
   verificationToken?: string;
   tokenExpiry?: Date;
   createdAt: string | Date;
