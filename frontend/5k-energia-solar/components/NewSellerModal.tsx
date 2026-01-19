@@ -247,6 +247,47 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
             )}
           </div>
 
+          {/* CPF */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-0.5">
+              CPF *
+            </label>
+            <input
+              {...register('cpf', { 
+                required: 'CPF é obrigatório',
+                pattern: {
+                  value: /^\d{11}$/,
+                  message: 'CPF deve conter 11 dígitos'
+                }
+              })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              placeholder="Somente números (ex: 12345678900)"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={11}
+              required
+            />
+            {errors.cpf && (
+              <p className="mt-1 text-sm text-red-600">{errors.cpf.message}</p>
+            )}
+          </div>
+
+          {/* Data de Nascimento */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-0.5">
+              Data de Nascimento *
+            </label>
+            <input
+              type="date"
+              {...register('birthDate', { required: 'Data de nascimento é obrigatória' })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              required
+            />
+            {errors.birthDate && (
+              <p className="mt-1 text-sm text-red-600">{errors.birthDate.message}</p>
+            )}
+          </div>
+
           {/* Estado */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-0.5">

@@ -56,6 +56,8 @@ export default function EditSellerModal({
       pixKey: (person as any).pixKey || '',
       city: (person as any).city || '',
       state: (person as any).state || '',
+      cpf: (person as any).cpf || '',
+      birthDate: (person as any).birthDate || '',
       role: (person as any).role || 'SELLER',
     },
   });
@@ -177,6 +179,8 @@ export default function EditSellerModal({
       if ((data as any).pixKey !== undefined) updateData.pixKey = (data as any).pixKey;
       if (data.city !== undefined) updateData.city = data.city;
       if (data.state !== undefined) updateData.state = data.state;
+      if ((data as any).cpf !== undefined) updateData.cpf = (data as any).cpf;
+      if ((data as any).birthDate !== undefined) updateData.birthDate = (data as any).birthDate;
       if ((data as any).role !== undefined) updateData.role = (data as any).role;
       if (photoBase64) updateData.photoBase64 = photoBase64;
 
@@ -292,6 +296,47 @@ export default function EditSellerModal({
             />
             {errors && (errors as any).pixKey && (
               <p className="text-red-500 text-xs mt-0.5">{(errors as any).pixKey.message}</p>
+            )}
+          </div>
+
+          {/* CPF */}
+          <div>
+            <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-0.5">
+              CPF
+            </label>
+            <input
+              id="cpf"
+              type="text"
+              maxLength={11}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              {...register('cpf', {
+                pattern: {
+                  value: /^\d{0,11}$/,
+                  message: 'CPF deve conter apenas números'
+                }
+              })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              placeholder="Somente números (ex: 12345678900)"
+            />
+            {errors && (errors as any).cpf && (
+              <p className="text-red-500 text-xs mt-0.5">{(errors as any).cpf.message}</p>
+            )}
+          </div>
+
+          {/* Data de Nascimento */}
+          <div>
+            <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Data de Nascimento
+            </label>
+            <input
+              id="birthDate"
+              type="date"
+              {...register('birthDate')}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+            />
+            {errors && (errors as any).birthDate && (
+              <p className="text-red-500 text-xs mt-0.5">{(errors as any).birthDate.message}</p>
             )}
           </div>
 

@@ -33,7 +33,10 @@ export interface CreateAffiliateDto {
   name: string;
   email: string;
   password: string;
-  phone?: string;
+  phone: string;
+  pixKey: string;
+  cpf: string; // Obrigatório
+  birthDate: string | Date; // Obrigatório
   state?: string;
   city?: string;
 }
@@ -85,6 +88,8 @@ export interface Person {
   approvalStatus: 'pending' | 'approved' | 'rejected';
   city: string;
   state: string;
+  cpf?: string; // CPF do usuário (somente números)
+  birthDate?: string | Date; // Data de nascimento
   createdAt: string | Date;
   updatedAt: string | Date;
 }
@@ -96,6 +101,8 @@ export interface CreatePersonDto {
   pixKey: string;
   city: string;
   state: string;
+  cpf: string; // Obrigatório
+  birthDate: string | Date; // Obrigatório
   role?: string;
   photoBase64?: string;
 }
@@ -107,6 +114,8 @@ export interface UpdatePersonDto {
   pixKey?: string;
   city?: string;
   state?: string;
+  cpf?: string;
+  birthDate?: string | Date;
   photoBase64?: string;
   active?: boolean;
   role?: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | 'AFFILIATE';

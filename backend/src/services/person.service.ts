@@ -19,6 +19,8 @@ export interface CreatePersonDto {
   photoBase64?: string;
   city?: string;
   state?: string;
+  cpf?: string;
+  birthDate?: Date | string;
   verificationToken?: string;
   verificationTokenExpiry?: Date;
 }
@@ -33,6 +35,8 @@ export interface UpdatePersonDto {
   active?: boolean;
   city?: string;
   state?: string;
+  cpf?: string;
+  birthDate?: Date | string;
 }
 
 export const createPerson = async (data: CreatePersonDto) => {
@@ -124,6 +128,8 @@ export const createPerson = async (data: CreatePersonDto) => {
     photoBase64: photoUrl, // Salva apenas a URL do S3, não o base64
     city: data.city,
     state: data.state,
+    cpf: data.cpf || null,
+    birthDate: data.birthDate || null,
     password: hashedPassword,
     qrCode,
     qrCodeUrl, // Salva a URL do QR code do S3

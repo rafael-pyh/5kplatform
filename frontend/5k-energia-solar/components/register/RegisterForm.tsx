@@ -55,7 +55,7 @@ export default function RegisterForm({
             <p className="text-gray-600 w-10/12 mx-auto">Crie sua conta para que possamos analisar seu perfil.</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-1">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-0.5">Nome</label>
               <input id="name" type="text" name="name" value={formData.name} onChange={handleChange} maxLength={100} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="Seu nome completo" required />
@@ -84,6 +84,16 @@ export default function RegisterForm({
             <div>
               <label htmlFor="pixKey" className="block text-sm font-medium text-gray-700 mb-0.5">Chave Pix</label>
               <input id="pixKey" type="text" name="pixKey" value={formData.pixKey} onChange={handleChange} maxLength={77} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="Sua chave Pix" required />
+            </div>
+
+            <div>
+              <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-0.5">CPF</label>
+              <input id="cpf" type="text" name="cpf" value={formData.cpf} onChange={handleChange} inputMode="numeric" pattern="[0-9]*" maxLength={11} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="Somente números (ex: 12345678900)" required />
+            </div>
+
+            <div>
+              <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-0.5">Data de Nascimento</label>
+              <input id="birthDate" type="date" name="birthDate" value={formData.birthDate} onChange={handleChange} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" required />
             </div>
 
             <div>

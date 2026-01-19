@@ -5,7 +5,7 @@ const manualRegisterRouter = Router();
 
 manualRegisterRouter.post("/manual-register", async (req, res, next) => {
   try {
-    const { name, email, password, phone, pixKey, photoBase64, city, state } = req.body;
+    const { name, email, password, phone, cpf, birthDate, pixKey, photoBase64, city, state } = req.body;
 
     if (!email) {
       return res.status(400).json({ success: false, message: "Email é obrigatório." });
@@ -18,6 +18,8 @@ manualRegisterRouter.post("/manual-register", async (req, res, next) => {
       email,
       password,
       phone,
+      cpf,
+      birthDate,
       pixKey,
       photoBase64,
       city,

@@ -101,6 +101,18 @@ function SellerTable({ persons, onViewQRCode, onEdit, onDeactivate, onActivate, 
               </th>
               <th
                 scope="col"
+                className="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                CPF
+              </th>
+              <th
+                scope="col"
+                className="p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Data de Nascimento
+              </th>
+              <th
+                scope="col"
                 className="p-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
                 Escaneamentos
@@ -180,6 +192,18 @@ function SellerTable({ persons, onViewQRCode, onEdit, onDeactivate, onActivate, 
                 <p className="text-gray-500 font-medium mb-1">Chave Pix</p>
                 <p className="text-gray-900 font-medium text-xs truncate" title={person.pixKey}>
                   {person.pixKey ? person.pixKey.substring(0, 8) + '...' : '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 font-medium mb-1">CPF</p>
+                <p className="text-gray-900 font-medium text-xs" title={person.cpf}>
+                  {person.cpf || '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 font-medium mb-1">Nascimento</p>
+                <p className="text-gray-900 font-medium text-xs">
+                  {person.birthDate ? new Date(person.birthDate).toLocaleDateString('pt-BR') : '-'}
                 </p>
               </div>
             </div>

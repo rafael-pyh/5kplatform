@@ -109,6 +109,14 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onActivate
       <td className="px-2 py-4 whitespace-nowrap">
         <div className="text-sm text-gray-900">{person.pixKey}</div>
       </td>
+      <td className="px-2 py-4 whitespace-nowrap">
+        <div className="text-sm text-gray-900">{person.cpf || '-'}</div>
+      </td>
+      <td className="px-2 py-4 whitespace-nowrap">
+        <div className="text-sm text-gray-900">
+          {person.birthDate ? new Date(person.birthDate).toLocaleDateString('pt-BR') : '-'}
+        </div>
+      </td>
       <td className="px-2 py-4 whitespace-nowrap text-center">
         <div className="text-sm text-gray-900">{person.scanCount || 0}</div>
       </td>

@@ -29,6 +29,8 @@ const buildSellerResponse = (person: any, userRole: string | PersonRole | undefi
     email: person.email,
     phone: person.phone,
     pixKey: person.pixKey,
+    cpf: person.cpf,
+    birthDate: person.birthDate,
     state: person.state,
     city: person.city,
     role: person.role,
@@ -93,7 +95,9 @@ export const listSellers = async (
       buildSellerResponse(seller.toJSON ? seller.toJSON() : seller, userRole)
     );
 
-    return ResponseBuilder.success(res, responseData);
+    const transformedData = responseData.map((data: any) => transformPersonUrls(data));
+
+    return ResponseBuilder.success(res, transformedData);
   } catch (error) {
     next(error);
   }

@@ -8,7 +8,9 @@ export interface PublicAffiliateRegistrationDto {
   name: string;
   email: string;
   password: string;
-  phone?: string;
+  phone: string;
+  cpf: string;
+  birthDate: string | Date;
   state?: string;
   city?: string;
 }
@@ -52,6 +54,8 @@ export const registerPublicAffiliate = async (data: PublicAffiliateRegistrationD
     email: data.email,
     password: hashedPassword,
     phone: data.phone || null,
+    cpf: data.cpf || null, // Novo campo
+    birthDate: data.birthDate || null, // Novo campo
     state: data.state || null,
     city: data.city || null,
     qrCode,

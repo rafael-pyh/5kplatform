@@ -21,13 +21,20 @@ export const registerAffiliate = async (
   next: NextFunction
 ) => {
   try {
-    const { name, email, password, phone, state, city } = req.body;
+    const { name, email, password, phone, cpf, birthDate, state, city } = req.body;
 
     // Validações básicas
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
         message: 'Nome, email e senha são obrigatórios'
+      });
+    }
+
+    if (!phone || !cpf || !birthDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Telefone, CPF e data de nascimento são obrigatórios'
       });
     }
 
@@ -43,6 +50,8 @@ export const registerAffiliate = async (
       email,
       password,
       phone,
+      cpf,
+      birthDate,
       state,
       city
     };

@@ -25,6 +25,8 @@ type FormData = {
   repeatPassword: string;
   phone: string;
   pixKey: string;
+  cpf: string;
+  birthDate: string;
   photoBase64: string;
   city: string;
   state: string;
@@ -43,6 +45,8 @@ export function useRegister(initial: Partial<FormData> = {}) {
     repeatPassword: '',
     phone: '',
     pixKey: '',
+    cpf: '',
+    birthDate: '',
     photoBase64: '',
     city: '',
     state: '',
@@ -122,6 +126,10 @@ export function useRegister(initial: Partial<FormData> = {}) {
     const phoneRegex = /^\d{10,11}$/;
     if (!phoneRegex.test(data.phone)) { toast.error('Telefone inválido. Insira apenas 10 ou 11 dígitos numéricos.'); return false; }
     if (!data.pixKey.trim()) { toast.error('Chave PIX é obrigatória'); return false; }
+    if (!data.cpf.trim()) { toast.error('CPF é obrigatório'); return false; }
+    const cpfRegex = /^\d{11}$/;
+    if (!cpfRegex.test(data.cpf)) { toast.error('CPF deve conter 11 dígitos'); return false; }
+    if (!data.birthDate) { toast.error('Data de nascimento é obrigatória'); return false; }
     if (!data.city.trim()) { toast.error('Cidade é obrigatória'); return false; }
     if (!data.state) { toast.error('Estado é obrigatório'); return false; }
     if (!data.photoBase64) { toast.error('Foto é obrigatória'); return false; }
@@ -144,6 +152,8 @@ export function useRegister(initial: Partial<FormData> = {}) {
         repeatPassword: '',
         phone: '',
         pixKey: '',
+        cpf: '',
+        birthDate: '',
         photoBase64: '',
         city: '',
         state: '',
