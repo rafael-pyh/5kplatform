@@ -191,6 +191,21 @@ export class Person extends Model {
     field: 'approvalStatus'
   })
   approvalStatus!: 'pending' | 'approved' | 'rejected';
+
+  @AllowNull(true)
+  @Unique
+  @Column({
+    type: DataType.STRING(11),
+    field: 'cpf'
+  })
+  cpf?: string; // CPF do usuário (somente números)
+
+  @AllowNull(true)
+  @Column({
+    type: DataType.DATE,
+    field: 'birthDate'
+  })
+  birthDate?: Date; // Data de nascimento do usuário
 }
 
 // Removi a chamada redundante de Person.init, pois o decorador @Table já cuida da configuração do modelo.
