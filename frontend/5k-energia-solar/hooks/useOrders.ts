@@ -15,6 +15,7 @@ interface UseOrdersOptions {
   limit?: number;
   offset?: number;
   status?: OrderStatus;
+  autoFetch?: boolean;
 }
 
 export function useOrders(options?: UseOrdersOptions) {
@@ -51,7 +52,7 @@ export function useOrders(options?: UseOrdersOptions) {
         }));
       }
     },
-    []
+    [options] // Include options since it's used inside
   );
 
   const getOrderById = useCallback(async (id: string) => {
@@ -79,8 +80,10 @@ export function useOrders(options?: UseOrdersOptions) {
   }, []);
 
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    if (options?.autoFetch !== false) {
+      fetchOrders();
+    }
+  }, []); // Removido fetchOrders e options das dependências para evitar loops
 
   return {
     orders: state.orders,

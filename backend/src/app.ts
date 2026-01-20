@@ -75,6 +75,14 @@ app.use("/api/lead", leadRoutes);
 app.use("/api/qrcode", qrcodeRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/creatives", creativeRoutes);
+
+// ============== KIT / SHOP ROUTES ==============
+app.use("/api/shop/products", productRoutes);
+app.use("/api/shop/kits", kitRoutes);
+app.use("/api/shop/orders", orderRoutes);
+app.use("/api/shop/credits", creditRoutes);
+app.use("/api/shop/withdrawals", withdrawalRoutes);
+
 app.use("/api/seller", sellerAuthRoutes);
 app.use("/api/seller", sellerLeadsRoutes);
 app.use("/api/seller", authenticate, sellerRoutes);
@@ -85,13 +93,6 @@ app.use("/api", emailActivationRouter);
 app.use("/api/whatsapp-templates", whatsappTemplateRoutes);
 // Admin cache management (protected by authenticate + requireAdmin inside routes)
 app.use("/api/admin/cache", cacheRoutes);
-
-// ============== KIT / SHOP ROUTES ==============
-app.use("/api/products", productRoutes);
-app.use("/api/kits", kitRoutes);
-app.use("/api/orders", orderRoutes);
-app.use("/api/credits", creditRoutes);
-app.use("/api/withdrawals", withdrawalRoutes);
 
 // Rota 404
 app.use((req, res) => {

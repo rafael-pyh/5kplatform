@@ -11,7 +11,11 @@ interface UseWithdrawalsState {
   error: string | null;
 }
 
-export function useWithdrawals() {
+interface UseWithdrawalsOptions {
+  autoFetch?: boolean;
+}
+
+export function useWithdrawals(options?: UseWithdrawalsOptions) {
   const [state, setState] = useState<UseWithdrawalsState>({
     withdrawals: [],
     total: 0,
@@ -51,8 +55,10 @@ export function useWithdrawals() {
   }, []);
 
   useEffect(() => {
-    fetchWithdrawals();
-  }, [fetchWithdrawals]);
+    if (options?.autoFetch !== false) {
+      fetchWithdrawals();
+    }
+  }, []); // Removido fetchWithdrawals das dependências para evitar loops
 
   return {
     withdrawals: state.withdrawals,

@@ -8,13 +8,15 @@ import { AdminWithdrawalCard } from '@/components/admin/shop/AdminWithdrawalCard
 import { useOrders } from '@/hooks/useOrders';
 import { useWithdrawals } from '@/hooks/useWithdrawals';
 import { OrderStatus } from '@/lib/types/shop.types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 
 export default function AdminShopPage() {
   const [activeTab, setActiveTab] = useState<'orders' | 'withdrawals'>('orders');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
-  const { orders, loading: ordersLoading, fetchOrders } = useOrders();
-  const { withdrawals, loading: withdrawalsLoading, fetchWithdrawals } = useWithdrawals();
+  const ordersOptions = useMemo(() => ({ autoFetch: false }), []);
+  const withdrawalsOptions = useMemo(() => ({ autoFetch: false }), []);
+  const { orders, loading: ordersLoading, fetchOrders } = useOrders(ordersOptions);
+  const { withdrawals, loading: withdrawalsLoading, fetchWithdrawals } = useWithdrawals(withdrawalsOptions);
 
   // Recarregar pedidos quando o filtro mudar
   useEffect(() => {
@@ -23,16 +25,16 @@ export default function AdminShopPage() {
     });
   }, [statusFilter, fetchOrders]);
 
-  const pendingOrders = orders.filter((o) => o.status === OrderStatus.PENDING_APPROVAL);
-  const pendingWithdrawals = withdrawals.filter((w) => w.status === 'PENDING');
+  const pendingOrders = useMemo(() => orders.filter((o) => o.status === OrderStatus.PENDING_APPROVAL), [orders]);
+  const pendingWithdrawals = useMemo(() => withdrawals.filter((w) => w.status === 'PENDING'), [withdrawals]);
 
-  const handleOrderActionSuccess = () => {
+  const handleOrderActionSuccess = useCallback(() => {
     fetchOrders();
-  };
+  }, [fetchOrders]);
 
-  const handleWithdrawalActionSuccess = () => {
+  const handleWithdrawalActionSuccess = useCallback(() => {
     fetchWithdrawals();
-  };
+  }, [fetchWithdrawals]);
 
   return (
     <ProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>

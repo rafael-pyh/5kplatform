@@ -71,7 +71,7 @@ export function KitCard({ kit, onOrderClick }: KitCardProps) {
         <div className="flex items-center justify-between">
           <div className="text-right">
             <p className="text-xs text-gray-500">Preço</p>
-            <p className="text-xl font-bold text-green-600">R$ {kit.price.toFixed(2)}</p>
+            <p className="text-xl font-bold text-green-600">R$ {Number(kit.price || 0).toFixed(2)}</p>
           </div>
           <button
             onClick={() => onOrderClick(kit)}

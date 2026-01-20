@@ -483,7 +483,7 @@ export function KitModal({
                   >
                     <div className="flex items-center gap-3 flex-1">
                       {/* Imagem do Produto */}
-                      <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                      <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden shrink-0">
                         {firstImage ? (
                           <img
                             src={firstImage.imageUrl}

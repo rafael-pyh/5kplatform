@@ -21,11 +21,11 @@ import {
 } from '../types/shop.types';
 
 // URLs base para cada recurso
-const PRODUCTS_URL = '/products';
-const KITS_URL = '/kits';
-const ORDERS_URL = '/orders';
-const CREDITS_URL = '/credits';
-const WITHDRAWALS_URL = '/withdrawals';
+const PRODUCTS_URL = '/shop/products';
+const KITS_URL = '/shop/kits';
+const ORDERS_URL = '/shop/orders'; // Back to original
+const CREDITS_URL = '/shop/credits';
+const WITHDRAWALS_URL = '/shop/withdrawals';
 
 export const shopService = {
   // ==================== PRODUTOS ====================
@@ -159,10 +159,17 @@ export const shopService = {
       if (filters?.personId) params.append('personId', filters.personId);
 
       const queryString = params.toString();
-      const response = await api.get<ApiResponse<PaginatedResponse<Order>>>(
+      const response = await api.get<{
+        success: boolean;
+        data: Order[];
+        pagination: { total: number; limit: number; offset: number };
+      }>(
         `${ORDERS_URL}${queryString ? `?${queryString}` : ''}`
       );
-      return response.data.data!;
+      return {
+        data: response.data.data,
+        pagination: response.data.pagination,
+      };
     },
 
     async getById(id: string): Promise<Order> {
@@ -247,10 +254,17 @@ export const shopService = {
       if (filters?.type) params.append('type', filters.type);
 
       const queryString = params.toString();
-      const response = await api.get<ApiResponse<PaginatedResponse<CreditTransaction>>>(
+      const response = await api.get<{
+        success: boolean;
+        data: CreditTransaction[];
+        pagination: { total: number; limit: number; offset: number };
+      }>(
         `${CREDITS_URL}/transactions${queryString ? `?${queryString}` : ''}`
       );
-      return response.data.data!;
+      return {
+        data: response.data.data,
+        pagination: response.data.pagination,
+      };
     },
 
     async getStats(): Promise<CreditStats> {
@@ -284,10 +298,17 @@ export const shopService = {
         offset: offset.toString(),
       });
 
-      const response = await api.get<ApiResponse<PaginatedResponse<WithdrawalRequest>>>(
+      const response = await api.get<{
+        success: boolean;
+        data: WithdrawalRequest[];
+        pagination: { total: number; limit: number; offset: number };
+      }>(
         `${WITHDRAWALS_URL}?${params.toString()}`
       );
-      return response.data.data!;
+      return {
+        data: response.data.data,
+        pagination: response.data.pagination,
+      };
     },
 
     async getById(id: string): Promise<WithdrawalRequest> {

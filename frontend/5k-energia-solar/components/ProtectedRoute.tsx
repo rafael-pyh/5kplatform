@@ -15,10 +15,16 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   useEffect(() => {
     if (!isLoading) {
+      const userRole = user?.role;
+
+      // Special handling for SUPER_ADMIN - they should have access to everything
+      const isSuperAdmin = userRole === 'SUPER_ADMIN';
+      const hasPermission = isSuperAdmin || (allowedRoles ? allowedRoles.includes(userRole as any) : true);
+      const willRedirect = allowedRoles && user && !hasPermission && !isSuperAdmin;
+
       if (!isAuthenticated) {
         router.push('/login');
-      } else if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-        // Usuário não tem permissão
+      } else if (willRedirect) {
         router.push('/unauthorized');
       }
     }
