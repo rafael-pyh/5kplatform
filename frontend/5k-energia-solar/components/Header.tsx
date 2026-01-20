@@ -16,6 +16,7 @@ export default function Header({ className }: { className?: string }) {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const isSellerOrAffiliate = user?.role === 'SELLER' || user?.role === 'AFFILIATE' || isAdmin;
 
   const menuItems = [
     {
@@ -60,6 +61,20 @@ export default function Header({ className }: { className?: string }) {
       label: 'Leads',
       href: '/dashboard/leads',
     },
+    ...(isSellerOrAffiliate ? [{
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+          />
+        </svg>
+      ),
+      label: 'Kits',
+      href: '/shop',
+    }] : []),
   ];
 
   // Adicionar item de administradores apenas para admins
@@ -77,6 +92,21 @@ export default function Header({ className }: { className?: string }) {
       ),
       label: 'Administradores',
       href: '/dashboard/admins',
+    });
+
+    menuItems.push({
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M20 7l-8-4-8 4m0 0l8 4m-8-4v10l8 4m0-10l8 4m-8-4v10M7 12v10m6-10v10"
+          />
+        </svg>
+      ),
+      label: 'Kits & Produtos',
+      href: '/admin/shop/kits',
     });
 
     menuItems.push({

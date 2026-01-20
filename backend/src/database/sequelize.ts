@@ -6,6 +6,17 @@ import { QRCodeScan } from '../models/QRCodeScan';
 import { Creative } from '../models/Creative';
 import { WhatsappTemplate } from '../models/WhatsappTemplate';
 
+// Kit / Shop Module Models
+import { Product } from '../models/Product';
+import { ProductImage } from '../models/ProductImage';
+import { Kit } from '../models/Kit';
+import { KitItem } from '../models/KitItem';
+import { Order } from '../models/Order';
+import { PaymentProof } from '../models/PaymentProof';
+import { CreditWallet } from '../models/CreditWallet';
+import { CreditTransaction } from '../models/CreditTransaction';
+import { WithdrawalRequest } from '../models/WithdrawalRequest';
+
 /**
  * Singleton Pattern para Sequelize
  * Garante apenas uma única instância de conexão com o banco de dados
@@ -46,7 +57,23 @@ function initializeSequelize(): Sequelize {
         }
       };
 
-  const models = [Person, Lead, QRCodeScan, Creative, WhatsappTemplate];
+  const models = [
+    Person,
+    Lead,
+    QRCodeScan,
+    Creative,
+    WhatsappTemplate,
+    // Kit / Shop Module
+    Product,
+    ProductImage,
+    Kit,
+    KitItem,
+    Order,
+    PaymentProof,
+    CreditWallet,
+    CreditTransaction,
+    WithdrawalRequest,
+  ];
 
   if (databaseUrl) {
     // Usa DATABASE_URL (Railway, Heroku)

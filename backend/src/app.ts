@@ -17,6 +17,11 @@ import migrationRoutes from "./routes/migration.routes";
 import emailActivationRouter from "./routes/emailActivation.routes";
 import whatsappTemplateRoutes from "./routes/whatsapp-template.routes";
 import cacheRoutes from "./routes/cache.routes";
+import productRoutes from "./routes/product.routes";
+import kitRoutes from "./routes/kit.routes";
+import orderRoutes from "./routes/order.routes";
+import creditRoutes from "./routes/credit.routes";
+import withdrawalRoutes from "./routes/withdrawal.routes";
 import { errorHandler } from "./shared/errorHandler";
 import { initializeMinIOBucket } from "./services/storage.service";
 import { authenticate } from "./middlewares/auth.middleware";
@@ -80,6 +85,13 @@ app.use("/api", emailActivationRouter);
 app.use("/api/whatsapp-templates", whatsappTemplateRoutes);
 // Admin cache management (protected by authenticate + requireAdmin inside routes)
 app.use("/api/admin/cache", cacheRoutes);
+
+// ============== KIT / SHOP ROUTES ==============
+app.use("/api/products", productRoutes);
+app.use("/api/kits", kitRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/credits", creditRoutes);
+app.use("/api/withdrawals", withdrawalRoutes);
 
 // Rota 404
 app.use((req, res) => {
