@@ -44,9 +44,6 @@ export default function ShopPage() {
             <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
               <p className="text-sm font-medium text-green-900 mb-2">✓ Pedido criado com sucesso!</p>
               <p className="text-lg font-mono font-bold text-green-700 mb-3">Número do pedido: {orderSuccess}</p>
-              <p className="text-sm text-green-800">
-                Envie o comprovante de pagamento via WhatsApp para confirmar a transação.
-              </p>
             </div>
           )}
 

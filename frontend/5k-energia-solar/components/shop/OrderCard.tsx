@@ -4,6 +4,7 @@ import { Order, OrderStatus } from '@/lib/types/shop.types';
 import { formatDate } from '@/lib/utils/dateUtils';
 import { useState } from 'react';
 import ResponsiveModal from '../ResponsiveModal';
+import { ImageModal } from '../ImageModal';
 import { uploadPaymentProof } from '@/app/actions/shop';
 
 interface OrderCardProps {
@@ -31,6 +32,7 @@ export function OrderCard({ order, onUploadSuccess }: OrderCardProps) {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<{ url: string; name: string; fileType: 'image' | 'pdf' } | null>(null);
 
   const handleProofUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -128,16 +130,14 @@ export function OrderCard({ order, onUploadSuccess }: OrderCardProps) {
             <p className="text-xs font-semibold text-gray-700 mb-2">Comprovantes:</p>
             <div className="space-y-1">
               {order.paymentProofs.map((proof) => (
-                <a
+                <button
                   key={proof.id}
-                  href={proof.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:text-blue-700 underline block truncate"
+                  onClick={() => setSelectedImage({ url: proof.fileUrl, name: proof.originalFileName, fileType: proof.fileType })}
+                  className="text-xs text-blue-600 hover:text-blue-700 underline block truncate text-left w-full"
                   title={proof.originalFileName}
                 >
                   📎 {proof.originalFileName}
-                </a>
+                </button>
               ))}
             </div>
           </div>
@@ -200,6 +200,17 @@ export function OrderCard({ order, onUploadSuccess }: OrderCardProps) {
           </div>
         </div>
       </ResponsiveModal>
+
+      {selectedImage && (
+        <ImageModal
+          isOpen={!!selectedImage}
+          onClose={() => setSelectedImage(null)}
+          imageUrl={selectedImage.url}
+          title={`Comprovante: ${selectedImage.name}`}
+          alt={selectedImage.name}
+          fileType={selectedImage.fileType}
+        />
+      )}
     </>
   );
 }

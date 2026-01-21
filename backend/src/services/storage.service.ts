@@ -109,7 +109,13 @@ export const uploadFileToMinIO = async (
     // Garante que o bucket existe
     await createBucketIfNotExists(BUCKET_NAME);
     
-    const objectName = `${folderName}/${Date.now()}-${fileName}`;
+    // Sanitiza o nome do arquivo para evitar caracteres problemáticos em URLs
+    const sanitizedFileName = fileName
+      .replace(/[^a-zA-Z0-9._-]/g, '_') // Substitui caracteres especiais por underscore
+      .replace(/_{2,}/g, '_') // Remove underscores consecutivos
+      .replace(/^_|_$/g, ''); // Remove underscores no início e fim
+    
+    const objectName = `${folderName}/${Date.now()}-${sanitizedFileName}`;
     
     // Detecta se é uma imagem
     const imageExtensions = ['jpg', 'jpeg', 'png', 'webp'];

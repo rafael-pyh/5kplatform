@@ -1,10 +1,12 @@
 'use client';
 
-import { Order, OrderStatus } from '@/lib/types/shop.types';
+import { Order, OrderStatus, PaymentProof } from '@/lib/types/shop.types';
 import { formatDate } from '@/lib/utils/dateUtils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ResponsiveModal from '@/components/ResponsiveModal';
+import { ImageModal } from '@/components/ImageModal';
 import { approveOrder, rejectOrder } from '@/app/actions/shop';
+import { shopService } from '@/lib/services/shop.service';
 
 interface AdminOrderCardProps {
   order: Order;
@@ -32,10 +34,38 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
   const [rejectReason, setRejectReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paymentProofs, setPaymentProofs] = useState<PaymentProof[]>(order.paymentProofs || []);
+  const [loadingProofs, setLoadingProofs] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{ url: string; name: string; fileType: 'image' | 'pdf' } | null>(null);
+
+  // Buscar paymentProofs se não foram fornecidos
+  useEffect(() => {
+    const fetchPaymentProofs = async () => {
+      if (order.paymentProofs && order.paymentProofs.length > 0) {
+        return; // Já tem os proofs
+      }
+
+      if (order.usesCredit) {
+        return; // Pedidos com crédito não precisam de proofs
+      }
+
+      setLoadingProofs(true);
+      try {
+        const proofs = await shopService.paymentProofs.getByOrder(order.id);
+        setPaymentProofs(proofs);
+      } catch (err) {
+        console.error('Erro ao buscar comprovantes:', err);
+      } finally {
+        setLoadingProofs(false);
+      }
+    };
+
+    fetchPaymentProofs();
+  }, [order.id, order.paymentProofs, order.usesCredit]);
 
   const canApprove =
     [OrderStatus.PENDING_APPROVAL, OrderStatus.PAID].includes(order.status) &&
-    (order.usesCredit || (order.paymentProofs && order.paymentProofs.length > 0));
+    (order.usesCredit || (paymentProofs && paymentProofs.length > 0));
 
   const canReject = [OrderStatus.PENDING_APPROVAL, OrderStatus.PENDING_PAYMENT].includes(
     order.status
@@ -117,20 +147,18 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
         </div>
 
         {/* Comprovante */}
-        {order.paymentProofs && order.paymentProofs.length > 0 && (
+        {paymentProofs && paymentProofs.length > 0 && (
           <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-xs font-semibold text-green-900 mb-2">✓ Comprovante(s) anexado(s):</p>
             <div className="space-y-1">
-              {order.paymentProofs.map((proof) => (
-                <a
+              {paymentProofs.map((proof) => (
+                <button
                   key={proof.id}
-                  href={proof.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-green-700 hover:text-green-900 underline block"
+                  onClick={() => setSelectedImage({ url: proof.fileUrl, name: proof.originalFileName, fileType: proof.fileType })}
+                  className="text-xs text-green-700 hover:text-green-900 underline block text-left w-full"
                 >
                   🔗 {proof.originalFileName}
-                </a>
+                </button>
               ))}
             </div>
           </div>
@@ -142,9 +170,15 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
           </div>
         )}
 
-        {!order.usesCredit && (!order.paymentProofs || order.paymentProofs.length === 0) && (
+        {!order.usesCredit && (!paymentProofs || paymentProofs.length === 0) && !loadingProofs && (
           <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-900">
             ⚠️ Nenhum comprovante anexado
+          </div>
+        )}
+
+        {loadingProofs && (
+          <div className="mb-3 p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600">
+            🔄 Carregando comprovantes...
           </div>
         )}
 
@@ -247,6 +281,17 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
           </div>
         </form>
       </ResponsiveModal>
+
+      {selectedImage && (
+        <ImageModal
+          isOpen={!!selectedImage}
+          onClose={() => setSelectedImage(null)}
+          imageUrl={selectedImage.url}
+          title={`Comprovante: ${selectedImage.name}`}
+          alt={selectedImage.name}
+          fileType={selectedImage.fileType}
+        />
+      )}
     </>
   );
 }

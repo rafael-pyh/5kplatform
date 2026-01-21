@@ -193,7 +193,7 @@ export const shopService = {
     async reject(id: string, reason: string): Promise<Order> {
       const response = await api.post<ApiResponse<Order>>(
         `${ORDERS_URL}/${id}/reject`,
-        { reason }
+        { rejectionReason: reason }
       );
       return response.data.data!;
     },

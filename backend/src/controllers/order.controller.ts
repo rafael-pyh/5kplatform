@@ -11,6 +11,7 @@ import {
   removePaymentProof,
 } from '../services/order.service';
 import { OrderStatus } from '../models/Order';
+import { Order } from '../models/Order';
 
 /**
  * Order Controller
@@ -106,6 +107,12 @@ export const listOrdersController = async (req: Request, res: Response) => {
         status: o.status,
         usesCredit: o.usesCredit,
         hasPaymentProofs: (o.paymentProofs?.length || 0) > 0,
+        approvedBy: o.approvedBy ? {
+          id: o.approvedBy.id,
+          name: o.approvedBy.name,
+        } : undefined,
+        approvedAt: o.approvedAt,
+        rejectionReason: o.rejectionReason,
         createdAt: o.createdAt,
       })),
     });
@@ -346,12 +353,23 @@ export const approveOrderController = async (req: Request, res: Response) => {
       });
     }
 
+    // Buscar o pedido com approvedBy populado
+    const orderWithApprovedBy = await Order.findByPk(id, {
+      include: [
+        { association: 'approvedBy', attributes: ['id', 'name', 'email'] },
+      ],
+    });
+
     return res.status(200).json({
       success: true,
       data: {
         id: order.id,
         orderCode: order.orderCode,
         status: order.status,
+        approvedBy: orderWithApprovedBy?.approvedBy ? {
+          id: orderWithApprovedBy.approvedBy.id,
+          name: orderWithApprovedBy.approvedBy.name,
+        } : undefined,
         approvedAt: order.approvedAt,
       },
     });
