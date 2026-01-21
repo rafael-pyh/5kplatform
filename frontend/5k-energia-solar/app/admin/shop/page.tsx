@@ -39,17 +39,17 @@ export default function AdminShopPage() {
   return (
     <ProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
       <DashboardLayout>
-        <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="w-full">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Gerenciamento de Shop</h1>
+            <h1 className="text-2xl font-bold text-slate-700">Gerenciamento de Shop</h1>
             <p className="text-gray-600">Aprove ou rejeite pedidos e processamento de saques</p>
             <div className="mt-4">
               <Link
                 href="/admin/shop/kits"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
-                📦 Gerenciar Produtos e Kits
+                Gerenciar Produtos e Kits
               </Link>
             </div>
           </div>
@@ -117,7 +117,7 @@ export default function AdminShopPage() {
                     ))}
                   </div>
                 ) : orders.length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg">
+                  <div className="text-center py-12 bg-gray-50 rounded-lg shadow">
                     <p className="text-gray-600">Nenhum pedido encontrado</p>
                   </div>
                 ) : (
@@ -143,7 +143,7 @@ export default function AdminShopPage() {
                   ))}
                 </div>
               ) : withdrawals.length === 0 ? (
-                <div className="text-center py-12 bg-gray-50 rounded-lg">
+                <div className="text-center py-12 bg-gray-50 rounded-lg shadow">
                   <p className="text-gray-600">Nenhum saque pendente</p>
                 </div>
               ) : (

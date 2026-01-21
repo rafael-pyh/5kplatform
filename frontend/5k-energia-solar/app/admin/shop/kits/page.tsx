@@ -17,6 +17,8 @@ import {
   CreateKitDTO,
   UpdateKitDTO,
 } from '@/lib/types/shop.types';
+import { Icon } from '@iconify/react';
+import { Button } from '@/components/ui';
 
 export default function ShopKitsPage() {
   // Estado
@@ -199,13 +201,13 @@ export default function ShopKitsPage() {
   return (
     <ProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
       <DashboardLayout>
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="w-full mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              📦 Gestão de Produtos e Kits
+            <h1 className="text-2xl font-bold text-slate-700">
+              Gestão de Produtos e Kits
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 mt-1">
               Adicione produtos e monte seus kits de venda
             </p>
           </div>
@@ -227,7 +229,7 @@ export default function ShopKitsPage() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              🛠️ Produtos ({products.length})
+              Produtos ({products.length})
             </button>
             <button
               onClick={() => setActiveTab('kits')}
@@ -237,7 +239,7 @@ export default function ShopKitsPage() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              📦 Kits ({kits.length})
+              Kits ({kits.length})
             </button>
           </div>
 
@@ -256,12 +258,14 @@ export default function ShopKitsPage() {
           {/* Produtos */}
           {!loading && activeTab === 'products' && (
             <div className="space-y-6">
-              <button
+              <Button
                 onClick={handleOpenProductModal}
-                className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                variant='outline-blue'
+                className="w-fit flex gap-1 items-center"
               >
-                ➕ Novo Produto
-              </button>
+                <Icon icon="bi-plus-lg" className="w-5 h-5 inline-block mr-2" />
+                <span>Novo Produto</span>
+              </Button>
 
               {products.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
@@ -310,13 +314,15 @@ export default function ShopKitsPage() {
           {/* Kits */}
           {!loading && activeTab === 'kits' && (
             <div className="space-y-6">
-              <button
+              <Button
                 onClick={handleOpenKitModal}
-                className="w-full md:w-auto px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
+                variant='outline-green'
+                className="w-auto flex gap-1 items-center"
                 disabled={products.length === 0}
               >
-                ➕ Novo Kit
-              </button>
+                <Icon icon="bi-plus-lg" className="w-5 h-5 inline-block mr-2" />
+                <span>Novo Kit</span>
+              </Button>
 
               {products.length === 0 && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
