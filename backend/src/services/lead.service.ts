@@ -5,6 +5,7 @@ import { sendApprovalOrRejectionEmail } from "../utils/email";
 import { env } from "../config/env";
 import { Validator } from "../shared/Validator";
 import { CachedService, CacheInvalidationManager } from "../cache/cache-invalidation";
+import { adjustCredits } from "./credit.service";
 
 // ===================== TIPOS =====================
 export interface CreateLeadDto {
@@ -231,7 +232,7 @@ async function updateLeadStatus(id: string, status: LeadStatus) {
   // Invalida caches
   CacheInvalidationManager.invalidateAfterUpdate('Lead', id);
 
-  // Se o status mudou para BOUGHT, notifica o vendedor (caso tenha email)
+  // Se o status mudou para BOUGHT, notifica o vendedor (caso tenha email) e dá créditos
   try {
     if (previousStatus !== LeadStatus.BOUGHT && status === LeadStatus.BOUGHT) {
       const owner = (lead as any).owner as Person | undefined;
@@ -242,6 +243,20 @@ async function updateLeadStatus(id: string, status: LeadStatus) {
         const buttonUrl = `${env.FRONTEND_URL}/seller/dashboard`;
 
         await sendApprovalOrRejectionEmail(owner.email, owner.name, subject, message, buttonText, buttonUrl);
+      }
+
+      // Atribuir créditos ao owner do lead (SELLER ou AFFILIATE)
+      if (owner) {
+        const creditAmount = 10; // 10 créditos por lead convertido
+        const reason = `Lead convertido: ${lead.name}`;
+
+        try {
+          await adjustCredits(owner.id, creditAmount, reason, 'SYSTEM');
+          console.log(`Créditos atribuídos: ${creditAmount} para ${owner.name} (${owner.role}) pelo lead ${lead.name}`);
+        } catch (creditError) {
+          console.error('Erro ao atribuir créditos:', creditError);
+          // Não falha a operação se não conseguir dar créditos
+        }
       }
     }
   } catch (err) {

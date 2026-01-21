@@ -97,7 +97,7 @@ export function OrderCard({ order, onUploadSuccess }: OrderCardProps) {
           <p className="font-medium text-gray-900">{order.kit?.name || 'Kit'}</p>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Total:</span>
-            <span className="font-semibold text-gray-900">R$ {order.totalPrice.toFixed(2)}</span>
+            <span className="font-semibold text-gray-900">R$ {(Number(order.totalPrice)).toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Data:</span>

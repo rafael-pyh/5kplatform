@@ -10,6 +10,14 @@ import { useWithdrawals } from '@/hooks/useWithdrawals';
 import { OrderStatus } from '@/lib/types/shop.types';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 
+const statusLabels: Record<OrderStatus, string> = {
+  [OrderStatus.PENDING_PAYMENT]: 'Aguardando Pagamento',
+  [OrderStatus.PENDING_APPROVAL]: 'Aguardando Aprovação',
+  [OrderStatus.APPROVED]: 'Aprovado',
+  [OrderStatus.REJECTED]: 'Rejeitado',
+  [OrderStatus.PAID]: 'Pago',
+};
+
 export default function AdminShopPage() {
   const [activeTab, setActiveTab] = useState<'orders' | 'withdrawals'>('orders');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
@@ -103,7 +111,7 @@ export default function AdminShopPage() {
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                   >
-                    {status === 'all' ? 'Todos' : status}
+                    {status === 'all' ? 'Todos' : statusLabels[status]}
                   </button>
                 ))}
               </div>

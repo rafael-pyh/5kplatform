@@ -133,6 +133,10 @@ export interface Order {
     id: string;
     name: string;
   };
+  // Campos adicionais retornados pela API de listagem
+  personName?: string;
+  kitName?: string;
+  hasPaymentProofs?: boolean;
   createdAt: string | Date;
   updatedAt: string | Date;
 }

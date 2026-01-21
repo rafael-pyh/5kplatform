@@ -6,14 +6,14 @@ WORKDIR /app
 RUN apt-get update -y && apt-get install -y openssl libssl-dev
 
 # Copiar arquivos de dependências
-COPY backend/package*.json ./
+COPY package*.json ./
 
 # Instalar dependências
 RUN npm install
 
 # Copiar código fonte
-COPY backend/tsconfig.json ./tsconfig.json
-COPY backend/src ./src
+COPY tsconfig.json ./tsconfig.json
+COPY src ./src
 
 # Compilar TypeScript
 RUN npm run build
@@ -29,22 +29,22 @@ RUN apt-get update -y && \
     rm -rf /var/lib/apt/lists/*
 
 # Copiar package.json
-COPY backend/package*.json ./
+COPY package*.json ./
 
 # Instalar apenas dependências de produção
 RUN npm install --omit=dev
 
 # Copiar Sequelize config e migrations
-COPY backend/config ./config
-COPY backend/.sequelizerc ./
-COPY backend/src/migrations ./src/migrations
-COPY backend/src/seeders ./src/seeders
+COPY config ./config
+COPY .sequelizerc ./
+COPY src/migrations ./src/migrations
+COPY src/seeders ./src/seeders
 
 # Copiar build da stage anterior
 COPY --from=builder /app/dist ./dist
 
 # Copiar entrypoint
-COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Criar usuário não-root

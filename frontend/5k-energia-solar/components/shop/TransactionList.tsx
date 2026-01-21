@@ -23,6 +23,35 @@ const typeLabels: Record<CreditTransactionType, string> = {
 };
 
 export function TransactionList({ transactions, loading }: TransactionListProps) {
+  // Função para formatar a descrição das transações
+  const formatDescription = (description: string | undefined, type: CreditTransactionType): string | undefined => {
+    if (!description) return undefined;
+
+    // Para ajustes relacionados a leads convertidos
+    if (type === CreditTransactionType.ADJUSTMENT && description.startsWith('Lead convertido:')) {
+      const leadName = description.replace('Lead convertido: ', '');
+      return `${leadName} comprou`;
+    }
+
+    // Para outros tipos de ajustes relacionados a leads
+    if (type === CreditTransactionType.ADJUSTMENT && description.includes('Lead atualizado para')) {
+      // Exemplo: "Lead atualizado para BOUGHT: Rafael Brandão Camargo"
+      const match = description.match(/Lead atualizado para (\w+): (.+)/);
+      if (match) {
+        const status = match[1];
+        const leadName = match[2];
+        const statusMap: Record<string, string> = {
+          'BOUGHT': 'comprou',
+          'NEGOTIATION': 'entrou em negociação',
+          'CANCELLED': 'cancelou'
+        };
+        const statusText = statusMap[status] || status.toLowerCase();
+        return `${leadName} ${statusText}`;
+      }
+    }
+
+    return description;
+  };
   if (loading) {
     return (
       <div className="space-y-3">
@@ -50,7 +79,7 @@ export function TransactionList({ transactions, loading }: TransactionListProps)
               <div className="text-2xl">{typeIcons[tx.type]}</div>
               <div>
                 <p className="font-medium text-gray-900">{typeLabels[tx.type]}</p>
-                {tx.description && <p className="text-xs text-gray-600">{tx.description}</p>}
+                {tx.description && <p className="text-xs text-gray-600">{formatDescription(tx.description, tx.type)}</p>}
                 <p className="text-xs text-gray-500">{formatDate(tx.createdAt)}</p>
               </div>
             </div>

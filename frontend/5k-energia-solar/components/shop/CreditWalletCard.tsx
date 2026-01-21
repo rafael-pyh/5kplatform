@@ -76,13 +76,13 @@ export function CreditWalletCard({ stats, onWithdrawalRequest }: CreditWalletCar
           <div>
             <p className="text-xs text-gray-600">Ganhos</p>
             <p className="text-lg font-semibold text-green-600">
-              +R$ {stats.totalEarned.toFixed(2)}
+              +R$ {(Number(stats.totalEarned)).toFixed(2)}
             </p>
           </div>
           <div>
             <p className="text-xs text-gray-600">Gastos</p>
             <p className="text-lg font-semibold text-red-600">
-              -R$ {stats.totalSpent.toFixed(2)}
+              -R$ {(Number(stats.totalSpent)).toFixed(2)}
             </p>
           </div>
         </div>

@@ -100,15 +100,15 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
         <div className="grid grid-cols-2 gap-3 mb-3 pb-3 border-b border-gray-100">
           <div>
             <p className="text-xs text-gray-600">Cliente</p>
-            <p className="font-medium text-gray-900">{order.person?.name || 'N/A'}</p>
+            <p className="font-medium text-gray-900">{order.personName || order.person?.name || 'N/A'}</p>
           </div>
           <div>
             <p className="text-xs text-gray-600">Kit</p>
-            <p className="font-medium text-gray-900">{order.kit?.name || 'N/A'}</p>
+            <p className="font-medium text-gray-900">{order.kitName || order.kit?.name || 'N/A'}</p>
           </div>
           <div>
             <p className="text-xs text-gray-600">Total</p>
-            <p className="font-bold text-green-600">R$ {order.totalPrice.toFixed(2)}</p>
+            <p className="font-bold text-green-600">R$ {Number(order.totalPrice).toFixed(2)}</p>
           </div>
           <div>
             <p className="text-xs text-gray-600">Data</p>
