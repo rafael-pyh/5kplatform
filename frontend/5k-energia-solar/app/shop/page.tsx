@@ -1,15 +1,18 @@
 'use client';
 
 import DashboardLayout from '@/components/DashboardLayout';
+import SellerDashboardLayout from '@/components/SellerDashboardLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { KitCard } from '@/components/shop/KitCard';
 import { OrderModal } from '@/components/shop/OrderModal';
 import { useShop } from '@/hooks/useShop';
+import { useAuth } from '@/contexts/AuthContext';
 import { Kit } from '@/lib/types/shop.types';
 import { useState } from 'react';
 
 export default function ShopPage() {
   const { kits, loading } = useShop();
+  const { user } = useAuth();
   const [selectedKit, setSelectedKit] = useState<Kit | null>(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
@@ -22,13 +25,17 @@ export default function ShopPage() {
     setTimeout(() => setOrderSuccess(null), 5000);
   };
 
+  // Determinar qual layout usar baseado no tipo de usuário
+  const isSellerOrAffiliate = user?.role === 'SELLER' || user?.role === 'AFFILIATE';
+  const LayoutComponent = isSellerOrAffiliate ? SellerDashboardLayout : DashboardLayout;
+
   return (
     <ProtectedRoute allowedRoles={['SELLER', 'AFFILIATE', 'ADMIN', 'SUPER_ADMIN']}>
-      <DashboardLayout>
-        <div className="max-w-6xl mx-auto px-4 py-8">
+      <LayoutComponent>
+        <div className="w-full">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Kits Disponíveis</h1>
+            <h1 className="text-2xl font-bold text-slate-700">Kits Disponíveis</h1>
             <p className="text-gray-600">Escolha um kit e faça sua solicitação</p>
           </div>
 
@@ -84,7 +91,7 @@ export default function ShopPage() {
           }}
           onSuccess={handleOrderSuccess}
         />
-      </DashboardLayout>
+      </LayoutComponent>
     </ProtectedRoute>
   );
 }

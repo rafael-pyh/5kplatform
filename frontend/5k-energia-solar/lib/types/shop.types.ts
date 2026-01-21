@@ -143,6 +143,15 @@ export interface CreateOrderDTO {
   notes?: string;
 }
 
+export interface CreateOrderResponse {
+  id: string;
+  orderCode: string;
+  status: string;
+  totalPrice: number;
+  usesCredit: boolean;
+  createdAt: string;
+}
+
 // ==================== COMPROVANTE DE PAGAMENTO ====================
 
 export type PaymentProofType = 'image' | 'pdf';

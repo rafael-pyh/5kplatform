@@ -14,6 +14,7 @@ import {
   CreditStats,
   WithdrawalRequest,
   CreateOrderDTO,
+  CreateOrderResponse,
   CreateWithdrawalDTO,
   UpdateKitItemsDTO,
   ApiResponse,
@@ -144,8 +145,8 @@ export const shopService = {
   // ==================== PEDIDOS ====================
 
   orders: {
-    async create(data: CreateOrderDTO): Promise<Order> {
-      const response = await api.post<ApiResponse<Order>>(ORDERS_URL, data);
+    async create(data: CreateOrderDTO): Promise<CreateOrderResponse> {
+      const response = await api.post<ApiResponse<CreateOrderResponse>>(ORDERS_URL, data);
       return response.data.data!;
     },
 

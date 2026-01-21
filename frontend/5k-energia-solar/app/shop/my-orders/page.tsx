@@ -1,17 +1,20 @@
 'use client';
 
 import DashboardLayout from '@/components/DashboardLayout';
+import SellerDashboardLayout from '@/components/SellerDashboardLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { OrderCard } from '@/components/shop/OrderCard';
 import { CreditWalletCard } from '@/components/shop/CreditWalletCard';
 import { TransactionList } from '@/components/shop/TransactionList';
 import { useOrders } from '@/hooks/useOrders';
 import { useCredits } from '@/hooks/useCredits';
+import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
 
 export default function MyOrdersPage() {
   const { orders, loading: ordersLoading, fetchOrders } = useOrders();
   const { stats, transactions, loading: creditsLoading, fetchTransactions } = useCredits();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'orders' | 'credits'>('orders');
 
   const handleUploadSuccess = () => {
@@ -22,13 +25,17 @@ export default function MyOrdersPage() {
     fetchTransactions();
   };
 
+  // Determinar qual layout usar baseado no tipo de usuário
+  const isSellerOrAffiliate = user?.role === 'SELLER' || user?.role === 'AFFILIATE';
+  const LayoutComponent = isSellerOrAffiliate ? SellerDashboardLayout : DashboardLayout;
+
   return (
     <ProtectedRoute allowedRoles={['SELLER', 'AFFILIATE', 'ADMIN', 'SUPER_ADMIN']}>
-      <DashboardLayout>
-        <div className="max-w-4xl mx-auto px-4 py-8">
+      <LayoutComponent>
+        <div className="w-full">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Minha Conta</h1>
+            <h1 className="text-2xl font-bold text-slate-700">Minha Conta</h1>
             <p className="text-gray-600">Visualize seus pedidos e gerecie seus créditos</p>
           </div>
 
@@ -66,7 +73,7 @@ export default function MyOrdersPage() {
                   ))}
                 </div>
               ) : orders.length === 0 ? (
-                <div className="text-center py-12 bg-gray-50 rounded-lg">
+                <div className="text-center py-12 bg-gray-50 rounded-lg shadow">
                   <p className="text-gray-600">Nenhum pedido realizado ainda</p>
                   <a
                     href="/shop"
@@ -95,7 +102,7 @@ export default function MyOrdersPage() {
             </div>
           )}
         </div>
-      </DashboardLayout>
+      </LayoutComponent>
     </ProtectedRoute>
   );
 }
