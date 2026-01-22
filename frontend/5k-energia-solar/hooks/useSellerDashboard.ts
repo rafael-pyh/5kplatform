@@ -33,6 +33,7 @@ export default function useSellerDashboard() {
   const [stats, setStats] = useState<Stats>(null);
   const [seller, setSeller] = useState<Seller | null>(null);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [qrModalMode, setQrModalMode] = useState<'qr' | 'criativos' | 'poster'>('qr');
   const [blockedReason, setBlockedReason] = useState<'unverified' | 'pendingApproval' | 'inactive' | null>(null);
 
   const handleLogout = useCallback(() => {
@@ -43,8 +44,14 @@ export default function useSellerDashboard() {
     router.push('/login');
   }, [router]);
 
-  const openQRModal = useCallback(() => setIsQRModalOpen(true), []);
+  const openQRModal = useCallback((mode: 'qr' | 'criativos' | 'poster' = 'qr') => {
+    setQrModalMode(mode);
+    setIsQRModalOpen(true);
+  }, []);
   const closeQRModal = useCallback(() => setIsQRModalOpen(false), []);
+
+  const openQRCodeModal = useCallback(() => openQRModal('qr'), [openQRModal]);
+  const openCriativosModal = useCallback(() => openQRModal('criativos'), [openQRModal]);
 
   const loadData = useCallback(
     async (latestUser?: any) => {
@@ -128,7 +135,10 @@ export default function useSellerDashboard() {
     leads,
     stats,
     isQRModalOpen,
+    qrModalMode,
     openQRModal,
+    openQRCodeModal,
+    openCriativosModal,
     closeQRModal,
     handleLogout,
     userRole: user?.role as 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | undefined,

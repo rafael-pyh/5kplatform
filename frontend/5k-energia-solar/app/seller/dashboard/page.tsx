@@ -17,7 +17,10 @@ export default function SellerDashboardPage() {
     leads,
     stats,
     isQRModalOpen,
+    qrModalMode,
     openQRModal,
+    openQRCodeModal,
+    openCriativosModal,
     closeQRModal,
     handleLogout,
     userRole,
@@ -45,7 +48,7 @@ export default function SellerDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <SellerHeader seller={seller} onOpenQR={openQRModal} onLogout={handleLogout} blocked={blocked} />
+      <SellerHeader seller={seller} onOpenQR={openQRCodeModal} onOpenCriativos={openCriativosModal} onLogout={handleLogout} blocked={blocked} />
 
       <main className="w-full h-lvh mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-linear-to-br from-blue-50 to-green-50">
         <StatsCards stats={stats} />
@@ -68,6 +71,7 @@ export default function SellerDashboardPage() {
           personName={seller.name}
           qrCode={seller.qrCode}
           userRole={userRole}
+          initialMode={qrModalMode}
         />
       )}
     </div>

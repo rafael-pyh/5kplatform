@@ -8,7 +8,7 @@ import { Button } from '../ui';
 import { useGlobalRefresh } from '@/hooks/useGlobalRefresh';
 import { useCredits } from '@/hooks/useCredits';
 
-const SellerHeader = ({ seller, onOpenQR, onLogout, blocked }: any) => {
+const SellerHeader = ({ seller, onOpenQR, onOpenCriativos, onLogout, blocked }: any) => {
   const router = useRouter();
   const { user } = useAuth();
   const { handleRefresh, isRefreshing } = useGlobalRefresh();
@@ -142,19 +142,21 @@ const SellerHeader = ({ seller, onOpenQR, onLogout, blocked }: any) => {
             </Button>
 
             {seller?.qrCodeUrl && (
-              <Button
-                onClick={onOpenQR}
-                variant="outline-blue"
-                size='sm'
-                title="Ver meu QR Code"
-                className="flex gap-2"
-                disabled={blocked}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                </svg>
-                <span className="hidden sm:inline font-medium">QR Code</span>
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={onOpenQR}
+                  variant="outline-blue"
+                  size='sm'
+                  title="Ver meu QR Code"
+                  className="flex gap-2"
+                  disabled={blocked}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                  </svg>
+                  <span className="hidden sm:inline font-medium">QR Code</span>
+                </Button>
+              </div>
             )}
             <div className="relative">
               <button
@@ -305,19 +307,34 @@ const SellerHeader = ({ seller, onOpenQR, onLogout, blocked }: any) => {
               </button>
 
               {seller?.qrCodeUrl && (
-                <button
-                  onClick={() => {
-                    onOpenQR();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
-                  disabled={blocked}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                  </svg>
-                  <span className="font-medium">Meu QR Code</span>
-                </button>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => {
+                      onOpenQR();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                    disabled={blocked}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                    <span className="font-medium">Meu QR Code</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onOpenCriativos();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full px-4 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                    disabled={blocked}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="font-medium">Criativos</span>
+                  </button>
+                </div>
               )}
 
               <button

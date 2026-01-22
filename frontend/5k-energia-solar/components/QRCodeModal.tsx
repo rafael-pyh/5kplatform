@@ -38,11 +38,12 @@ interface QRCodeModalProps {
   personName: string;
   qrCode?: string;
   userRole?: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | 'AFFILIATE';
+  initialMode?: 'qr' | 'criativos' | 'poster';
 }
 
-export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName, qrCode, userRole = 'SELLER' }: QRCodeModalProps) {
+export default function QRCodeModal({ isOpen, onClose, qrCodeBase64, personName, qrCode, userRole = 'SELLER', initialMode = 'qr' }: QRCodeModalProps) {
   const [resolution, setResolution] = useState<number | 'original'>(512);
-  const [previewMode, setPreviewMode] = useState<'qr' | 'criativos' | 'poster'>('qr');
+  const [previewMode, setPreviewMode] = useState<'qr' | 'criativos' | 'poster'>(initialMode);
   const [customPoster, setCustomPoster] = useState<string | null>(null);
   const [criativos, setCriativos] = useState<Creative[]>([]);
   const [loadingCriativos, setLoadingCriativos] = useState(false);
