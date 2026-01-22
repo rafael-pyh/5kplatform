@@ -33,6 +33,13 @@ export default function AdminShopPage() {
     });
   }, [statusFilter, fetchOrders]);
 
+  // Carregar saques quando a aba for selecionada
+  useEffect(() => {
+    if (activeTab === 'withdrawals') {
+      fetchWithdrawals();
+    }
+  }, [activeTab, fetchWithdrawals]);
+
   const pendingOrders = useMemo(() => orders.filter((o) => o.status === OrderStatus.PENDING_APPROVAL), [orders]);
   const pendingWithdrawals = useMemo(() => withdrawals.filter((w) => w.status === 'PENDING'), [withdrawals]);
 

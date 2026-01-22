@@ -72,7 +72,7 @@ export default function Header({ className }: { className?: string }) {
           />
         </svg>
       ),
-      label: 'Kits',
+      label: 'Pedidos',
       href: '/admin/shop',
     }] : []),
   ];

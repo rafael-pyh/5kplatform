@@ -1,8 +1,8 @@
 import { WithdrawalRequest, WithdrawalStatus } from '../models/WithdrawalRequest';
+import { CreditTransaction, CreditTransactionType } from '../models/CreditTransaction';
 import { Person } from '../models/Person';
 import { Op } from 'sequelize';
 import { getCreditBalance, addCreditTransaction, CreditTransactionParams } from './credit.service';
-import { CreditTransactionType } from '../models/CreditTransaction';
 
 /**
  * Withdrawal Service
@@ -60,6 +60,16 @@ export const requestWithdrawal = async (
       notes,
       status: WithdrawalStatus.PENDING,
     });
+
+    // Criar transação de auditoria para solicitação
+    const params: CreditTransactionParams = {
+      personId,
+      type: CreditTransactionType.WITHDRAW_REQUEST,
+      amount: -withdrawal.amount, // Débito (reservado)
+      description: `Solicitação de saque - R$ ${withdrawal.amount.toFixed(2)}`,
+      withdrawalRequestId: withdrawal.id,
+    };
+    await addCreditTransaction(params);
 
     return withdrawal;
   } catch (error: any) {
@@ -184,7 +194,15 @@ export const cancelWithdrawal = async (
       throw new Error(`Saque com status ${withdrawal.status} não pode ser cancelado`);
     }
 
-    // Deletar
+    // Deletar transação associada
+    await CreditTransaction.destroy({
+      where: {
+        withdrawalRequestId: withdrawal.id,
+        type: CreditTransactionType.WITHDRAW_REQUEST,
+      },
+    });
+
+    // Deletar solicitação
     await withdrawal.destroy();
     return null;
   } catch (error: any) {
@@ -222,16 +240,19 @@ export const approveWithdrawal = async (
       approvedAt: new Date(),
     });
 
-    // Criar transação de auditoria
-    const params: CreditTransactionParams = {
-      personId: withdrawal.personId,
-      type: CreditTransactionType.WITHDRAW_REQUEST,
-      amount: -withdrawal.amount, // Débito
-      description: `Saque aprovado - R$ ${withdrawal.amount.toFixed(2)}`,
-      withdrawalRequestId: withdrawal.id,
-      adjustedByUserId: approvedByUserId,
-    };
-    await addCreditTransaction(params);
+    // Atualizar transação existente para refletir aprovação
+    await CreditTransaction.update(
+      {
+        description: `Saque aprovado - R$ ${withdrawal.amount.toFixed(2)}`,
+        adjustedByUserId: approvedByUserId,
+      },
+      {
+        where: {
+          withdrawalRequestId: withdrawal.id,
+          type: CreditTransactionType.WITHDRAW_REQUEST,
+        },
+      }
+    );
 
     return withdrawal;
   } catch (error: any) {
@@ -271,6 +292,20 @@ export const rejectWithdrawal = async (
       rejectionReason,
     });
 
+    // Atualizar transação para refletir rejeição
+    await CreditTransaction.update(
+      {
+        description: `Saque rejeitado - R$ ${withdrawal.amount.toFixed(2)}: ${rejectionReason}`,
+        adjustedByUserId: rejectedByUserId,
+      },
+      {
+        where: {
+          withdrawalRequestId: withdrawal.id,
+          type: CreditTransactionType.WITHDRAW_REQUEST,
+        },
+      }
+    );
+
     return withdrawal;
   } catch (error: any) {
     console.error('Erro ao rejeitar saque:', error);
@@ -304,6 +339,19 @@ export const markWithdrawalAsPaid = async (
       status: WithdrawalStatus.PAID,
       paidAt: new Date(),
     });
+
+    // Atualizar transação para refletir pagamento
+    await CreditTransaction.update(
+      {
+        description: `Saque pago - R$ ${withdrawal.amount.toFixed(2)}`,
+      },
+      {
+        where: {
+          withdrawalRequestId: withdrawal.id,
+          type: CreditTransactionType.WITHDRAW_REQUEST,
+        },
+      }
+    );
 
     return withdrawal;
   } catch (error: any) {

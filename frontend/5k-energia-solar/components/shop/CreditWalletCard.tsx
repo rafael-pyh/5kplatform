@@ -110,7 +110,7 @@ export function CreditWalletCard({ stats, onWithdrawalRequest }: CreditWalletCar
         }}
         title="Solicitar Saque"
       >
-        <form onSubmit={handleWithdrawalSubmit} className="space-y-4">
+        <form onSubmit={handleWithdrawalSubmit} className="space-y-4 p-4">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-900">
               Saldo disponível:{' '}
