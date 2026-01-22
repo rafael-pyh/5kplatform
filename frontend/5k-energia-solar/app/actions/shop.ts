@@ -191,7 +191,7 @@ export async function rejectOrder(id: string, reason: string): Promise<{
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ reason }),
+      body: JSON.stringify({ rejectionReason: reason }),
     });
 
     if (!response.ok) {
