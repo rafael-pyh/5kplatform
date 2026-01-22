@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import PasswordField from '@/components/ui/PasswordField';
 import CityAutocomplete from '@/components/ui/CityAutocomplete';
+import { FileUpload } from '@/components/ui';
 
 interface StateOption {
   id: string;
@@ -133,7 +134,13 @@ export default function RegisterForm({
 
             <div className="md:col-span-2">
               <label htmlFor="photo" className="block text-sm font-medium text-gray-700 mb-0.5">Foto</label>
-              <input id="photo" type="file" accept="image/*" onChange={handleFileChange} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition file:mr-4 file:py-2 file:px-4 file:cursor-pointer file:border-0 file:text-sm file:bg-blue-50 file:rounded-lg file:text-blue-700 hover:file:bg-blue-100" required />
+              <FileUpload
+                id="photo"
+                accept="image/*"
+                onChange={handleFileChange}
+                label="Clique para selecionar uma foto"
+                dragText="ou arraste uma imagem aqui"
+              />
             </div>
 
             <div className="md:col-span-2">

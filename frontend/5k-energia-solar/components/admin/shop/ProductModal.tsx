@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { shopService } from '@/lib/services/shop.service';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import Button from '@/components/ui/Button';
+import { FileUpload } from '@/components/ui';
 import { Icon } from '@iconify/react';
 
 interface ProductModalProps {
@@ -89,11 +90,6 @@ export function ProductModal({
   const handleCancelDeleteImage = () => {
     setShowDeleteConfirmation(false);
     setImageToDelete(null);
-  };
-
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setSelectedImages(prev => [...prev, ...files]);
   };
 
   const handleRemoveSelectedImage = (index: number) => {
@@ -410,27 +406,22 @@ export function ProductModal({
               Imagens do Produto
             </label>
             <div className="space-y-3">
-              <label
-              htmlFor="image-upload"
-              className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
-              >
-              <div className="text-center">
-                <Icon icon="bi-cloud-arrow-up" className="text-2xl text-gray-400 mx-auto mb-1" />
-                <p className="text-sm font-medium text-gray-700">Clique para selecionar imagens</p>
-                <p className="text-xs text-gray-500">ou arraste arquivos aqui</p>
-              </div>
-              </label>
-              <input
-              id="image-upload"
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleImageSelect}
-              className="hidden"
+              <FileUpload
+                id="image-upload"
+                multiple={true}
+                accept="image/*"
+                onChange={(files) => {
+                  if (files && files instanceof FileList) {
+                    const fileArray: File[] = Array.from(files);
+                    setSelectedImages(prev => [...prev, ...fileArray]);
+                  }
+                }}
+                label="Clique para selecionar imagens"
+                dragText="ou arraste arquivos aqui"
               />
               {selectedImages.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {selectedImages.map((file, index) => (
+                {selectedImages.map((file: File, index) => (
                 <div key={index} className="relative group">
                   <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
                   <img

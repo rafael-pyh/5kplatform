@@ -7,7 +7,7 @@ import { adminService } from '@/lib/services';
 import { CreateAdminDto } from '@/lib/types';
 import PasswordField from '@/components/ui/PasswordField';
 import ResponsiveModal from '@/components/ResponsiveModal';
-import { Button } from '../ui';
+import { Button, FileUpload } from '../ui';
 
 interface NewAdminModalProps {
   isOpen: boolean;
@@ -184,7 +184,7 @@ export default function NewAdminModal({ isOpen, onClose, onSuccess }: NewAdminMo
             <label className="block text-sm font-medium text-gray-700 mb-0.5">
               Imagem de perfil
             </label>
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-3">
               <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200">
                 {preview ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -195,18 +195,14 @@ export default function NewAdminModal({ isOpen, onClose, onSuccess }: NewAdminMo
                   </svg>
                 )}
               </div>
-              <label className="cursor-pointer">
-                <span className="px-3 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-100 transition inline-block text-sm font-medium">
-                  Escolher Arquivo
-                </span>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </label>
+              <FileUpload
+                id="photo"
+                accept="image/*"
+                onChange={handleFileChange}
+                label="Escolher Arquivo"
+                dragText="ou arraste uma imagem aqui"
+                className="flex-1"
+              />
             </div>
           </div>
 

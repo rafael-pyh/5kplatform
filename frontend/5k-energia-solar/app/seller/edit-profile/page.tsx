@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEditProfile } from '@/hooks/useEditProfile';
 import CityAutocomplete from '@/components/ui/CityAutocomplete';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { Button } from '@/components/ui';
+import { Button, FileUpload } from '@/components/ui';
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -182,14 +182,14 @@ export default function EditProfilePage() {
                   </div>
                 )}
                 <div className="grow">
-                  <input
+                  <FileUpload
                     id="photo"
-                    type="file"
                     accept="image/*"
                     onChange={handleFileChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition file:mr-4 file:py-2 file:px-4 file:cursor-pointer file:border-0 file:text-sm file:bg-blue-50 file:rounded-lg file:text-blue-700 hover:file:bg-blue-100"
+                    label="Clique para alterar a foto"
+                    dragText="ou arraste uma imagem aqui"
                   />
-                  <p className="text-xs text-gray-500 mt-2">Clique para alterar a foto (opcional)</p>
+                  <p className="text-xs text-gray-500 mt-2">Foto opcional</p>
                 </div>
               </div>
             </div>

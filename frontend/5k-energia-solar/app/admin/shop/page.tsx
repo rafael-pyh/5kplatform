@@ -55,7 +55,7 @@ export default function AdminShopPage() {
             <div className="mt-4">
               <Link
                 href="/admin/shop/kits"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-700 hover:text-white transition-colors"
               >
                 Gerenciar Produtos e Kits
               </Link>

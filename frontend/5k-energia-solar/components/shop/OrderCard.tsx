@@ -5,6 +5,7 @@ import { formatDate } from '@/lib/utils/dateUtils';
 import { useState } from 'react';
 import ResponsiveModal from '../ResponsiveModal';
 import { ImageModal } from '../ImageModal';
+import { FileUpload } from '../ui';
 import { uploadPaymentProof } from '@/app/actions/shop';
 
 interface OrderCardProps {
@@ -166,22 +167,14 @@ export function OrderCard({ order, onUploadSuccess }: OrderCardProps) {
             <span className="font-mono font-bold">{order.orderCode}</span>
           </p>
 
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-            <label className="cursor-pointer block">
-              <input
-                type="file"
-                onChange={handleProofUpload}
-                disabled={uploading}
-                accept="image/*,.pdf"
-                className="hidden"
-              />
-              <div className="text-center">
-                <div className="text-3xl mb-2">📄</div>
-                <p className="font-medium text-gray-900">Clique ou arraste um arquivo</p>
-                <p className="text-xs text-gray-600 mt-1">PNG, JPEG, GIF, WebP ou PDF até 20MB</p>
-              </div>
-            </label>
-          </div>
+          <FileUpload
+            id="proof-upload"
+            accept="image/*,.pdf"
+            onChange={handleProofUpload}
+            label="Clique ou arraste um arquivo"
+            dragText="Apenas imagens ou PDF são aceitos"
+            disabled={uploading}
+          />
 
           {uploadError && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">

@@ -11,9 +11,8 @@ import ResponsiveModal from '@/components/ResponsiveModal';
 import { useState, useEffect } from 'react';
 import { shopService } from '@/lib/services/shop.service';
 import ConfirmationModal from '@/components/ConfirmationModal';
-import { ImageUploadModal } from '@/components/admin/shop/ImageUploadModal';
 import { Icon } from '@/components/ui/Icon';
-import { Button } from '@/components/ui';
+import { Button, FileUpload } from '@/components/ui';
 
 interface KitModalProps {
   isOpen: boolean;
@@ -67,7 +66,6 @@ export function KitModal({
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [showImageUpload, setShowImageUpload] = useState(false);
 
   useEffect(() => {
     if (kit) {
@@ -97,7 +95,6 @@ export function KitModal({
     }
     setShowDeleteConfirmation(false);
     setSelectedImageFile(null);
-    setShowImageUpload(false);
   }, [kit]);
 
   const handleInputChange = (
@@ -439,30 +436,32 @@ export function KitModal({
             </div>
           )}
 
-          {/* Botão de Upload */}
-          {onImageUpload && (
-            <div>
-              <Button
-                variant='outline-green'
-                type="button"
-                onClick={() => {
-                  if (kit) {
-                    onImageUpload!(kit.id);
+          {/* Upload de Imagem */}
+          <div>
+            <FileUpload
+              id="kit-image-upload"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  if (kit && onImageUpload) {
+                    // Para edição: usar o modal de upload existente
+                    onImageUpload(kit.id);
                   } else {
-                    setShowImageUpload(true);
+                    // Para criação: definir o arquivo selecionado
+                    setSelectedImageFile(file);
                   }
-                }}
-                className="flex gap-2 w-full md:w-auto px-4 py-2"
-              >
-              <Icon icon="bi-camera"/> <p>{selectedImageFile ? 'Alterar Imagem' : kit?.imageUrl ? 'Alterar Imagem' : 'Adicionar Imagem'}</p>
-              </Button>
-              {!kit?.imageUrl && !selectedImageFile && (
-                <p className="text-xs text-gray-500 mt-1">
-                  A primeira imagem dos produtos será usada automaticamente
-                </p>
-              )}
-            </div>
-          )}
+                }
+              }}
+              label={selectedImageFile ? 'Alterar Imagem' : kit?.imageUrl ? 'Alterar Imagem' : 'Adicionar Imagem'}
+              dragText="ou arraste uma imagem aqui"
+            />
+            {!kit?.imageUrl && !selectedImageFile && (
+              <p className="text-xs text-gray-500 mt-1">
+                A primeira imagem dos produtos será usada automaticamente
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Adicionar Produtos */}
@@ -619,17 +618,6 @@ export function KitModal({
       onCancel={handleCancelDeleteImage}
     />
 
-    {!kit && (
-      <ImageUploadModal
-        isOpen={showImageUpload}
-        title="Selecionar Imagem - Kit"
-        onClose={() => setShowImageUpload(false)}
-        onFileSelected={(file) => {
-          setSelectedImageFile(file);
-          setShowImageUpload(false);
-        }}
-      />
-    )}
     </>
   );
 }

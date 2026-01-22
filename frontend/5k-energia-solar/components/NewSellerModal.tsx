@@ -7,6 +7,7 @@ import { personService } from '@/lib/services';
 import { CreatePersonDto } from '@/lib/types';
 import ResponsiveModal from '@/components/ResponsiveModal';
 import CityAutocomplete from '@/components/ui/CityAutocomplete';
+import { FileUpload } from '@/components/ui';
 import { getStates, getCitiesByState } from '@/lib/actions/locationActions';
 import { Button } from './ui';
 
@@ -369,11 +370,12 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
             <label className="block text-sm font-medium text-gray-700 mb-0.5">
               Foto de Perfil
             </label>
-            <input
-              type="file"
+            <FileUpload
+              id="photo"
               accept="image/*"
               onChange={handlePhotoChange}
-              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition file:mr-4 file:py-2 file:px-4 file:cursor-pointer file:border-0 file:text-sm file:bg-blue-50 file:rounded-lg file:text-blue-700 hover:file:bg-blue-100"
+              label="Clique para selecionar uma foto"
+              dragText="ou arraste uma imagem aqui"
             />
             {photoPreview && (
               <div className="mt-2 flex items-center gap-2">

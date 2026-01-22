@@ -7,7 +7,7 @@ import { adminService } from '@/lib/services';
 import { User, UpdateAdminDto } from '@/lib/types';
 import PasswordField from '@/components/ui/PasswordField';
 import ResponsiveModal from '@/components/ResponsiveModal';
-import { Button } from '../ui';
+import { Button, FileUpload } from '../ui';
 
 interface EditAdminModalProps {
   isOpen: boolean;
@@ -231,18 +231,14 @@ export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: Ed
                 )}
               </div>
 
-              <label className="cursor-pointer">
-                <span className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block text-sm font-medium">
-                  Alterar Foto
-                </span>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </label>
+              <FileUpload
+                id="photo"
+                accept="image/*"
+                onChange={handleFileChange}
+                label="Alterar Foto"
+                dragText="ou arraste uma imagem aqui"
+                className="mt-2"
+              />
             </div>
           </div>
 
