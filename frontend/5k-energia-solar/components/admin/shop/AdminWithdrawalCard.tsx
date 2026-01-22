@@ -93,7 +93,7 @@ export function AdminWithdrawalCard({ withdrawal, onActionSuccess }: AdminWithdr
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="text-sm text-gray-600">Solicitação de Saque</p>
-          <p className="font-bold text-lg text-gray-900">R$ {withdrawal.amount.toFixed(2)}</p>
+          <p className="font-bold text-lg text-gray-900">R$ {Number(withdrawal.amount).toFixed(2)}</p>
         </div>
         <div className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[withdrawal.status]}`}>
           {statusLabels[withdrawal.status]}

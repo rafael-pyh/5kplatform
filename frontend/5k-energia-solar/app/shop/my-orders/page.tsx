@@ -158,7 +158,7 @@ export default function MyOrdersPage() {
                           </div>
                           <div className="text-right">
                             <p className={`font-bold text-lg text-red-600`}>
-                              -R$ {withdrawal.amount.toFixed(2)}
+                              -R$ {Number(withdrawal.amount).toFixed(2)}
                             </p>
                             <p className={`text-xs px-2 py-1 rounded-full inline-block ${
                               withdrawal.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
