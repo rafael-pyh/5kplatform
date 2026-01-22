@@ -12,6 +12,8 @@ import { useState, useEffect } from 'react';
 import { shopService } from '@/lib/services/shop.service';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import { ImageUploadModal } from '@/components/admin/shop/ImageUploadModal';
+import { Icon } from '@/components/ui/Icon';
+import { Button } from '@/components/ui';
 
 interface KitModalProps {
   isOpen: boolean;
@@ -32,9 +34,21 @@ export function KitModal({
   onImageUpload,
   onImageUploaded,
 }: KitModalProps) {
-  const [formData, setFormData] = useState<Partial<CreateKitDTO> & { tagArray?: string[] }>({
+  const [formData, setFormData] = useState<{
+    name?: string;
+    price: string;
+    description?: string;
+    sku?: string;
+    tags?: string;
+    tagArray?: string[];
+    items?: {
+      productId: string;
+      quantity: number;
+      notes?: string;
+    }[];
+  }>({
     name: kit?.name || '',
-    price: kit?.price || 0,
+    price: kit?.price?.toString() || '',
     description: kit?.description || '',
     sku: kit?.sku || '',
     tags: kit?.tags || '',
@@ -59,7 +73,7 @@ export function KitModal({
     if (kit) {
       setFormData({
         name: kit.name || '',
-        price: kit.price || 0,
+        price: kit.price?.toString() || '',
         description: kit.description || '',
         sku: kit.sku || '',
         tags: kit.tags || '',
@@ -73,7 +87,7 @@ export function KitModal({
     } else {
       setFormData({
         name: '',
-        price: 0,
+        price: '',
         description: '',
         sku: '',
         tags: '',
@@ -92,8 +106,7 @@ export function KitModal({
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]:
-        name === 'price' ? parseFloat(value) || 0 : value,
+      [name]: value,
     }));
   };
 
@@ -189,7 +202,7 @@ export function KitModal({
       return;
     }
 
-    if (formData.price! <= 0) {
+    if (parseFloat(formData.price) <= 0) {
       setError('Preço deve ser maior que 0');
       return;
     }
@@ -220,11 +233,9 @@ export function KitModal({
       // Remove the tagArray before sending
       const dataToSubmit: any = { ...formData };
       delete dataToSubmit.tagArray;
-
-      // Incluir a imagem do kit se encontrada
-      if (kitImageUrl) {
-        dataToSubmit.imageUrl = kitImageUrl;
-      }
+      
+      // Parse numeric fields
+      dataToSubmit.price = parseFloat(dataToSubmit.price) || 0;
       
       const result = await onSubmit(dataToSubmit as CreateKitDTO);
 
@@ -283,7 +294,7 @@ export function KitModal({
   return (
     <>
       <ResponsiveModal isOpen={isOpen} onClose={onClose} title="">
-        <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl max-h-[90vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="space-y-4 p-4 max-h-[90vh] overflow-y-auto">
         {/* Título */}
         <div>
           <h2 className="text-xl font-bold text-gray-900 mb-6">
@@ -349,7 +360,7 @@ export function KitModal({
               <input
                 type="number"
                 name="price"
-                value={formData.price || 0}
+                value={formData.price || ''}
                 onChange={handleInputChange}
                 step="0.01"
                 min="0"
@@ -431,7 +442,8 @@ export function KitModal({
           {/* Botão de Upload */}
           {onImageUpload && (
             <div>
-              <button
+              <Button
+                variant='outline-green'
                 type="button"
                 onClick={() => {
                   if (kit) {
@@ -440,10 +452,10 @@ export function KitModal({
                     setShowImageUpload(true);
                   }
                 }}
-                className="w-full md:w-auto px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                className="flex gap-2 w-full md:w-auto px-4 py-2"
               >
-                📷 {selectedImageFile ? 'Alterar Imagem' : kit?.imageUrl ? 'Alterar Imagem' : 'Adicionar Imagem'}
-              </button>
+              <Icon icon="bi-camera"/> <p>{selectedImageFile ? 'Alterar Imagem' : kit?.imageUrl ? 'Alterar Imagem' : 'Adicionar Imagem'}</p>
+              </Button>
               {!kit?.imageUrl && !selectedImageFile && (
                 <p className="text-xs text-gray-500 mt-1">
                   A primeira imagem dos produtos será usada automaticamente
@@ -489,13 +501,15 @@ export function KitModal({
             </div>
           </div>
 
-          <button
+          <Button
             type="button"
+            variant='outline-blue'
             onClick={handleAddItem}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            className="w-full flex gap-2 px-4 py-2"
           >
-            ➕ Adicionar Produto
-          </button>
+            <Icon icon="bi-plus" className='text-2xl'/>
+            <p>Adicionar Produto</p>
+          </Button>
         </div>
 
         {/* Lista de Produtos Adicionados */}
@@ -573,20 +587,23 @@ export function KitModal({
 
         {/* Botões */}
         <div className="flex gap-3 pt-4 border-t border-gray-200">
-          <button
+          <Button
             type="button"
+            variant="outline-danger"
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            className="flex-1 gap-2 px-4 py-2"
           >
+            <Icon icon="bi-x-lg" />
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+            className="flex-1 gap-2 px-4 py-2"
           >
+            <Icon icon="bi-check-lg" className='text-2xl'/>
             {isSubmitting ? '⏳ Salvando...' : 'Salvar Kit'}
-          </button>
+          </Button>
         </div>
       </form>
     </ResponsiveModal>

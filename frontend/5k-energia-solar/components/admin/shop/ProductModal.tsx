@@ -5,6 +5,8 @@ import ResponsiveModal from '@/components/ResponsiveModal';
 import { useState, useEffect } from 'react';
 import { shopService } from '@/lib/services/shop.service';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import Button from '@/components/ui/Button';
+import { Icon } from '@iconify/react';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -23,12 +25,21 @@ export function ProductModal({
   onImageUpload,
   onImageUploaded,
 }: ProductModalProps) {
-  const [formData, setFormData] = useState<CreateProductDTO & { id?: string; tagArray?: string[] }>({
+  const [formData, setFormData] = useState<{
+    name: string;
+    price: string;
+    description: string;
+    sku: string;
+    stock: string;
+    tags: string;
+    id?: string;
+    tagArray?: string[];
+  }>({
     name: product?.name || '',
-    price: product?.price || 0,
+    price: product?.price?.toString() || '',
     description: product?.description || '',
     sku: product?.sku || '',
-    stock: product?.stock || 0,
+    stock: product?.stock?.toString() || '',
     tags: product?.tags || '',
     tagArray: product?.tags ? product.tags.split(',').map(t => t.trim()) : [],
   });
@@ -93,10 +104,10 @@ export function ProductModal({
     if (product) {
       setFormData({
         name: product.name || '',
-        price: product.price || 0,
+        price: product.price?.toString() || '',
         description: product.description || '',
         sku: product.sku || '',
-        stock: product.stock || 0,
+        stock: product.stock?.toString() || '',
         tags: product.tags || '',
         tagArray: product.tags ? product.tags.split(',').map(t => t.trim()) : [],
       });
@@ -105,10 +116,10 @@ export function ProductModal({
     } else {
       setFormData({
         name: '',
-        price: 0,
+        price: '',
         description: '',
         sku: '',
-        stock: 0,
+        stock: '',
         tags: '',
         tagArray: [],
       });
@@ -122,8 +133,7 @@ export function ProductModal({
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]:
-        name === 'price' || name === 'stock' ? parseFloat(value) || 0 : value,
+      [name]: value,
     }));
   };
 
@@ -165,7 +175,7 @@ export function ProductModal({
       return;
     }
 
-    if (formData.price <= 0) {
+    if (parseFloat(formData.price) <= 0) {
       setError('Preço deve ser maior que 0');
       return;
     }
@@ -175,6 +185,10 @@ export function ProductModal({
       // Remove the tagArray before sending
       const dataToSubmit: any = { ...formData };
       delete dataToSubmit.tagArray;
+      
+      // Parse numeric fields
+      dataToSubmit.price = parseFloat(dataToSubmit.price) || 0;
+      dataToSubmit.stock = parseFloat(dataToSubmit.stock) || 0;
       
       // Criar o produto primeiro
       const createdProduct = await onSubmit(dataToSubmit);
@@ -205,10 +219,10 @@ export function ProductModal({
 
       setFormData({
         name: '',
-        price: 0,
+        price: '',
         description: '',
         sku: '',
-        stock: 0,
+        stock: '',
         tags: '',
         tagArray: [],
       });
@@ -222,13 +236,13 @@ export function ProductModal({
   };
 
   return (
-    <>
+    <div>
       <ResponsiveModal isOpen={isOpen} onClose={onClose} title="">
-        <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+        <form onSubmit={handleSubmit} className="p-4 space-y-4">
         {/* Título */}
         <div>
           <h2 className="text-xl font-bold text-gray-900 mb-6">
-            {product ? '✏️ Editar Produto' : '➕ Novo Produto'}
+            {product ? 'Editar Produto' : 'Novo Produto'}
           </h2>
         </div>
 
@@ -336,13 +350,13 @@ export function ProductModal({
                   className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-2"
                 >
                   {tag}
-                  <button
+                  <Button
                     type="button"
                     onClick={() => handleRemoveTag(tag)}
                     className="text-blue-700 hover:text-blue-900"
                   >
-                    ×
-                  </button>
+                    <Icon icon="bi-x-lg" />
+                  </Button>
                 </span>
               ))}
             </div>
@@ -371,7 +385,7 @@ export function ProductModal({
                         }}
                       />
                     </div>
-                    <button
+                    <Button
                       type="button"
                       onClick={() => handleDeleteImage(image)}
                       disabled={deletingImages.has(image.id)}
@@ -379,7 +393,7 @@ export function ProductModal({
                       title="Remover imagem"
                     >
                       {deletingImages.has(image.id) ? '⏳' : '×'}
-                    </button>
+                    </Button>
                     <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
                       #{image.order}
                     </div>
@@ -396,38 +410,49 @@ export function ProductModal({
               Imagens do Produto
             </label>
             <div className="space-y-3">
+              <label
+              htmlFor="image-upload"
+              className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
+              >
+              <div className="text-center">
+                <Icon icon="bi-cloud-arrow-up" className="text-2xl text-gray-400 mx-auto mb-1" />
+                <p className="text-sm font-medium text-gray-700">Clique para selecionar imagens</p>
+                <p className="text-xs text-gray-500">ou arraste arquivos aqui</p>
+              </div>
+              </label>
               <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleImageSelect}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              id="image-upload"
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
               />
               {selectedImages.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {selectedImages.map((file, index) => (
-                    <div key={index} className="relative group">
-                      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={`Imagem ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveSelectedImage(index)}
-                        className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-700 transition-colors"
-                        title="Remover imagem"
-                      >
-                        ×
-                      </button>
-                      <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                        #{index + 1}
-                      </div>
-                    </div>
-                  ))}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {selectedImages.map((file, index) => (
+                <div key={index} className="relative group">
+                  <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt={`Imagem ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  </div>
+                  <button
+                  type="button"
+                  onClick={() => handleRemoveSelectedImage(index)}
+                  className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-700 transition-colors"
+                  title="Remover imagem"
+                  >
+                  ×
+                  </button>
+                  <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                  #{index + 1}
+                  </div>
                 </div>
+                ))}
+              </div>
               )}
             </div>
           </div>
@@ -436,36 +461,40 @@ export function ProductModal({
         {/* Botão de Upload de Imagem (apenas edição) */}
         {product && onImageUpload && (
           <div className="pt-2">
-            <button
+            <Button
               type="button"
+              variant='outline-green'
               onClick={() => onImageUpload(product.id)}
-              className="w-full px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+              className="w-full flex gap-2 px-4 py-2 "
             >
-              📷 Adicionar Imagem
-            </button>
+              <Icon icon="bi-camera" className='text-2xl'/>
+              <p>Adicionar Imagem</p>
+            </Button>
           </div>
         )}
 
         {/* Botões */}
         <div className="flex gap-3 pt-4 border-t border-gray-200">
-          <button
+          <Button 
             type="button"
+            variant='outline-danger'
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            className="flex-1 gap-2 px-4 py-2"
           >
-            Cancelar
-          </button>
-          <button
+            <Icon icon="bi-x-lg" />
+            <p>Cancelar</p>
+          </Button>
+          <Button
             type="submit"
             disabled={isSubmitting || uploadingImages}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="flex-1 gap-2 px-4 py-2"
           >
             {isSubmitting
-              ? '⏳ Salvando...'
+              ? <><Icon icon="bi-hourglass-split" /><p>Salvando...</p></>
               : uploadingImages
-              ? '📷 Enviando imagens...'
-              : 'Salvar'}
-          </button>
+              ? <><Icon icon="bi-camera" /><p>Enviando imagens...</p></>
+              : <><Icon icon="bi-check-lg" /><p>Salvar</p></>}
+          </Button>
         </div>
       </form>
     </ResponsiveModal>
@@ -481,6 +510,6 @@ export function ProductModal({
       onConfirm={handleConfirmDeleteImage}
       onCancel={handleCancelDeleteImage}
     />
-    </>
+    </div>
   );
 }
