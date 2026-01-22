@@ -61,12 +61,13 @@ export default function ShopKitsPage() {
   };
 
   // Handlers de Produto
-  const handleCreateProduct = async (data: CreateProductDTO) => {
+  const handleCreateProduct = async (data: CreateProductDTO): Promise<Product> => {
     try {
       const newProduct = await shopService.products.create(data);
       setProducts([...products, newProduct]);
       setShowProductModal(false);
       setSelectedProduct(null);
+      return newProduct;
     } catch (err: any) {
       throw err;
     }
@@ -86,11 +87,12 @@ export default function ShopKitsPage() {
     }
   };
 
-  const handleProductSubmit = async (data: CreateProductDTO | UpdateProductDTO) => {
+  const handleProductSubmit = async (data: CreateProductDTO | UpdateProductDTO): Promise<Product | void> => {
     if (selectedProduct) {
       await handleUpdateProduct(data as UpdateProductDTO);
+      return; // Não retorna produto na edição
     } else {
-      await handleCreateProduct(data as CreateProductDTO);
+      return await handleCreateProduct(data as CreateProductDTO);
     }
   };
 

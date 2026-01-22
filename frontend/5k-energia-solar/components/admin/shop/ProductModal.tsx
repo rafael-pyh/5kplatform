@@ -10,7 +10,7 @@ interface ProductModalProps {
   isOpen: boolean;
   product?: Product | null;
   onClose: () => void;
-  onSubmit: (data: CreateProductDTO | UpdateProductDTO) => Promise<void>;
+  onSubmit: (data: CreateProductDTO | UpdateProductDTO) => Promise<Product | void>;
   onImageUpload?: (productId: string) => void;
   onImageUploaded?: () => void;
 }
@@ -35,6 +35,8 @@ export function ProductModal({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletingImages, setDeletingImages] = useState<Set<string>>(new Set());
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -76,6 +78,15 @@ export function ProductModal({
   const handleCancelDeleteImage = () => {
     setShowDeleteConfirmation(false);
     setImageToDelete(null);
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setSelectedImages(prev => [...prev, ...files]);
+  };
+
+  const handleRemoveSelectedImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
 
   useEffect(() => {
@@ -165,7 +176,33 @@ export function ProductModal({
       const dataToSubmit: any = { ...formData };
       delete dataToSubmit.tagArray;
       
-      await onSubmit(dataToSubmit);
+      // Criar o produto primeiro
+      const createdProduct = await onSubmit(dataToSubmit);
+
+      // Se há imagens selecionadas e estamos criando um novo produto,
+      // fazer upload das imagens após a criação
+      if (selectedImages.length > 0 && !product && createdProduct) {
+        setUploadingImages(true);
+        try {
+          // Fazer upload de cada imagem
+          for (const imageFile of selectedImages) {
+            const formData = new FormData();
+            formData.append('image', imageFile);
+            await shopService.productImages.add(createdProduct.id, formData);
+          }
+          
+          if (onImageUploaded) {
+            onImageUploaded();
+          }
+        } catch (uploadErr: any) {
+          console.error('Erro ao fazer upload das imagens:', uploadErr);
+          setError('Produto criado, mas houve erro no upload das imagens');
+          // Não falhar completamente por causa do upload
+        } finally {
+          setUploadingImages(false);
+        }
+      }
+
       setFormData({
         name: '',
         price: 0,
@@ -175,6 +212,7 @@ export function ProductModal({
         tags: '',
         tagArray: [],
       });
+      setSelectedImages([]);
       onClose();
     } catch (err: any) {
       setError(err.message || 'Erro ao salvar produto');
@@ -311,7 +349,7 @@ export function ProductModal({
           )}
         </div>
 
-        {/* Preview das Imagens */}
+        {/* Preview das Imagens Existentes (apenas edição) */}
         {product?.images && product.images.length > 0 && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -351,7 +389,51 @@ export function ProductModal({
           </div>
         )}
 
-        {/* Botão de Upload de Imagem */}
+        {/* Seleção de Imagens (criação) */}
+        {!product && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Imagens do Produto
+            </label>
+            <div className="space-y-3">
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              {selectedImages.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {selectedImages.map((file, index) => (
+                    <div key={index} className="relative group">
+                      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Imagem ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSelectedImage(index)}
+                        className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-700 transition-colors"
+                        title="Remover imagem"
+                      >
+                        ×
+                      </button>
+                      <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                        #{index + 1}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Botão de Upload de Imagem (apenas edição) */}
         {product && onImageUpload && (
           <div className="pt-2">
             <button
@@ -375,10 +457,14 @@ export function ProductModal({
           </button>
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || uploadingImages}
             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
-            {isSubmitting ? '⏳ Salvando...' : 'Salvar'}
+            {isSubmitting
+              ? '⏳ Salvando...'
+              : uploadingImages
+              ? '📷 Enviando imagens...'
+              : 'Salvar'}
           </button>
         </div>
       </form>
