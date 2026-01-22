@@ -81,6 +81,39 @@ export default function EditSellerModal({
     }
   }, [isOpen]);
 
+  // Reset form with person data when modal opens or person changes
+  useEffect(() => {
+    if (isOpen && person) {
+      // Try to find the state abbreviation if the current value is a full name
+      let stateValue = (person as any).state || '';
+      if (stateValue && states.length > 0) {
+        // Check if it's already an abbreviation
+        const isAbbreviation = states.some(s => s.abbreviation === stateValue);
+        if (!isAbbreviation) {
+          // Try to find the abbreviation by name
+          const stateByName = states.find(s => s.name.toLowerCase() === stateValue.toLowerCase());
+          if (stateByName) {
+            stateValue = stateByName.abbreviation;
+          }
+        }
+      }
+
+      reset({
+        name: person.name || '',
+        email: person.email || '',
+        phone: person.phone || '',
+        pixKey: (person as any).pixKey || '',
+        city: (person as any).city || '',
+        state: stateValue,
+        cpf: (person as any).cpf || '',
+        birthDate: (person as any).birthDate || '',
+        role: (person as any).role || 'SELLER',
+      });
+      setPhotoPreview(person.photoBase64 || null);
+      setPhotoFile(null);
+    }
+  }, [isOpen, person, reset, states]);
+
   // Load cities when state changes
   useEffect(() => {
     const loadCities = async () => {

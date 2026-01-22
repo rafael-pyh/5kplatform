@@ -21,6 +21,7 @@ export default function EditProfilePage() {
     handleFileChange,
     handleSubmit,
     isLoading,
+    profileLoading,
   } = useEditProfile(seller as any);
 
   useEffect(() => {
@@ -29,10 +30,10 @@ export default function EditProfilePage() {
     }
   }, [seller, loading, router]);
 
-  if (loading) {
+  if (loading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" text="Carregando..." />
+        <LoadingSpinner size="lg" text="Carregando dados do perfil..." />
       </div>
     );
   }

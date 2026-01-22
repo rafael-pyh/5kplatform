@@ -31,32 +31,72 @@ export function useEditProfile(seller: Person | null) {
   const [citiesLoading, setCitiesLoading] = useState(false);
   const [originalData, setOriginalData] = useState<FormData | null>(null);
   const [formData, setFormData] = useState<FormData>({
-    name: seller?.name || '',
-    email: seller?.email || '',
-    phone: seller?.phone || '',
-    pixKey: seller?.pixKey || '',
-    photoBase64: seller?.photoBase64 || '',
-    city: seller?.city || '',
-    state: seller?.state || '',
+    name: '',
+    email: '',
+    phone: '',
+    pixKey: '',
+    photoBase64: '',
+    city: '',
+    state: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
 
-  // Inicializar dados originais
+  // Buscar perfil completo quando o seller estiver disponível
   useEffect(() => {
-    if (seller) {
-      const initialData: FormData = {
-        name: seller.name || '',
-        email: seller.email || '',
-        phone: seller.phone || '',
-        pixKey: seller?.pixKey || '',
-        photoBase64: seller?.photoBase64 || '',
-        city: seller?.city || '',
-        state: seller?.state || '',
-      };
-      setOriginalData(initialData);
-    }
-  }, [seller]);
+    const fetchProfile = async () => {
+      if (!seller?.id) return;
+
+      setProfileLoading(true);
+      try {
+        const fullProfile = await api.get<any>(`/seller/${seller.id}`);
+        const profileData = fullProfile.data?.data;
+
+        if (profileData) {
+          // Try to find the state abbreviation if the current value is a full name
+          let stateValue = profileData.state || '';
+          if (stateValue && states.length > 0) {
+            // Check if it's already an abbreviation
+            const isAbbreviation = states.includes(stateValue);
+            if (!isAbbreviation) {
+              // For now, we'll keep the value as is since we don't have state names here
+              // The conversion will happen when states are loaded
+            }
+          }
+
+          // Convert photoBase64 to data URL if it's base64, otherwise keep as URL
+          let photoBase64Value = profileData.photoBase64 || '';
+          if (photoBase64Value.includes('[Foto')) {
+            // It's a placeholder, set to empty
+            photoBase64Value = '';
+          } else if (photoBase64Value && !photoBase64Value.includes('data:') && !photoBase64Value.startsWith('http')) {
+            // Assume it's base64 string without data URL prefix
+            photoBase64Value = `data:image/jpeg;base64,${photoBase64Value}`;
+          }
+
+          const initialData: FormData = {
+            name: profileData.name || '',
+            email: profileData.email || '',
+            phone: profileData.phone || '',
+            pixKey: profileData.pixKey || '',
+            photoBase64: photoBase64Value,
+            city: profileData.city || '',
+            state: stateValue,
+          };
+          setOriginalData(initialData);
+          setFormData(initialData);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar perfil completo:', error);
+        toast.error('Erro ao carregar dados do perfil');
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [seller?.id, states]);
 
   // Buscar estados da API
   useEffect(() => {
@@ -170,6 +210,14 @@ export function useEditProfile(seller: Person | null) {
         Object.assign(dataToUpdate, formData);
       }
 
+      // Process photoBase64 to remove data URL prefix if present
+      if (dataToUpdate.photoBase64 && typeof dataToUpdate.photoBase64 === 'string' && dataToUpdate.photoBase64.includes('data:')) {
+        const base64Data = dataToUpdate.photoBase64.split(',')[1];
+        if (base64Data) {
+          dataToUpdate.photoBase64 = base64Data;
+        }
+      }
+
       await updateProfileAction(seller.id, dataToUpdate as any);
       toast.success('Perfil atualizado com sucesso!');
       setHasChanges(false);
@@ -205,5 +253,6 @@ export function useEditProfile(seller: Person | null) {
     handleSubmit,
     isLoading,
     hasChanges,
+    profileLoading,
   } as const;
 }

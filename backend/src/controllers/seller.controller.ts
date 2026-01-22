@@ -39,7 +39,7 @@ const buildSellerResponse = (person: any, userRole: string | PersonRole | undefi
     updated_at: person.updatedAt,
     created_by: person.created_by,
     scanCount: person.scanCount,
-    photoBase64: person.photoBase64 ? '[Foto do perfil]' : null
+    photoBase64: person.photoBase64
   };
 };
 
