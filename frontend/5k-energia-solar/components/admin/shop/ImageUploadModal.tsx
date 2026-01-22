@@ -7,8 +7,9 @@ interface ImageUploadModalProps {
   isOpen: boolean;
   title: string;
   onClose: () => void;
-  onUpload: (file: File) => Promise<void>;
+  onUpload?: (file: File) => Promise<void>;
   onUploaded?: () => void;
+  onFileSelected?: (file: File) => void;
 }
 
 export function ImageUploadModal({
@@ -17,6 +18,7 @@ export function ImageUploadModal({
   onClose,
   onUpload,
   onUploaded,
+  onFileSelected,
 }: ImageUploadModalProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -61,6 +63,20 @@ export function ImageUploadModal({
 
     if (!selectedFile) {
       setError('Selecione uma imagem');
+      return;
+    }
+
+    if (onFileSelected) {
+      // Modo seleção: apenas retorna o arquivo
+      onFileSelected(selectedFile);
+      setSelectedFile(null);
+      setPreview(null);
+      onClose();
+      return;
+    }
+
+    if (!onUpload) {
+      setError('Função de upload não fornecida');
       return;
     }
 
@@ -163,7 +179,7 @@ export function ImageUploadModal({
             disabled={isSubmitting || !selectedFile}
             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
-            {isSubmitting ? '⏳ Enviando...' : 'Enviar'}
+            {isSubmitting ? '⏳ Processando...' : onFileSelected ? 'Selecionar' : 'Enviar'}
           </button>
         </div>
       </form>

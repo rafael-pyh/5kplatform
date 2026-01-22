@@ -11,13 +11,14 @@ import ResponsiveModal from '@/components/ResponsiveModal';
 import { useState, useEffect } from 'react';
 import { shopService } from '@/lib/services/shop.service';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import { ImageUploadModal } from '@/components/admin/shop/ImageUploadModal';
 
 interface KitModalProps {
   isOpen: boolean;
   kit?: Kit | null;
   products: Product[];
   onClose: () => void;
-  onSubmit: (data: CreateKitDTO | UpdateKitDTO) => Promise<void>;
+  onSubmit: (data: CreateKitDTO | UpdateKitDTO) => Promise<Kit | void>;
   onImageUpload?: (kitId: string) => void;
   onImageUploaded?: () => void;
 }
@@ -51,6 +52,8 @@ export function KitModal({
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [showImageUpload, setShowImageUpload] = useState(false);
 
   useEffect(() => {
     if (kit) {
@@ -79,6 +82,8 @@ export function KitModal({
       });
     }
     setShowDeleteConfirmation(false);
+    setSelectedImageFile(null);
+    setShowImageUpload(false);
   }, [kit]);
 
   const handleInputChange = (
@@ -221,7 +226,20 @@ export function KitModal({
         dataToSubmit.imageUrl = kitImageUrl;
       }
       
-      await onSubmit(dataToSubmit as CreateKitDTO);
+      const result = await onSubmit(dataToSubmit as CreateKitDTO);
+
+      // Se é kit novo e há imagem selecionada, fazer upload
+      if (!kit && selectedImageFile && result) {
+        try {
+          const formData = new FormData();
+          formData.append('image', selectedImageFile);
+          await shopService.kits.uploadImage(result.id, formData);
+        } catch (uploadErr: any) {
+          console.error('Erro ao fazer upload da imagem:', uploadErr);
+          // Não falhar o salvamento por causa do upload
+        }
+      }
+
       onClose();
     } catch (err: any) {
       setError(err.message || 'Erro ao salvar kit');
@@ -380,12 +398,12 @@ export function KitModal({
           <h3 className="font-semibold text-gray-900">Imagem do Kit</h3>
 
           {/* Preview da Imagem */}
-          {kit?.imageUrl && (
+          {(kit?.imageUrl || selectedImageFile) && (
             <div className="relative">
               <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200 max-w-sm">
                 <img
-                  src={kit.imageUrl}
-                  alt={kit.name}
+                  src={selectedImageFile ? URL.createObjectURL(selectedImageFile) : kit?.imageUrl}
+                  alt={kit?.name || 'Imagem selecionada'}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -395,7 +413,13 @@ export function KitModal({
               </div>
               <button
                 type="button"
-                onClick={() => setShowDeleteConfirmation(true)}
+                onClick={() => {
+                  if (kit?.imageUrl) {
+                    setShowDeleteConfirmation(true);
+                  } else {
+                    setSelectedImageFile(null);
+                  }
+                }}
                 className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-700 transition-colors"
                 title="Remover imagem"
               >
@@ -409,12 +433,18 @@ export function KitModal({
             <div>
               <button
                 type="button"
-                onClick={() => kit && onImageUpload(kit.id)}
+                onClick={() => {
+                  if (kit) {
+                    onImageUpload!(kit.id);
+                  } else {
+                    setShowImageUpload(true);
+                  }
+                }}
                 className="w-full md:w-auto px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
               >
-                📷 {kit?.imageUrl ? 'Alterar Imagem' : 'Adicionar Imagem'}
+                📷 {selectedImageFile ? 'Alterar Imagem' : kit?.imageUrl ? 'Alterar Imagem' : 'Adicionar Imagem'}
               </button>
-              {!kit?.imageUrl && (
+              {!kit?.imageUrl && !selectedImageFile && (
                 <p className="text-xs text-gray-500 mt-1">
                   A primeira imagem dos produtos será usada automaticamente
                 </p>
@@ -571,6 +601,18 @@ export function KitModal({
       onConfirm={handleConfirmDeleteImage}
       onCancel={handleCancelDeleteImage}
     />
+
+    {!kit && (
+      <ImageUploadModal
+        isOpen={showImageUpload}
+        title="Selecionar Imagem - Kit"
+        onClose={() => setShowImageUpload(false)}
+        onFileSelected={(file) => {
+          setSelectedImageFile(file);
+          setShowImageUpload(false);
+        }}
+      />
+    )}
     </>
   );
 }

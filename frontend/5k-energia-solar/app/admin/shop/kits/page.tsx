@@ -109,24 +109,26 @@ export default function ShopKitsPage() {
   };
 
   // Handlers de Kit
-  const handleCreateKit = async (data: CreateKitDTO) => {
+  const handleCreateKit = async (data: CreateKitDTO): Promise<Kit> => {
     try {
       const newKit = await shopService.kits.create(data);
       setKits([...kits, newKit]);
       setShowKitModal(false);
       setSelectedKit(null);
+      return newKit;
     } catch (err: any) {
       throw err;
     }
   };
 
-  const handleUpdateKit = async (data: UpdateKitDTO) => {
-    if (!selectedKit) return;
+  const handleUpdateKit = async (data: UpdateKitDTO): Promise<Kit> => {
+    if (!selectedKit) throw new Error('Kit não selecionado');
     try {
       const updated = await shopService.kits.update(selectedKit.id, data);
       setKits(kits.map((k) => (k.id === selectedKit.id ? updated : k)));
       setShowKitModal(false);
       setSelectedKit(null);
+      return updated;
     } catch (err: any) {
       throw err;
     }
@@ -153,11 +155,11 @@ export default function ShopKitsPage() {
     }
   };
 
-  const handleKitSubmit = async (data: CreateKitDTO | UpdateKitDTO) => {
+  const handleKitSubmit = async (data: CreateKitDTO | UpdateKitDTO): Promise<Kit | void> => {
     if (selectedKit) {
-      await handleUpdateKit(data as UpdateKitDTO);
+      return await handleUpdateKit(data as UpdateKitDTO);
     } else {
-      await handleCreateKit(data as CreateKitDTO);
+      return await handleCreateKit(data as CreateKitDTO);
     }
   };
 
