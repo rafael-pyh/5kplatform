@@ -38,8 +38,7 @@ export default function FileUpload({
 
   return (
     <div className={className}>
-      <label
-        htmlFor={id}
+      <div
         onClick={handleClick}
         className={`flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors ${
           disabled ? 'opacity-50 cursor-not-allowed' : ''
@@ -50,7 +49,7 @@ export default function FileUpload({
           <p className="text-sm font-medium text-gray-700">{label}</p>
           <p className="text-xs text-gray-500">{dragText}</p>
         </div>
-      </label>
+      </div>
       <input
         ref={inputRef}
         id={id}
@@ -64,3 +63,5 @@ export default function FileUpload({
     </div>
   );
 }
+
+FileUpload.displayName = 'FileUpload';

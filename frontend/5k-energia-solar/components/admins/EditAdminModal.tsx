@@ -19,7 +19,8 @@ interface EditAdminModalProps {
 export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: EditAdminModalProps) {
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileUploadKey, setFileUploadKey] = useState(0);
 
   const {
     register,
@@ -62,9 +63,8 @@ export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: Ed
       }
 
       // if user selected a new file, read base64 and include as `avatar` (or imageBase64)
-      if (fileInputRef.current && fileInputRef.current.files && fileInputRef.current.files[0]) {
-        const file = fileInputRef.current.files[0];
-        const base64 = await toBase64(file);
+      if (selectedFile) {
+        const base64 = await toBase64(selectedFile);
         // attach to payload as `photoBase64` (backend expects this field)
         (updateData as any).photoBase64 = base64;
       }
@@ -74,7 +74,8 @@ export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: Ed
       reset();
       // clear preview and file input
       setPreview(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setSelectedFile(null);
+      setFileUploadKey(prev => prev + 1);
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -97,8 +98,10 @@ export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: Ed
     const file = e.target.files && e.target.files[0];
     if (!file) {
       setPreview(null);
+      setSelectedFile(null);
       return;
     }
+    setSelectedFile(file);
     const reader = new FileReader();
     reader.onload = () => setPreview(reader.result as string);
     reader.readAsDataURL(file);
@@ -108,7 +111,8 @@ export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: Ed
     if (!loading) {
       reset();
       setPreview(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setSelectedFile(null);
+      setFileUploadKey(prev => prev + 1);
       onClose();
     }
   };
@@ -232,6 +236,7 @@ export default function EditAdminModal({ isOpen, onClose, onSuccess, admin }: Ed
               </div>
 
               <FileUpload
+                key={fileUploadKey}
                 id="photo"
                 accept="image/*"
                 onChange={handleFileChange}
