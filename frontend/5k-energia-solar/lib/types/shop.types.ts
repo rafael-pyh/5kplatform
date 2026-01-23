@@ -208,7 +208,20 @@ export interface CreditStats {
   lastTransaction?: string | Date;
 }
 
-// ==================== SAQUES ====================
+export interface PersonDetails {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  city: string;
+  state: string;
+  creditBalance: number;
+  qrCode: string;
+  active: boolean;
+  role: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
 
 export enum WithdrawalStatus {
   PENDING = 'PENDING',

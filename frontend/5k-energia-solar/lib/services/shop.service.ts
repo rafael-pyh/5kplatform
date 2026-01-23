@@ -13,6 +13,7 @@ import {
   CreditTransaction,
   CreditStats,
   WithdrawalRequest,
+  PersonDetails,
   CreateOrderDTO,
   CreateOrderResponse,
   CreateWithdrawalDTO,
@@ -27,6 +28,7 @@ const KITS_URL = '/shop/kits';
 const ORDERS_URL = '/shop/orders'; // Back to original
 const CREDITS_URL = '/shop/credits';
 const WITHDRAWALS_URL = '/shop/withdrawals';
+const PERSONS_URL = '/person';
 
 export const shopService = {
   // ==================== PRODUTOS ====================
@@ -277,6 +279,17 @@ export const shopService = {
       const response = await api.post<ApiResponse<CreditTransaction>>(
         `${CREDITS_URL}/adjust`,
         { personId, amount, reason }
+      );
+      return response.data.data!;
+    },
+  },
+
+  // ==================== PESSOAS ====================
+
+  persons: {
+    async getDetailsForAdmin(personId: string): Promise<PersonDetails> {
+      const response = await api.get<ApiResponse<PersonDetails>>(
+        `${PERSONS_URL}/${personId}/admin-details`
       );
       return response.data.data!;
     },

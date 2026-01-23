@@ -9,10 +9,12 @@ import {
   CreatedAt,
   UpdatedAt,
   HasMany,
+  HasOne,
   AllowNull,
 } from 'sequelize-typescript';
 import { Lead } from './Lead';
 import { QRCodeScan } from './QRCodeScan';
+import { CreditWallet } from './CreditWallet';
 
 export enum PersonRole {
   SELLER = 'SELLER',
@@ -184,6 +186,9 @@ export class Person extends Model {
 
   @HasMany(() => QRCodeScan)
   qrCodeScans?: QRCodeScan[];
+
+  @HasOne(() => CreditWallet)
+  creditWallet?: CreditWallet;
 
   @Default('pending')
   @Column({

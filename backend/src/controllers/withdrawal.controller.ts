@@ -131,8 +131,7 @@ export const listWithdrawalsController = async (req: Request, res: Response) => 
       },
       data: withdrawals.map((w) => ({
         id: w.id,
-        personName: w.person?.name,
-        personEmail: w.person?.email,
+        personId: w.personId,
         amount: parseFloat(w.amount.toString()),
         status: w.status,
         bankAccountInfo: w.bankAccountInfo,

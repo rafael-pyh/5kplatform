@@ -1,9 +1,10 @@
 'use client';
 
-import { WithdrawalRequest, WithdrawalStatus } from '@/lib/types/shop.types';
+import { WithdrawalRequest, WithdrawalStatus, PersonDetails } from '@/lib/types/shop.types';
 import { formatDate } from '@/lib/utils/dateUtils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { approveWithdrawal, rejectWithdrawal, markWithdrawalAsPaid } from '@/app/actions/shop';
+import { shopService } from '@/lib/services/shop.service';
 
 interface AdminWithdrawalCardProps {
   withdrawal: WithdrawalRequest;
@@ -27,6 +28,38 @@ const statusLabels: Record<WithdrawalStatus, string> = {
 export function AdminWithdrawalCard({ withdrawal, onActionSuccess }: AdminWithdrawalCardProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [personDetails, setPersonDetails] = useState<PersonDetails | null>(null);
+  const [personLoading, setPersonLoading] = useState(false);
+
+  // Buscar dados da pessoa quando o componente for montado
+  useEffect(() => {
+    const fetchPersonDetails = async () => {
+      console.log('withdrawal:', withdrawal);
+      console.log('personId:', withdrawal.personId);
+      
+      if (!withdrawal.personId) {
+        console.log('personId não encontrado');
+        return;
+      }
+
+      setPersonLoading(true);
+      try {
+        console.log('Fazendo requisição para buscar dados da pessoa...');
+        const details = await shopService.persons.getDetailsForAdmin(withdrawal.personId);
+        console.log('Dados da pessoa recebidos:', details);
+        setPersonDetails(details);
+      } catch (err: any) {
+        console.error('Erro ao buscar dados da pessoa:', err);
+        // Não definir erro para não interferir com outras operações
+      } finally {
+        setPersonLoading(false);
+      }
+    };
+
+    fetchPersonDetails();
+  }, [withdrawal.personId]);
 
   const handleApprove = async () => {
     setLoading(true);
@@ -49,17 +82,24 @@ export function AdminWithdrawalCard({ withdrawal, onActionSuccess }: AdminWithdr
   };
 
   const handleReject = async () => {
+    if (!rejectReason.trim()) {
+      setError('Motivo da rejeição é obrigatório');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const result = await rejectWithdrawal(withdrawal.id);
+      const result = await rejectWithdrawal(withdrawal.id, rejectReason.trim());
 
       if (!result.success) {
         setError(result.error || 'Erro ao rejeitar');
         return;
       }
 
+      setShowRejectForm(false);
+      setRejectReason('');
       onActionSuccess?.();
     } catch (err: any) {
       setError(err.message || 'Erro ao rejeitar');
@@ -88,6 +128,8 @@ export function AdminWithdrawalCard({ withdrawal, onActionSuccess }: AdminWithdr
     }
   };
 
+  console.log('Withdrawal:', withdrawal);
+
   return (
     <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white">
       <div className="flex items-start justify-between mb-3">
@@ -98,6 +140,44 @@ export function AdminWithdrawalCard({ withdrawal, onActionSuccess }: AdminWithdr
         <div className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[withdrawal.status]}`}>
           {statusLabels[withdrawal.status]}
         </div>
+      </div>
+
+      {/* Informações da Pessoa */}
+      <div className="mb-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+        <p className="text-xs font-semibold text-gray-700 mb-2">Dados do Solicitante:</p>
+        {personLoading ? (
+          <div className="flex items-center justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="ml-2 text-sm text-gray-600">Carregando dados...</span>
+          </div>
+        ) : personDetails ? (
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div>
+              <span className="text-gray-600">Nome:</span>
+              <p className="font-medium text-gray-900">{personDetails.name}</p>
+            </div>
+            <div>
+              <span className="text-gray-600">Telefone:</span>
+              <p className="font-medium text-gray-900">{personDetails.phone || 'N/A'}</p>
+            </div>
+            <div>
+              <span className="text-gray-600">Cidade:</span>
+              <p className="font-medium text-gray-900">{personDetails.city}</p>
+            </div>
+            <div>
+              <span className="text-gray-600">Estado:</span>
+              <p className="font-medium text-gray-900">{personDetails.state}</p>
+            </div>
+            <div className="col-span-2">
+              <span className="text-gray-600">Saldo Atual:</span>
+              <p className="font-medium text-green-700">R$ {personDetails.creditBalance.toFixed(2)}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-sm text-gray-500">Não foi possível carregar os dados do solicitante</p>
+          </div>
+        )}
       </div>
 
       <div className="space-y-2 mb-3 pb-3 border-b border-gray-100 text-sm">
@@ -141,6 +221,40 @@ export function AdminWithdrawalCard({ withdrawal, onActionSuccess }: AdminWithdr
         </div>
       )}
 
+      {showRejectForm && (
+        <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm font-semibold text-red-900 mb-2">Motivo da rejeição:</p>
+          <textarea
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            placeholder="Digite o motivo da rejeição..."
+            className="w-full p-2 border border-red-300 rounded-md text-sm resize-none"
+            rows={3}
+            disabled={loading}
+          />
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={handleReject}
+              disabled={loading || !rejectReason.trim()}
+              className="flex-1 px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded transition-colors disabled:opacity-50"
+            >
+              {loading ? '...' : 'Confirmar Rejeição'}
+            </button>
+            <button
+              onClick={() => {
+                setShowRejectForm(false);
+                setRejectReason('');
+                setError(null);
+              }}
+              disabled={loading}
+              className="flex-1 px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded transition-colors disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Botões */}
       <div className="flex gap-2">
         {withdrawal.status === WithdrawalStatus.PENDING && (
@@ -153,7 +267,7 @@ export function AdminWithdrawalCard({ withdrawal, onActionSuccess }: AdminWithdr
               {loading ? '...' : 'Aprovar'}
             </button>
             <button
-              onClick={handleReject}
+              onClick={() => setShowRejectForm(true)}
               disabled={loading}
               className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
             >

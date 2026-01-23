@@ -115,7 +115,16 @@ export const listWithdrawals = async (
     const { count, rows } = await WithdrawalRequest.findAndCountAll({
       where: Object.keys(where).length > 0 ? where : undefined,
       include: [
-        { association: 'person', attributes: ['id', 'name', 'email', 'pixKey'] },
+        { 
+          association: 'person', 
+          attributes: ['id', 'name', 'email', 'phone', 'city', 'state'],
+          include: [
+            {
+              association: 'creditWallet',
+              attributes: ['balance']
+            }
+          ]
+        },
         { association: 'approvedBy', attributes: ['id', 'name', 'email'] },
         { association: 'rejectedBy', attributes: ['id', 'name', 'email'] },
       ],

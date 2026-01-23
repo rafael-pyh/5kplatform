@@ -237,7 +237,7 @@ export async function approveWithdrawal(id: string): Promise<{
   }
 }
 
-export async function rejectWithdrawal(id: string): Promise<{
+export async function rejectWithdrawal(id: string, reason: string): Promise<{
   success: boolean;
   data?: any;
   error?: string;
@@ -253,7 +253,9 @@ export async function rejectWithdrawal(id: string): Promise<{
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ rejectionReason: reason }),
     });
 
     if (!response.ok) {

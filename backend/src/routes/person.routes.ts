@@ -148,6 +148,31 @@ router.get("/", authenticate, requireAdmin, controller.getAll);
  *         description: Pessoa deletada
  */
 router.get("/:id", authenticate, requireAdmin, controller.getById);
+
+/**
+ * @swagger
+ * /api/person/{id}/admin-details:
+ *   get:
+ *     summary: Obter detalhes completos da pessoa para admin (incluindo saldo)
+ *     tags:
+ *       - Person
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Dados completos da pessoa incluindo saldo
+ *       403:
+ *         description: Permissão negada
+ *       404:
+ *         description: Pessoa não encontrada
+ */
+router.get("/:id/admin-details", authenticate, requireAdmin, controller.getPersonDetailsForAdmin);
 router.put("/:id", authenticate, controller.updateById);
 router.delete("/:id", authenticate, requireAdmin, controller.deleteById);
 

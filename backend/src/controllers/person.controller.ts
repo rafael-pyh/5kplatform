@@ -107,3 +107,34 @@ export const getStates = async (req: Request, res: Response, next: NextFunction)
     next(error);
   }
 };
+
+export const getPersonDetailsForAdmin = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const personId = req.params.id;
+    const person = await service.getById(personId);
+
+    if (!person) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pessoa não encontrada',
+      });
+    }
+
+    // Buscar saldo de créditos
+    const { getCreditBalance } = await import('../services/credit.service');
+    const creditBalance = await getCreditBalance(personId);
+
+    const jsonData = person.toJSON ? person.toJSON() : person;
+    const transformed = transformPersonUrls(jsonData);
+
+    // Adicionar saldo aos dados retornados
+    const personDetails = {
+      ...transformed,
+      creditBalance,
+    };
+
+    return ResponseBuilder.success(res, personDetails);
+  } catch (error) {
+    next(error);
+  }
+};
