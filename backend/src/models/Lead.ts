@@ -93,4 +93,32 @@ export class Lead extends Model {
     field: 'updatedAt'
   })
   updatedAt!: Date;
+
+  /**
+   * Método customizado toJSON para garantir que todos os campos sejam inclusos
+   */
+  toJSON() {
+    const values: any = {
+      id: this.id,
+      name: this.name,
+      email: this.email || undefined,
+      phone: this.phone || undefined,
+      energyBill: this.energyBill || undefined,
+      roofPhoto: this.roofPhoto || undefined,
+      status: this.status,
+      ownerId: this.ownerId,
+      notes: this.notes || undefined,
+      city: this.city || undefined,
+      state: this.state || undefined,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+    };
+
+    // Incluir owner se carregado
+    if (this.owner) {
+      values.owner = this.owner.toJSON ? this.owner.toJSON() : this.owner;
+    }
+
+    return values;
+  }
 }

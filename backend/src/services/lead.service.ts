@@ -6,6 +6,7 @@ import { env } from "../config/env";
 import { Validator } from "../shared/Validator";
 import { CachedService, CacheInvalidationManager } from "../cache/cache-invalidation";
 import { adjustCredits } from "./credit.service";
+import { uploadBase64ToS3 } from "./storage.service";
 
 // ===================== TIPOS =====================
 export interface CreateLeadDto {
@@ -14,6 +15,8 @@ export interface CreateLeadDto {
   phone?: string;
   energyBill?: string;
   roofPhoto?: string;
+  city?: string;
+  state?: string;
   ownerId: string;
 }
 
@@ -53,28 +56,118 @@ export class LeadService extends CachedService {
  * Cache invalidado após criação
  */
 async function createLead(data: CreateLeadDto) {
+  console.log('[Lead Service] ===== INICIANDO CRIAÇÃO DE LEAD =====');
+  console.log('[Lead Service] Dados recebidos:', {
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    city: data.city,
+    state: data.state,
+    ownerId: data.ownerId,
+    hasEnergyBill: !!data.energyBill,
+    hasRoofPhoto: !!data.roofPhoto,
+  });
+
   const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
+  
+  // Validar e processar energyBill
   if (data.energyBill) {
-    Validator.isBase64DataUrl(data.energyBill, 'Conta de energia');
-    Validator.maxBase64Size(data.energyBill, MAX_IMAGE_BYTES, 'Conta de energia');
-  }
-  if (data.roofPhoto) {
-    Validator.isBase64DataUrl(data.roofPhoto, 'Foto do telhado');
-    Validator.maxBase64Size(data.roofPhoto, MAX_IMAGE_BYTES, 'Foto do telhado');
+    try {
+      console.log('[Lead Service] Validando conta de energia...');
+      Validator.isBase64DataUrl(data.energyBill, 'Conta de energia');
+      Validator.maxBase64Size(data.energyBill, MAX_IMAGE_BYTES, 'Conta de energia');
+      console.log('[Lead Service] ✓ Conta de energia validada');
+    } catch (error: any) {
+      console.error('[Lead Service] ✗ Validação da conta de energia falhou:', error.message);
+      throw error;
+    }
   }
 
-  const lead = await Lead.create(data as any);
+  // Validar e processar roofPhoto
+  if (data.roofPhoto) {
+    try {
+      console.log('[Lead Service] Validando foto do telhado...');
+      Validator.isBase64DataUrl(data.roofPhoto, 'Foto do telhado');
+      Validator.maxBase64Size(data.roofPhoto, MAX_IMAGE_BYTES, 'Foto do telhado');
+      console.log('[Lead Service] ✓ Foto do telhado validada');
+    } catch (error: any) {
+      console.error('[Lead Service] ✗ Validação da foto do telhado falhou:', error.message);
+      throw error;
+    }
+  }
+
+  // Processar imagens para S3 se existirem
+  const processedData = { ...data };
+  
+  if (data.energyBill) {
+    try {
+      console.log('[Lead Service] 🚀 Iniciando upload da conta de energia para S3...');
+      const energyBillUrl = await uploadBase64ToS3(data.energyBill, 'energy-bill.jpg', 'leads');
+      console.log('[Lead Service] ✓ Conta de energia enviada com sucesso');
+      console.log('[Lead Service] URL:', energyBillUrl);
+      processedData.energyBill = energyBillUrl;
+    } catch (error: any) {
+      console.error('[Lead Service] ✗ Erro ao fazer upload da conta de energia:', error.message);
+      throw error; // Relançar erro em vez de silenciar
+    }
+  }
+  
+  if (data.roofPhoto) {
+    try {
+      console.log('[Lead Service] 🚀 Iniciando upload da foto do telhado para S3...');
+      const roofPhotoUrl = await uploadBase64ToS3(data.roofPhoto, 'roof-photo.jpg', 'leads');
+      console.log('[Lead Service] ✓ Foto do telhado enviada com sucesso');
+      console.log('[Lead Service] URL:', roofPhotoUrl);
+      processedData.roofPhoto = roofPhotoUrl;
+    } catch (error: any) {
+      console.error('[Lead Service] ✗ Erro ao fazer upload da foto do telhado:', error.message);
+      throw error; // Relançar erro em vez de silenciar
+    }
+  }
+
+  console.log('[Lead Service] 💾 Salvando lead no banco de dados...');
+  console.log('[Lead Service] Dados a serem salvos:', {
+    name: processedData.name,
+    email: processedData.email,
+    phone: processedData.phone,
+    city: processedData.city,
+    state: processedData.state,
+    ownerId: processedData.ownerId,
+    hasEnergyBill: !!processedData.energyBill,
+    hasRoofPhoto: !!processedData.roofPhoto,
+  });
+  
+  const lead = await Lead.create(processedData as any);
+  
+  console.log('[Lead Service] ✓ Lead criado com ID:', lead.id);
   
   // Invalida cache de listas após criação
   CacheInvalidationManager.invalidateAfterCreate('Lead');
 
+  console.log('[Lead Service] 🔄 Recarregando lead do banco de dados...');
   await lead.reload({
+    attributes: ['id', 'name', 'status', 'email', 'phone', 'energyBill', 'roofPhoto', 'notes', 'city', 'state', 'ownerId', 'createdAt', 'updatedAt'],
     include: [{
       model: Person,
       as: 'owner',
       attributes: ['id', 'name', 'email', 'phone'],
     }],
   });
+  
+  const jsonData = lead.toJSON();
+  console.log('[Lead Service] ✓ Lead após reload:', {
+    id: jsonData.id,
+    name: jsonData.name,
+    email: jsonData.email,
+    phone: jsonData.phone,
+    city: jsonData.city,
+    state: jsonData.state,
+    hasEnergyBill: !!jsonData.energyBill,
+    hasRoofPhoto: !!jsonData.roofPhoto,
+  });
+  
+  console.log('[Lead Service] ===== CRIAÇÃO DE LEAD CONCLUÍDA COM SUCESSO =====');
+  
   return lead;
 }
 
@@ -106,7 +199,7 @@ async function getAllLeads(filters?: {
 
     return Lead.findAll({
       where,
-      attributes: ['id', 'name', 'status', 'createdAt', 'email', 'phone', 'ownerId'],
+      attributes: ['id', 'name', 'status', 'createdAt', 'email', 'phone', 'ownerId', 'city', 'state', 'energyBill', 'roofPhoto'],
       include: [{
         model: Person,
         as: 'owner',
@@ -135,7 +228,7 @@ async function getLeadsByOwner(ownerId: string, limit?: number, offset?: number)
   return service.getCachedOrExecute(cacheKey, async () => {
     return Lead.findAll({
       where: { ownerId },
-      attributes: ['id', 'name', 'status', 'createdAt', 'email', 'phone'],
+      attributes: ['id', 'name', 'status', 'createdAt', 'email', 'phone', 'energyBill', 'roofPhoto', 'city', 'state'],
       order: [['createdAt', 'DESC']],
       limit: limit || 50,
       offset: offset || 0,
@@ -156,7 +249,7 @@ async function getLeadById(id: string) {
 
   return service.getCachedOrExecute(cacheKey, async () => {
     const lead = await Lead.findByPk(id, {
-      attributes: ['id', 'name', 'status', 'createdAt', 'email', 'phone', 'energyBill', 'roofPhoto', 'notes'],
+      attributes: ['id', 'name', 'status', 'createdAt', 'email', 'phone', 'energyBill', 'roofPhoto', 'notes', 'city', 'state'],
       include: [{
         model: Person,
         as: 'owner',
@@ -189,7 +282,7 @@ async function updateLead(id: string, data: UpdateLeadDto) {
   CacheInvalidationManager.invalidateAfterUpdate('Lead', id);
 
   await lead.reload({
-    attributes: ['id', 'name', 'status', 'email', 'phone', 'energyBill', 'roofPhoto', 'notes'],
+    attributes: ['id', 'name', 'status', 'email', 'phone', 'energyBill', 'roofPhoto', 'notes', 'city', 'state'],
     include: [{
       model: Person,
       as: 'owner',

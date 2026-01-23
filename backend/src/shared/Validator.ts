@@ -36,11 +36,19 @@ export class Validator {
       throw new ValidationError(`${fieldName} inválido`);
     }
 
-    // data:[<mediatype>][;base64],<data>
-    const match = value.match(/^data:([\w/+.-]+);base64,([A-Za-z0-9+/=\n\r]+)$/);
-    if (!match) {
-      throw new ValidationError(`${fieldName} deve ser um Data URL em base64 válido`);
+    // Aceita data URL padrão: data:[<mediatype>][;base64],<data>
+    const dataUrlMatch = value.match(/^data:([\w/+.-]+);base64,([A-Za-z0-9+/=\n\r]+)$/);
+    if (dataUrlMatch) {
+      return; // Válido
     }
+
+    // Aceita URLs HTTP/HTTPS (já foram processadas)
+    if (value.match(/^https?:\/\//)) {
+      return; // Válido
+    }
+
+    // Rejeita qualquer outro formato
+    throw new ValidationError(`${fieldName} deve ser um Data URL em base64 válido ou uma URL HTTP(S)`);
   }
 
   static maxBase64Size(value: string, maxBytes: number, fieldName: string): void {

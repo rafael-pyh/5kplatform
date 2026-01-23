@@ -139,12 +139,12 @@ if (!isOpen) return null;
                 {...register('credits', {
                   required: showCreditsField ? 'Quantidade de créditos é obrigatória' : false,
                   min: { value: 0, message: 'Mínimo 0 créditos' },
-                  max: { value: 1000, message: 'Máximo 1000 créditos' }
+                  max: { value: 100000, message: 'Máximo 100000 créditos' }
                 })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 placeholder="10"
                 min="1"
-                max="1000"
+                max="100000"
               />
               {errors.credits && (
                 <p className="mt-1 text-sm text-red-600">{errors.credits.message}</p>

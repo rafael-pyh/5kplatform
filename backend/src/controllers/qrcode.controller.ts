@@ -42,6 +42,9 @@ export const createLeadFromQR = async (req: Request, res: Response, next: NextFu
   try {
     const { qrCode } = req.params;
 
+    console.log('[QRCode Controller] Recebido request para criar lead com QR:', qrCode);
+    console.log('[QRCode Controller] Body do request:', req.body);
+
     // Busca o vendedor pelo QR Code
     const person = await personService.getByQRCode(qrCode);
 
@@ -51,11 +54,16 @@ export const createLeadFromQR = async (req: Request, res: Response, next: NextFu
       ownerId: person.id,
     };
 
+    console.log('[QRCode Controller] Chamando createLead com dados:', leadData);
+
     const lead = await LeadServiceFunctions.createLead(leadData);
     const jsonData = (lead as any).toJSON ? (lead as any).toJSON() : lead;
 
+    console.log('[QRCode Controller] Lead criado com sucesso. Dados retornados:', jsonData);
+
     return ResponseBuilder.created(res, jsonData, "Cadastro realizado com sucesso!");
   } catch (error) {
+    console.error('[QRCode Controller] Erro ao criar lead:', error);
     next(error);
   }
 };

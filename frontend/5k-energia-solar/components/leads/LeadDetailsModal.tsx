@@ -62,7 +62,13 @@ function LeadDetailsModal({ isOpen, onClose, lead, className }: LeadDetailsModal
   const isImageUrl = (url?: string) => {
     if (!url) return false;
     const maybe = ensureDataUrl(url);
-    return !!maybe && /^data:image\//.test(maybe);
+    if (maybe && /^data:image\//.test(maybe)) return true;
+    // Also check for HTTP URLs that are likely images
+    if (maybe && /^https?:\/\//.test(maybe)) {
+      const lower = maybe.toLowerCase();
+      return /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/.test(lower);
+    }
+    return false;
   };
 
   function ensureDataUrl(value?: string | null): string | null {
