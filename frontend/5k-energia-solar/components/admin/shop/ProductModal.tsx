@@ -2,7 +2,7 @@
 
 import { Product, CreateProductDTO, UpdateProductDTO, ProductImage } from '@/lib/types/shop.types';
 import ResponsiveModal from '@/components/ResponsiveModal';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { shopService } from '@/lib/services/shop.service';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import Button from '@/components/ui/Button';
@@ -53,6 +53,15 @@ export function ProductModal({
   const [deletingImages, setDeletingImages] = useState<Set<string>>(new Set());
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<ProductImage | null>(null);
+
+  // Criar ObjectURLs estáveis para as imagens selecionadas
+  const imagePreviewUrls = useMemo(() => {
+    console.log('[ProductModal] Gerando ObjectURLs para', selectedImages.length, 'imagens');
+    return selectedImages.map(file => ({
+      file,
+      url: URL.createObjectURL(file)
+    }));
+  }, [selectedImages]);
 
   const handleDeleteImage = (image: ProductImage) => {
     setImageToDelete(image);
@@ -193,24 +202,35 @@ export function ProductModal({
       // fazer upload das imagens após a criação
       if (selectedImages.length > 0 && !product && createdProduct) {
         setUploadingImages(true);
+        console.log('[ProductModal] Iniciando upload de', selectedImages.length, 'imagens');
         try {
           // Fazer upload de cada imagem
-          for (const imageFile of selectedImages) {
-            const formData = new FormData();
-            formData.append('image', imageFile);
-            await shopService.productImages.add(createdProduct.id, formData);
+          for (let i = 0; i < selectedImages.length; i++) {
+            const imageFile = selectedImages[i];
+            console.log(`[ProductModal] Enviando imagem ${i + 1}/${selectedImages.length}:`, imageFile.name);
+            const formDataToSubmit = new FormData();
+            formDataToSubmit.append('image', imageFile);
+            await shopService.productImages.add(createdProduct.id, formDataToSubmit);
+            console.log(`[ProductModal] ✅ Imagem ${i + 1} enviada com sucesso`);
           }
           
+          console.log('[ProductModal] ✅ Todas as imagens foram enviadas com sucesso');
           if (onImageUploaded) {
             onImageUploaded();
           }
         } catch (uploadErr: any) {
-          console.error('Erro ao fazer upload das imagens:', uploadErr);
+          console.error('[ProductModal] ❌ Erro ao fazer upload das imagens:', uploadErr);
           setError('Produto criado, mas houve erro no upload das imagens');
           // Não falhar completamente por causa do upload
         } finally {
           setUploadingImages(false);
         }
+      } else {
+        console.log('[ProductModal] Upload não realizado:', {
+          temImagens: selectedImages.length > 0,
+          ehNovoProduto: !product,
+          produtoRetornado: !!createdProduct
+        });
       }
 
       setFormData({
@@ -410,10 +430,20 @@ export function ProductModal({
                 id="image-upload"
                 multiple={true}
                 accept="image/*"
-                onChange={(files) => {
-                  if (files && files instanceof FileList) {
-                    const fileArray: File[] = Array.from(files);
-                    setSelectedImages(prev => [...prev, ...fileArray]);
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  console.log('[ProductModal] FileUpload onChange disparado');
+                  const files = e.target.files;
+                  console.log('[ProductModal] Arquivos recebidos:', files?.length);
+                  
+                  if (files && files.length > 0) {
+                    const fileArray = Array.from(files);
+                    console.log('[ProductModal] Arquivos processados:', fileArray.map(f => f.name));
+                    
+                    setSelectedImages(prev => {
+                      const updated = [...prev, ...fileArray];
+                      console.log('[ProductModal] Total de imagens após adicionar:', updated.length);
+                      return updated;
+                    });
                   }
                 }}
                 label="Clique para selecionar imagens"
@@ -421,27 +451,33 @@ export function ProductModal({
               />
               {selectedImages.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {selectedImages.map((file: File, index) => (
-                <div key={index} className="relative group">
-                  <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                  <img
-                    src={URL.createObjectURL(file)}
-                    alt={`Imagem ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
+                {imagePreviewUrls.map((item, index) => (
+                  <div key={`${item.file.name}-${index}`} className="relative group">
+                    <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                      <img
+                        src={item.url}
+                        alt={`Imagem ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onLoad={() => {
+                          console.log('[ProductModal] ✅ Imagem carregada:', item.file.name);
+                        }}
+                        onError={(e) => {
+                          console.error('[ProductModal] ❌ Erro ao carregar imagem:', item.file.name, e);
+                        }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSelectedImage(index)}
+                      className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-700 transition-colors"
+                      title="Remover imagem"
+                    >
+                      ×
+                    </button>
+                    <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                      #{index + 1}
+                    </div>
                   </div>
-                  <button
-                  type="button"
-                  onClick={() => handleRemoveSelectedImage(index)}
-                  className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-700 transition-colors"
-                  title="Remover imagem"
-                  >
-                  ×
-                  </button>
-                  <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                  #{index + 1}
-                  </div>
-                </div>
                 ))}
               </div>
               )}

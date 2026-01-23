@@ -182,22 +182,44 @@ export default function ShopKitsPage() {
   };
 
   const handleImageUploadSubmit = async (file: File) => {
-    if (!imageUploadId) return;
+    if (!imageUploadId) {
+      console.error('[handleImageUploadSubmit] imageUploadId não definido');
+      return;
+    }
+
+    console.log('[handleImageUploadSubmit] Iniciando upload:', {
+      imageUploadId,
+      imageUploadType,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+    });
 
     try {
       const formData = new FormData();
       formData.append('image', file);
 
       if (imageUploadType === 'product') {
+        console.log('[handleImageUploadSubmit] Enviando imagem para produto:', imageUploadId);
         await shopService.productImages.add(imageUploadId, formData);
-        // Atualizar lista de produtos
-        await fetchData();
+        console.log('[handleImageUploadSubmit] Imagem do produto enviada com sucesso');
       } else {
+        console.log('[handleImageUploadSubmit] Enviando imagem para kit:', imageUploadId);
         await shopService.kits.uploadImage(imageUploadId, formData);
-        // Atualizar lista de kits
-        await fetchData();
+        console.log('[handleImageUploadSubmit] Imagem do kit enviada com sucesso');
       }
+
+      // Atualizar lista após upload bem-sucedido
+      console.log('[handleImageUploadSubmit] Recarregando dados...');
+      await fetchData();
+      
+      // Fechar o modal de upload
+      setShowImageUpload(false);
+      setImageUploadId(null);
+      
+      console.log('[handleImageUploadSubmit] Upload concluído com sucesso');
     } catch (err: any) {
+      console.error('[handleImageUploadSubmit] Erro no upload:', err);
       throw err;
     }
   };

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import ResponsiveModal from '@/components/ResponsiveModal';
+import { toast } from 'react-hot-toast';
 
 interface ImageUploadModalProps {
   isOpen: boolean;
@@ -24,37 +25,89 @@ export function ImageUploadModal({
   const [preview, setPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fileInfo, setFileInfo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log('[ImageUploadModal] Nenhum arquivo selecionado');
+      setError(null);
+      return;
+    }
+
+    console.log('[ImageUploadModal] ========== NOVO ARQUIVO SELECIONADO ==========');
+    console.log('[ImageUploadModal] Nome:', file.name);
+    console.log('[ImageUploadModal] Tipo:', file.type);
+    console.log('[ImageUploadModal] Tamanho:', file.size, 'bytes', `(${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+    console.log('[ImageUploadModal] Última modificação:', new Date(file.lastModified).toLocaleString());
 
     // Validar tipo de arquivo
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      setError('Apenas imagens (JPEG, PNG, GIF, WebP) são permitidas');
+    const isAllowedType = allowedTypes.includes(file.type) || file.type === '';
+    
+    console.log('[ImageUploadModal] Tipo permitido?', isAllowedType);
+
+    if (!isAllowedType && file.type !== '') {
+      const errorMsg = `Tipo de arquivo não suportado: ${file.type}. Apenas JPEG, PNG, GIF e WebP são permitidos`;
+      console.error('[ImageUploadModal] ❌ ERRO DE TIPO:', errorMsg);
+      setError(errorMsg);
       setSelectedFile(null);
       setPreview(null);
+      setFileInfo(null);
+      toast.error(errorMsg);
       return;
     }
 
     // Validar tamanho (máximo 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setError('Arquivo muito grande. Máximo 10MB permitido');
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      const errorMsg = `Arquivo muito grande. Máximo 10MB permitido. Arquivo: ${(file.size / 1024 / 1024).toFixed(2)}MB`;
+      console.error('[ImageUploadModal] ❌ ERRO DE TAMANHO:', errorMsg);
+      setError(errorMsg);
       setSelectedFile(null);
       setPreview(null);
+      setFileInfo(null);
+      toast.error(errorMsg);
       return;
     }
 
+    // Arquivo válido
+    console.log('[ImageUploadModal] ✅ Arquivo VALIDADO');
     setError(null);
     setSelectedFile(file);
+    setFileInfo(`${file.name} (${(file.size / 1024).toFixed(2)}KB)`);
 
     // Criar preview
     const reader = new FileReader();
     reader.onload = (e) => {
-      setPreview(e.target?.result as string);
+      const result = e.target?.result as string;
+      console.log('[ImageUploadModal] ✅ FileReader.onload disparado');
+      console.log('[ImageUploadModal] Data URL comprimento:', result?.length, 'caracteres');
+      console.log('[ImageUploadModal] Data URL preview:', result?.substring(0, 50) + '...');
+      
+      setPreview(result);
+      
+      console.log('[ImageUploadModal] ✅ Preview state atualizado');
+      console.log('[ImageUploadModal] ========== ARQUIVO PRONTO PARA UPLOAD ==========');
     };
+    reader.onerror = (error) => {
+      const errorMsg = `Erro ao ler a imagem: ${error}. Tente novamente.`;
+      console.error('[ImageUploadModal] ❌ FileReader error:', error);
+      setError(errorMsg);
+      setSelectedFile(null);
+      setPreview(null);
+      setFileInfo(null);
+      toast.error(errorMsg);
+    };
+    reader.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = (event.loaded / event.total) * 100;
+        console.log('[ImageUploadModal] 📊 Lendo arquivo:', percentComplete.toFixed(0) + '%');
+      }
+    };
+    
+    console.log('[ImageUploadModal] 📖 Iniciando leitura com FileReader...');
     reader.readAsDataURL(file);
   };
 
@@ -62,33 +115,54 @@ export function ImageUploadModal({
     e.preventDefault();
 
     if (!selectedFile) {
-      setError('Selecione uma imagem');
+      const errorMsg = 'Selecione uma imagem para continuar';
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
 
+    console.log('[ImageUploadModal] Enviando arquivo:', {
+      name: selectedFile.name,
+      type: selectedFile.type,
+      size: selectedFile.size,
+    });
+
     if (onFileSelected) {
       // Modo seleção: apenas retorna o arquivo
+      console.log('[ImageUploadModal] Modo seleção - retornando arquivo');
       onFileSelected(selectedFile);
       setSelectedFile(null);
       setPreview(null);
+      setFileInfo(null);
       onClose();
       return;
     }
 
     if (!onUpload) {
-      setError('Função de upload não fornecida');
+      const errorMsg = 'Função de upload não fornecida';
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
 
     setIsSubmitting(true);
+    console.log('[ImageUploadModal] Iniciando upload...');
+    
     try {
       await onUpload(selectedFile);
+      console.log('[ImageUploadModal] Upload concluído com sucesso');
+      toast.success('Imagem enviada com sucesso!');
       setSelectedFile(null);
       setPreview(null);
+      setFileInfo(null);
+      setError(null);
       onUploaded?.(); // Chamar callback opcional
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Erro ao fazer upload da imagem');
+      const errorMsg = err.message || 'Erro ao fazer upload da imagem';
+      console.error('[ImageUploadModal] Erro no upload:', err);
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -98,91 +172,135 @@ export function ImageUploadModal({
     setSelectedFile(null);
     setPreview(null);
     setError(null);
+    setFileInfo(null);
     onClose();
   };
 
   return (
     <ResponsiveModal isOpen={isOpen} onClose={handleClose} title="">
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-        {/* Título */}
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-6">📷 {title}</h2>
-        </div>
-
-        {/* Erro */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <p className="text-sm text-red-700">{error}</p>
+      <div className="p-6 w-full">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Título */}
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">📷 {title}</h2>
           </div>
-        )}
 
-        {/* Preview */}
-        {preview && (
-          <div className="relative border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100">
-            <img
-              src={preview}
-              alt="Preview"
-              className="w-full h-48 object-cover"
+          {/* Erro */}
+          {error && (
+            <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 animate-pulse">
+              <p className="text-sm font-bold text-red-700 mb-1">⚠️ ERRO</p>
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {/* Informações do Arquivo */}
+          {fileInfo && (
+            <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4 animate-pulse">
+              <p className="text-sm font-bold text-green-700">
+                ✅ ARQUIVO SELECIONADO
+              </p>
+              <p className="text-sm text-green-700 mt-1">{fileInfo}</p>
+            </div>
+          )}
+
+          {/* Preview - Seção Destaque */}
+          {preview && (
+            <div className="bg-blue-50 border-3 border-blue-400 rounded-lg p-4 space-y-3 animate-fadeIn">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🖼️</span>
+                <h3 className="text-lg font-bold text-blue-900">Pré-visualização da Imagem</h3>
+              </div>
+              
+              <div className="relative bg-white border-2 border-blue-300 rounded-lg overflow-hidden shadow-lg max-h-96 flex items-center justify-center">
+                <img
+                  src={preview}
+                  alt="Preview da imagem selecionada"
+                  className="w-full h-full object-contain"
+                  style={{ maxHeight: '380px' }}
+                  onLoad={(e) => {
+                    console.log('[ImageUploadModal] ✅ Imagem renderizada com sucesso');
+                    console.log('[ImageUploadModal] Dimensões:', {
+                      naturalWidth: (e.target as HTMLImageElement).naturalWidth,
+                      naturalHeight: (e.target as HTMLImageElement).naturalHeight,
+                    });
+                  }}
+                  onError={(e) => {
+                    console.error('[ImageUploadModal] ❌ Erro ao renderizar imagem:', e);
+                    setError('Erro ao exibir a pré-visualização. Tente selecionando a imagem novamente.');
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    console.log('[ImageUploadModal] Botão de remover clicado');
+                    setSelectedFile(null);
+                    setPreview(null);
+                    setFileInfo(null);
+                    setError(null);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = '';
+                    }
+                  }}
+                  className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-10 h-10 flex items-center justify-center transition-colors font-bold text-xl shadow-lg hover:scale-110 transform"
+                  title="Remover imagem"
+                >
+                  ×
+                </button>
+              </div>
+              <p className="text-xs text-blue-600 text-center font-medium">Clique no X para remover a imagem</p>
+            </div>
+          )}
+
+          {/* Input de arquivo */}
+          <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50 hover:bg-blue-100 transition-colors">
+            <label className="block text-sm font-bold text-gray-900 mb-3">
+              📁 Selecione uma Imagem
+            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              onChange={handleFileChange}
+              disabled={isSubmitting}
+              className="block w-full text-sm text-gray-600
+                file:mr-4 file:py-3 file:px-5
+                file:rounded-lg file:border-2 file:border-blue-500
+                file:text-sm file:font-bold
+                file:bg-blue-500 file:text-white
+                hover:file:bg-blue-600
+                disabled:opacity-50
+                cursor-pointer
+                file:cursor-pointer"
             />
+            <p className="text-xs text-gray-600 mt-3 font-medium">
+              ℹ️ Máximo 10MB | Formatos: JPEG, PNG, GIF, WebP
+            </p>
+          </div>
+
+          {/* Botões */}
+          <div className="flex gap-3 pt-4 border-t-2 border-gray-300">
             <button
               type="button"
-              onClick={() => {
-                setSelectedFile(null);
-                setPreview(null);
-                if (fileInputRef.current) {
-                  fileInputRef.current.value = '';
-                }
-              }}
-              className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700"
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-3 border-2 border-gray-400 text-gray-700 rounded-lg font-bold hover:bg-gray-100 transition-colors disabled:opacity-50 text-base"
             >
-              ×
+              ✕ Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || !selectedFile}
+              className={`flex-1 px-4 py-3 rounded-lg font-bold text-base transition-colors ${
+                selectedFile && !isSubmitting
+                  ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl transform hover:scale-105'
+                  : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+              }`}
+            >
+              {isSubmitting ? '⏳ Enviando...' : selectedFile ? '✓ Enviar Imagem' : 'Selecione uma Imagem'}
             </button>
           </div>
-        )}
-
-        {/* Input de arquivo */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Selecione uma imagem
-          </label>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp"
-            onChange={handleFileChange}
-            disabled={isSubmitting}
-            className="block w-full text-sm text-gray-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-md file:border-0
-              file:text-sm file:font-semibold
-              file:bg-blue-50 file:text-blue-700
-              hover:file:bg-blue-100
-              disabled:opacity-50"
-          />
-          <p className="text-xs text-gray-500 mt-2">
-            Máximo 10MB. Formatos: JPEG, PNG, GIF, WebP
-          </p>
-        </div>
-
-        {/* Botões */}
-        <div className="flex gap-3 pt-4 border-t border-gray-200">
-          <button
-            type="button"
-            onClick={handleClose}
-            disabled={isSubmitting}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting || !selectedFile}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
-          >
-            {isSubmitting ? '⏳ Processando...' : onFileSelected ? 'Selecionar' : 'Enviar'}
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </ResponsiveModal>
   );
 }

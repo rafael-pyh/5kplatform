@@ -66,7 +66,7 @@ export const requestWithdrawal = async (
       personId,
       type: CreditTransactionType.WITHDRAW_REQUEST,
       amount: -withdrawal.amount, // Débito (reservado)
-      description: `Solicitação de saque - R$ ${withdrawal.amount.toFixed(2)}`,
+      description: `Solicitação de saque - R$ ${Number(withdrawal.amount).toFixed(2)}`,
       withdrawalRequestId: withdrawal.id,
     };
     await addCreditTransaction(params);
@@ -243,7 +243,7 @@ export const approveWithdrawal = async (
     // Atualizar transação existente para refletir aprovação
     await CreditTransaction.update(
       {
-        description: `Saque aprovado - R$ ${withdrawal.amount.toFixed(2)}`,
+        description: `Saque aprovado - R$ ${Number(withdrawal.amount).toFixed(2)}`,
         adjustedByUserId: approvedByUserId,
       },
       {
@@ -295,7 +295,7 @@ export const rejectWithdrawal = async (
     // Atualizar transação para refletir rejeição
     await CreditTransaction.update(
       {
-        description: `Saque rejeitado - R$ ${withdrawal.amount.toFixed(2)}: ${rejectionReason}`,
+        description: `Saque rejeitado - R$ ${Number(withdrawal.amount).toFixed(2)}: ${rejectionReason}`,
         adjustedByUserId: rejectedByUserId,
       },
       {
@@ -343,7 +343,7 @@ export const markWithdrawalAsPaid = async (
     // Atualizar transação para refletir pagamento
     await CreditTransaction.update(
       {
-        description: `Saque pago - R$ ${withdrawal.amount.toFixed(2)}`,
+        description: `Saque pago - R$ ${Number(withdrawal.amount).toFixed(2)}`,
       },
       {
         where: {
