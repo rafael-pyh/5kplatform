@@ -61,20 +61,6 @@ export default function Header({ className }: { className?: string }) {
       label: 'Leads',
       href: '/dashboard/leads',
     },
-    ...(isSellerOrAffiliate ? [{
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-          />
-        </svg>
-      ),
-      label: 'Pedidos',
-      href: '/admin/shop',
-    }] : []),
   ];
 
   // Adicionar item de administradores apenas para admins
@@ -101,12 +87,12 @@ export default function Header({ className }: { className?: string }) {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M20 7l-8-4-8 4m0 0l8 4m-8-4v10l8 4m0-10l8 4m-8-4v10M7 12v10m6-10v10"
+            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
           />
         </svg>
       ),
-      label: 'Kits & Produtos',
-      href: '/admin/shop/kits',
+      label: 'Criativos',
+      href: '/dashboard/creatives',
     });
 
     menuItems.push({
@@ -116,12 +102,28 @@ export default function Header({ className }: { className?: string }) {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+            d="M20 7l-8-4-8 4m0 0l8 4m-8-4v10l8 4m0-10l8 4m-8-4v10M7 12v10m6-10v10"
           />
         </svg>
       ),
-      label: 'Criativos',
-      href: '/dashboard/creatives',
+      label: 'Kits & Produtos',
+      href: '/admin/shop/kits',
+    });
+
+
+    menuItems.push({
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+          />
+        </svg>
+      ),
+      label: 'Pedidos',
+      href: '/admin/shop',
     });
   }
 
@@ -136,14 +138,14 @@ export default function Header({ className }: { className?: string }) {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-0.5">
               {menuItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${isActive
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium whitespace-nowrap ${isActive
                         ? 'bg-blue-100 text-blue-600'
                         : 'text-gray-600 hover:bg-gray-100'
                       }`}
