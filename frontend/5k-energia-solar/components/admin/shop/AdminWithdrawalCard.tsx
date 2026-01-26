@@ -5,6 +5,9 @@ import { formatDate } from '@/lib/utils/dateUtils';
 import { useState, useEffect } from 'react';
 import { approveWithdrawal, rejectWithdrawal, markWithdrawalAsPaid } from '@/app/actions/shop';
 import { shopService } from '@/lib/services/shop.service';
+import { Button } from '@/components/ui';
+import { Icon } from '@/components/ui/Icon';
+import { toast } from 'react-hot-toast';
 
 interface AdminWithdrawalCardProps {
   withdrawal: WithdrawalRequest;
@@ -44,6 +47,7 @@ export function AdminWithdrawalCard({ withdrawal, onActionSuccess }: AdminWithdr
       setPersonLoading(true);
       try {
         const details = await shopService.persons.getDetailsForAdmin(withdrawal.personId);
+        console.log('Dados da pessoa:', details);
         setPersonDetails(details);
       } catch (err: any) {
         console.error('Erro ao buscar dados da pessoa:', err);
@@ -155,11 +159,23 @@ export function AdminWithdrawalCard({ withdrawal, onActionSuccess }: AdminWithdr
             </div>
             <div>
               <span className="text-gray-600">Cidade:</span>
-              <p className="font-medium text-gray-900">{personDetails.city}</p>
+              <p className="font-medium text-gray-900">{personDetails.city}/{personDetails.state}</p>
             </div>
             <div>
-              <span className="text-gray-600">Estado:</span>
-              <p className="font-medium text-gray-900">{personDetails.state}</p>
+              <span className="text-gray-600">Chave Pix:</span>
+              <div className="flex items-center">
+                <p className="font-medium text-gray-900">{personDetails.pixKey || 'N/A'}</p>
+                <Button 
+                  variant="none"
+                  className="p-0 w-fit h-fit focus:ring-0 selection:ring-0 outline-0"
+                  onClick={() => {
+                    navigator.clipboard.writeText(personDetails.pixKey || '');
+                    toast.success('Chave pix copiada com sucesso!');
+                  }}
+                >
+                  <Icon icon="bi-copy" className="w-4 h-4 inline-block ml-1 text-blue-500 hover:text-blue-800" />
+                </Button>
+              </div>
             </div>
             <div className="col-span-2">
               <span className="text-gray-600">Saldo Atual:</span>

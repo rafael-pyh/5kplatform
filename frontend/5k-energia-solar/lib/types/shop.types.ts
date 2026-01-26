@@ -219,6 +219,7 @@ export interface PersonDetails {
   qrCode: string;
   active: boolean;
   role: string;
+  pixKey: string;
   createdAt: string | Date;
   updatedAt: string | Date;
 }

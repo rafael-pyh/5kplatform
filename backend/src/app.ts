@@ -67,9 +67,16 @@ app.get("/health", (req, res) => {
 // Swagger Documentation
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Rotas da API
+// Rotas públicas da API
 app.use("/api/auth", authRoutes);
 app.use("/api/auth", registrationRoutes);
+app.use("/api", manualRegisterRoutes);
+app.use("/api", emailActivationRouter);
+
+// Middleware de autenticação para todas as rotas /api (exceto as públicas acima)
+app.use('/api', authenticate);
+
+// Rotas protegidas da API
 app.use("/api/person", personRoutes);
 app.use("/api/lead", leadRoutes);
 app.use("/api/qrcode", qrcodeRoutes);
@@ -85,11 +92,9 @@ app.use("/api/shop/withdrawals", withdrawalRoutes);
 
 app.use("/api/seller", sellerAuthRoutes);
 app.use("/api/seller", sellerLeadsRoutes);
-app.use("/api/seller", authenticate, sellerRoutes);
-app.use("/api", manualRegisterRoutes);
+app.use("/api/seller", sellerRoutes);
 app.use("/api/approval", approvalRoutes);
-app.use("/api/admin", authenticate, migrationRoutes);
-app.use("/api", emailActivationRouter);
+app.use("/api/admin", migrationRoutes);
 app.use("/api/whatsapp-templates", whatsappTemplateRoutes);
 // Admin cache management (protected by authenticate + requireAdmin inside routes)
 app.use("/api/admin/cache", cacheRoutes);

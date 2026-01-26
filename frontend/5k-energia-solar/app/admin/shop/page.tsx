@@ -52,6 +52,8 @@ export default function AdminShopPage() {
     fetchWithdrawals();
   }, [fetchWithdrawals]);
 
+  console.log(withdrawals);
+
   return (
     <ProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
       <DashboardLayout>
