@@ -90,6 +90,7 @@ export interface Person {
   state: string;
   cpf?: string; // CPF do usuário (somente números)
   birthDate?: string | Date; // Data de nascimento
+  commissionType?: 'FIXED' | 'PERCENTAGE';
   createdAt: string | Date;
   updatedAt: string | Date;
 }
@@ -105,6 +106,7 @@ export interface CreatePersonDto {
   birthDate: string | Date; // Obrigatório
   role?: string;
   photoBase64?: string;
+  commissionType?: 'FIXED' | 'PERCENTAGE';
 }
 
 export interface UpdatePersonDto {
@@ -119,6 +121,7 @@ export interface UpdatePersonDto {
   photoBase64?: string;
   active?: boolean;
   role?: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | 'AFFILIATE';
+  commissionType?: 'FIXED' | 'PERCENTAGE';
 }
 
 // ========== LEAD (INTERESSADO) ==========

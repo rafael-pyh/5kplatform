@@ -30,6 +30,7 @@ type FormData = {
   photoBase64: string;
   city: string;
   state: string;
+  commissionType: 'FIXED' | 'PERCENTAGE';
 };
 
 export function useRegister(initial: Partial<FormData> = {}) {
@@ -50,6 +51,7 @@ export function useRegister(initial: Partial<FormData> = {}) {
     photoBase64: '',
     city: '',
     state: '',
+    commissionType: 'PERCENTAGE',
     ...initial,
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -157,6 +159,7 @@ export function useRegister(initial: Partial<FormData> = {}) {
         photoBase64: '',
         city: '',
         state: '',
+        commissionType: 'PERCENTAGE',
       });
       
       router.push('/login');

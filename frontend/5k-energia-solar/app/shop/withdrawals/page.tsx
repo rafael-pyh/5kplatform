@@ -8,7 +8,6 @@ import { TransactionList } from '@/components/shop/TransactionList';
 import { useWithdrawals } from '@/hooks/useWithdrawals';
 import { useCredits } from '@/hooks/useCredits';
 import { useAuth } from '@/contexts/AuthContext';
-import { formatDate } from '@/lib/utils/dateUtils';
 
 export default function WithdrawalsPage() {
   const { fetchWithdrawals } = useWithdrawals({ autoFetch: true });

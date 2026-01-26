@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import PasswordField from '@/components/ui/PasswordField';
 import CityAutocomplete from '@/components/ui/CityAutocomplete';
-import { FileUpload } from '@/components/ui';
+import { Button, FileUpload } from '@/components/ui';
 
 interface StateOption {
   id: string;
@@ -132,6 +132,14 @@ export default function RegisterForm({
               )}
             </div>
 
+            <div>
+              <label htmlFor="commissionType" className="block text-sm font-medium text-gray-700 mb-0.5">Tipo de Comissão</label>
+              <select id="commissionType" name="commissionType" value={formData.commissionType} onChange={handleChange} className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" required>
+                <option value="PERCENTAGE">Porcentagem sobre a venda</option>
+                <option value="FIXED">Valor fixo</option>
+              </select>
+            </div>
+
             <div className="md:col-span-2">
               <label htmlFor="photo" className="block text-sm font-medium text-gray-700 mb-0.5">Foto</label>
               <FileUpload
@@ -141,10 +149,20 @@ export default function RegisterForm({
                 label="Clique para selecionar uma foto"
                 dragText="ou arraste uma imagem aqui"
               />
+              {formData.photoBase64 && (
+                <div className="mt-2 flex items-center gap-2">
+                  <img
+                    src={formData.photoBase64}
+                    alt="Preview"
+                    className="w-12 h-12 rounded-lg object-cover border border-gray-200"
+                  />
+                  <span className="text-sm text-gray-600">Imagem selecionada</span>
+                </div>
+              )}
             </div>
 
             <div className="md:col-span-2">
-              <button type="submit" disabled={isLoading} className="w-full bg-linear-to-r from-blue-100 to-green-100 text-white py-3 rounded-lg font-medium hover:from-blue-600 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition">{isLoading ? 'Cadastrando...' : 'Cadastrar'}</button>
+              <Button type="submit" disabled={isLoading} className="w-full">{isLoading ? 'Cadastrando...' : 'Cadastrar'}</Button>
             </div>
 
             <div className="md:col-span-2 w-full flex justify-between">

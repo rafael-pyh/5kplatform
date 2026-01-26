@@ -124,6 +124,11 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onActivate
         <div className="text-sm text-gray-900">{person.city ? `${person.city}/${person.state}` : 'Não informado'}</div>
       </td>
       <td className="px-2 py-4 whitespace-nowrap">
+        <Badge variant={person.commissionType === 'FIXED' ? 'info' : 'warning'}>
+          {person.commissionType === 'FIXED' ? 'Valor Fixo' : 'Porcentagem'}
+        </Badge>
+      </td>
+      <td className="px-2 py-4 whitespace-nowrap">
         <Badge variant={person.active ? 'success' : 'danger'}>
           {person.active ? 'Ativo' : 'Inativo'}
         </Badge>

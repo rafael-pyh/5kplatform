@@ -21,6 +21,7 @@ export interface Person {
   state: string;
   cpf?: string;
   birthDate?: string | Date;
+  commissionType?: 'FIXED' | 'PERCENTAGE';
   verificationToken?: string;
   tokenExpiry?: Date;
   createdAt: string | Date;

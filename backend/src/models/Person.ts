@@ -211,6 +211,14 @@ export class Person extends Model {
     field: 'birthDate'
   })
   birthDate?: Date; // Data de nascimento do usuário
+
+  @Default('PERCENTAGE')
+  @Column({
+    type: DataType.ENUM('FIXED', 'PERCENTAGE'),
+    field: 'commissionType'
+  })
+  commissionType!: 'FIXED' | 'PERCENTAGE'; // Tipo de comissão
+
 }
 
 // Removi a chamada redundante de Person.init, pois o decorador @Table já cuida da configuração do modelo.

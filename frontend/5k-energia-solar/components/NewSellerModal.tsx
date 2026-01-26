@@ -365,6 +365,25 @@ export default function NewSellerModal({ isOpen, onClose, onSuccess }: NewSeller
             )}
           </div>
 
+          {/* Tipo de Comissão */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-0.5">
+              Tipo de Comissão *
+            </label>
+            <select
+              {...register('commissionType', { required: 'Tipo de comissão é obrigatório' })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-sm"
+              required
+            >
+              <option value="">Selecione um tipo</option>
+              <option value="PERCENTAGE">Porcentagem sobre a venda</option>
+              <option value="FIXED">Valor fixo</option>
+            </select>
+            {errors.commissionType && (
+              <p className="mt-1 text-sm text-red-600">{errors.commissionType.message}</p>
+            )}
+          </div>
+
           {/* Foto de Perfil - full width */}
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-0.5">

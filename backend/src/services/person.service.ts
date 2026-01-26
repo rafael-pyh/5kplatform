@@ -23,6 +23,7 @@ export interface CreatePersonDto {
   birthDate?: Date | string;
   verificationToken?: string;
   verificationTokenExpiry?: Date;
+  commissionType?: 'FIXED' | 'PERCENTAGE';
 }
 
 export interface UpdatePersonDto {
@@ -37,6 +38,7 @@ export interface UpdatePersonDto {
   state?: string;
   cpf?: string;
   birthDate?: Date | string;
+  commissionType?: 'FIXED' | 'PERCENTAGE';
 }
 
 export const createPerson = async (data: CreatePersonDto) => {
@@ -137,6 +139,7 @@ export const createPerson = async (data: CreatePersonDto) => {
     approvalStatus: !hashedPassword ? 'approved' : 'pending',
     verificationToken,
     tokenExpiry,
+    commissionType: data.commissionType || 'PERCENTAGE',
   });
 
   // Envia email baseado no tipo de registro

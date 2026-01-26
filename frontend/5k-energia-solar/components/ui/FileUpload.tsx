@@ -26,20 +26,18 @@ export default function FileUpload({
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleClick = () => {
-    if (!disabled && inputRef.current) {
-      inputRef.current.click();
-    }
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(e);
+    // Reset the input value to allow selecting the same file again
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
   };
 
   return (
     <div className={className}>
-      <div
-        onClick={handleClick}
+      <label
+        htmlFor={id}
         className={`flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors ${
           disabled ? 'opacity-50 cursor-not-allowed' : ''
         }`}
@@ -49,7 +47,7 @@ export default function FileUpload({
           <p className="text-sm font-medium text-gray-700">{label}</p>
           <p className="text-xs text-gray-500">{dragText}</p>
         </div>
-      </div>
+      </label>
       <input
         ref={inputRef}
         id={id}
