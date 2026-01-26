@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import swaggerUi from "swagger-ui-express";
+import { env } from "./config/env";
 import authRoutes from "./routes/auth.routes";
 import personRoutes from "./routes/person.routes";
 import leadRoutes from "./routes/lead.routes";
@@ -72,24 +73,26 @@ app.use(helmet({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: env.isDevelopment ? 1000 : 100, // More permissive in development
   message: {
     success: false,
     message: "Muitas requisições, tente novamente mais tarde."
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => env.isDevelopment, // Skip rate limiting in development
 });
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 auth attempts per windowMs
+  max: env.isDevelopment ? 50 : 10, // More permissive in development
   message: {
     success: false,
     message: "Muitas tentativas de autenticação, tente novamente mais tarde."
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => env.isDevelopment, // Skip rate limiting in development
 });
 
 app.use(limiter);
