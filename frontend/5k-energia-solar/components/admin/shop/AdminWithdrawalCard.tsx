@@ -47,7 +47,6 @@ export function AdminWithdrawalCard({ withdrawal, onActionSuccess }: AdminWithdr
       setPersonLoading(true);
       try {
         const details = await shopService.persons.getDetailsForAdmin(withdrawal.personId);
-        console.log('Dados da pessoa:', details);
         setPersonDetails(details);
       } catch (err: any) {
         console.error('Erro ao buscar dados da pessoa:', err);
