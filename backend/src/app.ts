@@ -1,5 +1,7 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import swaggerUi from "swagger-ui-express";
 import authRoutes from "./routes/auth.routes";
 import personRoutes from "./routes/person.routes";
@@ -49,9 +51,52 @@ const corsOptions = {
 
 // Middlewares globais
 app.use(cors(corsOptions));
-// Aumenta limite para suportar imagens base64 (10MB)
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Security headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
+}));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: {
+    success: false,
+    message: "Muitas requisições, tente novamente mais tarde."
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 auth attempts per windowMs
+  message: {
+    success: false,
+    message: "Muitas tentativas de autenticação, tente novamente mais tarde."
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(limiter);
+
+// Limite reduzido para payloads (2MB)
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 
 
@@ -68,10 +113,10 @@ app.get("/health", (req, res) => {
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Rotas públicas da API
-app.use("/api/auth", authRoutes);
-app.use("/api/auth", registrationRoutes);
-app.use("/api", manualRegisterRoutes);
-app.use("/api", emailActivationRouter);
+app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/auth", authLimiter, registrationRoutes);
+app.use("/api", authLimiter, manualRegisterRoutes);
+app.use("/api", authLimiter, emailActivationRouter);
 
 // Middleware de autenticação para todas as rotas /api (exceto as públicas acima)
 app.use('/api', authenticate);

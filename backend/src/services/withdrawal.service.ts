@@ -52,7 +52,7 @@ export const requestWithdrawal = async (
       throw new Error('Dados bancários não podem estar vazios');
     }
 
-    // Criar solicitação
+    // Criar solicitação (sem debitar ainda)
     const withdrawal = await WithdrawalRequest.create({
       personId,
       amount,
@@ -61,11 +61,11 @@ export const requestWithdrawal = async (
       status: WithdrawalStatus.PENDING,
     });
 
-    // Criar transação de auditoria para solicitação
+    // Criar transação de auditoria para solicitação (sem débito)
     const params: CreditTransactionParams = {
       personId,
       type: CreditTransactionType.WITHDRAW_REQUEST,
-      amount: -withdrawal.amount, // Débito (reservado)
+      amount: 0, // Sem débito ainda
       description: `Solicitação de saque - R$ ${Number(withdrawal.amount).toFixed(2)}`,
       withdrawalRequestId: withdrawal.id,
     };
@@ -315,6 +315,8 @@ export const rejectWithdrawal = async (
       }
     );
 
+    // Não há débito para reverter, apenas atualizar status
+
     return withdrawal;
   } catch (error: any) {
     console.error('Erro ao rejeitar saque:', error);
@@ -349,18 +351,15 @@ export const markWithdrawalAsPaid = async (
       paidAt: new Date(),
     });
 
-    // Atualizar transação para refletir pagamento
-    await CreditTransaction.update(
-      {
-        description: `Saque pago - R$ ${Number(withdrawal.amount).toFixed(2)}`,
-      },
-      {
-        where: {
-          withdrawalRequestId: withdrawal.id,
-          type: CreditTransactionType.WITHDRAW_REQUEST,
-        },
-      }
-    );
+    // Criar transação de débito efetivo
+    const debitParams: CreditTransactionParams = {
+      personId: withdrawal.personId,
+      type: CreditTransactionType.WITHDRAW_REQUEST,
+      amount: -withdrawal.amount, // Débito efetivo
+      description: `Saque pago - R$ ${Number(withdrawal.amount).toFixed(2)}`,
+      withdrawalRequestId: withdrawal.id,
+    };
+    await addCreditTransaction(debitParams);
 
     return withdrawal;
   } catch (error: any) {

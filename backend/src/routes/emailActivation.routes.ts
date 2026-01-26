@@ -7,8 +7,6 @@ emailActivationRouter.get("/verify-email", async (req, res) => {
   try {
     const { token } = req.query;
 
-    console.log('[Email Validation] Iniciando validação de email com token:', token);
-
     if (!token) {
       console.warn('[Email Validation] Token não fornecido');
       return res.status(400).json({ message: "Token de verificação é obrigatório." });

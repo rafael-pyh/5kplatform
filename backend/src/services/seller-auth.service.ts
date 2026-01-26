@@ -117,8 +117,6 @@ export const setPassword = async (data: SetPasswordDto) => {
   Validator.required(data.password, 'Senha');
   Validator.minLength(data.password, 8, 'Senha');
 
-  console.log('[SellerAuthService] Definindo senha com token:', data.token);
-
   // Busca pessoa pelo token
   const person = await Person.findOne({
     where: {
@@ -133,8 +131,6 @@ export const setPassword = async (data: SetPasswordDto) => {
     console.warn('[SellerAuthService] Token inválido ou expirado para setPassword:', data.token);
     throw new BadRequestError("Token inválido ou expirado");
   }
-
-  console.log('[SellerAuthService] Token válido, atualizando senha para:', person.email);
 
   // Hash da senha
   const hashedPassword = await hashPassword(data.password);

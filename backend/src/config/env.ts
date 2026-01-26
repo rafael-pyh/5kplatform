@@ -21,7 +21,7 @@ export const env = {
   CACHE_TTL_MS: parseInt(process.env.CACHE_TTL_MS || '300000'), // 5 minutos padrão
   
   // ==================== JWT ====================
-  JWT_SECRET: process.env.JWT_SECRET || "change-me-in-production",
+  JWT_SECRET: process.env.JWT_SECRET || "your-super-secure-jwt-secret-change-this-in-production-2026",
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "7d",
   
   // ==================== URLS - INTERNAL (Server-side only) ====================

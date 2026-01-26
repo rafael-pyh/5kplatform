@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from './errors';
+import { env } from '../config/env';
 
 export const errorHandler = (
   err: Error,
@@ -7,14 +8,25 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  console.error('🔴 [ERROR HANDLER] Erro capturado:', {
-    name: err.name,
-    message: err.message,
-    type: err.constructor.name,
-    path: req.path,
-    method: req.method,
-    stack: err.stack,
-  });
+  // Log detalhado apenas em desenvolvimento
+  if (env.isDevelopment) {
+    console.error('🔴 [ERROR HANDLER] Erro capturado:', {
+      name: err.name,
+      message: err.message,
+      type: err.constructor.name,
+      path: req.path,
+      method: req.method,
+      stack: err.stack,
+    });
+  } else {
+    // Em produção, log apenas informações não sensíveis
+    console.error('🔴 [ERROR HANDLER] Erro:', {
+      name: err.name,
+      message: err.message,
+      path: req.path,
+      method: req.method,
+    });
+  }
 
   if (err instanceof AppError) {
     console.log(`✅ [ERROR HANDLER] AppError detectado - Status: ${err.statusCode}, Mensagem: ${err.message}`);
