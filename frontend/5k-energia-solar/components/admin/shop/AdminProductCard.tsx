@@ -18,8 +18,6 @@ export function AdminProductCard({
 }: AdminProductCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
-  console.log(product);
-
   const handleDelete = async () => {
     if (confirm(`Tem certeza que deseja deletar o produto "${product.name}"?`)) {
       setIsDeleting(true);

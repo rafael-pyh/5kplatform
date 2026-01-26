@@ -27,10 +27,8 @@ export function OrderModal({ kit, isOpen, onClose, onSuccess }: OrderModalProps)
   useEffect(() => {
     if (isOpen && kit?.id) {
       setLoadingKit(true);
-      console.log('Buscando detalhes do kit:', kit.id);
       shopService.kits.getById(kit.id)
         .then((kitDetails) => {
-          console.log('Detalhes do kit recebidos:', kitDetails);
           setFullKit(kitDetails);
         })
         .catch((err) => {
@@ -49,10 +47,6 @@ export function OrderModal({ kit, isOpen, onClose, onSuccess }: OrderModalProps)
   if (!kit) return null;
 
   const currentKit = fullKit || kit;
-
-  console.log('OrderModal - currentKit:', currentKit);
-  console.log('OrderModal - currentKit.items:', currentKit.items);
-  console.log('OrderModal - items length:', currentKit.items?.length);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,8 +100,6 @@ export function OrderModal({ kit, isOpen, onClose, onSuccess }: OrderModalProps)
       setLoading(false);
     }
   };
-
-  console.log('Rendering OrderModal with kit:', kit);
 
   return (
     <ResponsiveModal isOpen={isOpen} onClose={onClose} title={`Solicitar: ${kit.name}`}>

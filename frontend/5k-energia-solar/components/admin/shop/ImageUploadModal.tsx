@@ -31,22 +31,13 @@ export function ImageUploadModal({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
-      console.log('[ImageUploadModal] Nenhum arquivo selecionado');
       setError(null);
       return;
     }
 
-    console.log('[ImageUploadModal] ========== NOVO ARQUIVO SELECIONADO ==========');
-    console.log('[ImageUploadModal] Nome:', file.name);
-    console.log('[ImageUploadModal] Tipo:', file.type);
-    console.log('[ImageUploadModal] Tamanho:', file.size, 'bytes', `(${(file.size / 1024 / 1024).toFixed(2)}MB)`);
-    console.log('[ImageUploadModal] Última modificação:', new Date(file.lastModified).toLocaleString());
-
     // Validar tipo de arquivo
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     const isAllowedType = allowedTypes.includes(file.type) || file.type === '';
-    
-    console.log('[ImageUploadModal] Tipo permitido?', isAllowedType);
 
     if (!isAllowedType && file.type !== '') {
       const errorMsg = `Tipo de arquivo não suportado: ${file.type}. Apenas JPEG, PNG, GIF e WebP são permitidos`;
@@ -73,7 +64,6 @@ export function ImageUploadModal({
     }
 
     // Arquivo válido
-    console.log('[ImageUploadModal] ✅ Arquivo VALIDADO');
     setError(null);
     setSelectedFile(file);
     setFileInfo(`${file.name} (${(file.size / 1024).toFixed(2)}KB)`);
@@ -82,14 +72,8 @@ export function ImageUploadModal({
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
-      console.log('[ImageUploadModal] ✅ FileReader.onload disparado');
-      console.log('[ImageUploadModal] Data URL comprimento:', result?.length, 'caracteres');
-      console.log('[ImageUploadModal] Data URL preview:', result?.substring(0, 50) + '...');
       
       setPreview(result);
-      
-      console.log('[ImageUploadModal] ✅ Preview state atualizado');
-      console.log('[ImageUploadModal] ========== ARQUIVO PRONTO PARA UPLOAD ==========');
     };
     reader.onerror = (error) => {
       const errorMsg = `Erro ao ler a imagem: ${error}. Tente novamente.`;
@@ -103,11 +87,10 @@ export function ImageUploadModal({
     reader.onprogress = (event) => {
       if (event.lengthComputable) {
         const percentComplete = (event.loaded / event.total) * 100;
-        console.log('[ImageUploadModal] 📊 Lendo arquivo:', percentComplete.toFixed(0) + '%');
+        setFileInfo(`Carregando... ${percentComplete.toFixed(0)}%`);
       }
     };
     
-    console.log('[ImageUploadModal] 📖 Iniciando leitura com FileReader...');
     reader.readAsDataURL(file);
   };
 
@@ -121,15 +104,8 @@ export function ImageUploadModal({
       return;
     }
 
-    console.log('[ImageUploadModal] Enviando arquivo:', {
-      name: selectedFile.name,
-      type: selectedFile.type,
-      size: selectedFile.size,
-    });
-
     if (onFileSelected) {
       // Modo seleção: apenas retorna o arquivo
-      console.log('[ImageUploadModal] Modo seleção - retornando arquivo');
       onFileSelected(selectedFile);
       setSelectedFile(null);
       setPreview(null);
@@ -146,11 +122,9 @@ export function ImageUploadModal({
     }
 
     setIsSubmitting(true);
-    console.log('[ImageUploadModal] Iniciando upload...');
     
     try {
       await onUpload(selectedFile);
-      console.log('[ImageUploadModal] Upload concluído com sucesso');
       toast.success('Imagem enviada com sucesso!');
       setSelectedFile(null);
       setPreview(null);
@@ -217,13 +191,6 @@ export function ImageUploadModal({
                   alt="Preview da imagem selecionada"
                   className="w-full h-full object-contain"
                   style={{ maxHeight: '380px' }}
-                  onLoad={(e) => {
-                    console.log('[ImageUploadModal] ✅ Imagem renderizada com sucesso');
-                    console.log('[ImageUploadModal] Dimensões:', {
-                      naturalWidth: (e.target as HTMLImageElement).naturalWidth,
-                      naturalHeight: (e.target as HTMLImageElement).naturalHeight,
-                    });
-                  }}
                   onError={(e) => {
                     console.error('[ImageUploadModal] ❌ Erro ao renderizar imagem:', e);
                     setError('Erro ao exibir a pré-visualização. Tente selecionando a imagem novamente.');
@@ -232,7 +199,6 @@ export function ImageUploadModal({
                 <button
                   type="button"
                   onClick={() => {
-                    console.log('[ImageUploadModal] Botão de remover clicado');
                     setSelectedFile(null);
                     setPreview(null);
                     setFileInfo(null);

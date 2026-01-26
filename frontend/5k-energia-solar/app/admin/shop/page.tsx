@@ -52,9 +52,6 @@ export default function AdminShopPage() {
     fetchWithdrawals();
   }, [fetchWithdrawals]);
 
-  console.log('orders', orders);
-  console.log('withdrawals', withdrawals);
-
   return (
     <ProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
       <DashboardLayout>
@@ -109,13 +106,9 @@ export default function AdminShopPage() {
                 {(['all', OrderStatus.PENDING_APPROVAL, OrderStatus.APPROVED, OrderStatus.REJECTED] as const).map((status) => (
                   <Button
                     key={status}
-                    variant='none'
+                    variant={statusFilter === status ? 'outline-blue' : 'outline'}
                     onClick={() => setStatusFilter(status)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      statusFilter === status
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
+                    
                   >
                     {status === 'all' ? 'Todos' : statusLabels[status]}
                   </Button>
@@ -131,7 +124,7 @@ export default function AdminShopPage() {
                     ))}
                   </div>
                 ) : orders.length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg shadow">
+                  <div className="text-center py-12 bg-gray-50 rounded-lg shadow col-span-full">
                     <p className="text-gray-600">Nenhum pedido encontrado</p>
                   </div>
                 ) : (

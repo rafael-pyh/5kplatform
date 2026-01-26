@@ -36,19 +36,14 @@ export function AdminWithdrawalCard({ withdrawal, onActionSuccess }: AdminWithdr
   // Buscar dados da pessoa quando o componente for montado
   useEffect(() => {
     const fetchPersonDetails = async () => {
-      console.log('withdrawal:', withdrawal);
-      console.log('personId:', withdrawal.personId);
-      
+    
       if (!withdrawal.personId) {
-        console.log('personId não encontrado');
         return;
       }
 
       setPersonLoading(true);
       try {
-        console.log('Fazendo requisição para buscar dados da pessoa...');
         const details = await shopService.persons.getDetailsForAdmin(withdrawal.personId);
-        console.log('Dados da pessoa recebidos:', details);
         setPersonDetails(details);
       } catch (err: any) {
         console.error('Erro ao buscar dados da pessoa:', err);
@@ -127,8 +122,6 @@ export function AdminWithdrawalCard({ withdrawal, onActionSuccess }: AdminWithdr
       setLoading(false);
     }
   };
-
-  console.log('Withdrawal:', withdrawal);
 
   return (
     <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white">

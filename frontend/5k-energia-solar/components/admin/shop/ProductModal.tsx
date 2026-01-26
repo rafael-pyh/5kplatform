@@ -56,7 +56,6 @@ export function ProductModal({
 
   // Criar ObjectURLs estáveis para as imagens selecionadas
   const imagePreviewUrls = useMemo(() => {
-    console.log('[ProductModal] Gerando ObjectURLs para', selectedImages.length, 'imagens');
     return selectedImages.map(file => ({
       file,
       url: URL.createObjectURL(file)
@@ -202,19 +201,15 @@ export function ProductModal({
       // fazer upload das imagens após a criação
       if (selectedImages.length > 0 && !product && createdProduct) {
         setUploadingImages(true);
-        console.log('[ProductModal] Iniciando upload de', selectedImages.length, 'imagens');
         try {
           // Fazer upload de cada imagem
           for (let i = 0; i < selectedImages.length; i++) {
             const imageFile = selectedImages[i];
-            console.log(`[ProductModal] Enviando imagem ${i + 1}/${selectedImages.length}:`, imageFile.name);
             const formDataToSubmit = new FormData();
             formDataToSubmit.append('image', imageFile);
             await shopService.productImages.add(createdProduct.id, formDataToSubmit);
-            console.log(`[ProductModal] ✅ Imagem ${i + 1} enviada com sucesso`);
           }
           
-          console.log('[ProductModal] ✅ Todas as imagens foram enviadas com sucesso');
           if (onImageUploaded) {
             onImageUploaded();
           }
@@ -225,12 +220,6 @@ export function ProductModal({
         } finally {
           setUploadingImages(false);
         }
-      } else {
-        console.log('[ProductModal] Upload não realizado:', {
-          temImagens: selectedImages.length > 0,
-          ehNovoProduto: !product,
-          produtoRetornado: !!createdProduct
-        });
       }
 
       setFormData({
@@ -431,17 +420,13 @@ export function ProductModal({
                 multiple={true}
                 accept="image/*"
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  console.log('[ProductModal] FileUpload onChange disparado');
                   const files = e.target.files;
-                  console.log('[ProductModal] Arquivos recebidos:', files?.length);
                   
                   if (files && files.length > 0) {
                     const fileArray = Array.from(files);
-                    console.log('[ProductModal] Arquivos processados:', fileArray.map(f => f.name));
                     
                     setSelectedImages(prev => {
                       const updated = [...prev, ...fileArray];
-                      console.log('[ProductModal] Total de imagens após adicionar:', updated.length);
                       return updated;
                     });
                   }
@@ -458,9 +443,6 @@ export function ProductModal({
                         src={item.url}
                         alt={`Imagem ${index + 1}`}
                         className="w-full h-full object-cover"
-                        onLoad={() => {
-                          console.log('[ProductModal] ✅ Imagem carregada:', item.file.name);
-                        }}
                         onError={(e) => {
                           console.error('[ProductModal] ❌ Erro ao carregar imagem:', item.file.name, e);
                         }}
