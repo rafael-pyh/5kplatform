@@ -36,7 +36,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             // Valida o token com o backend
             const response = await api.get('/auth/me');
-            const userData = response.data.data;
+            let userData = response.data.data;
+            
+            // Se for SELLER ou AFFILIATE, busca dados adicionais do profile
+            if (userData.role === 'SELLER' || userData.role === 'AFFILIATE') {
+              try {
+                const profileResponse = await api.get('/seller/profile');
+                const profileData = profileResponse.data.data;
+                // Atualiza userData com qrCodeUrl do profile
+                userData = { ...userData, qrCodeUrl: profileData.qrCodeUrl, qrCode: profileData.qrCode };
+              } catch (profileError) {
+                console.warn('Erro ao buscar profile do seller:', profileError);
+                // Continua sem qrCodeUrl se falhar
+              }
+            }
+            
             setUser(userData);
             localStorage.setItem('user', JSON.stringify(userData));
           } catch (jwtError: any) {
@@ -48,16 +62,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   rememberMeToken,
                 });
                 const { token: newToken, user: userData, rememberMeToken: newRememberMeToken } = response.data.data;
+                let userDataMutable = userData;
 
+                // Se for SELLER ou AFFILIATE, busca dados adicionais do profile
+                if (userDataMutable.role === 'SELLER' || userDataMutable.role === 'AFFILIATE') {
+                  try {
+                    const profileResponse = await api.get('/seller/profile');
+                    const profileData = profileResponse.data.data;
+                    // Atualiza userData com qrCodeUrl do profile
+                    userDataMutable = { ...userDataMutable, qrCodeUrl: profileData.qrCodeUrl, qrCode: profileData.qrCode };
+                  } catch (profileError) {
+                    console.warn('Erro ao buscar profile do seller:', profileError);
+                    // Continua sem qrCodeUrl se falhar
+                  }
+                }
 
                 // Salva os novos tokens
                 localStorage.setItem('token', newToken);
-                localStorage.setItem('user', JSON.stringify(userData));
+                localStorage.setItem('user', JSON.stringify(userDataMutable));
                 if (newRememberMeToken) {
                   localStorage.setItem('rememberMeToken', newRememberMeToken);
                 }
 
-                setUser(userData);
+                setUser(userDataMutable);
               } catch (rememberError: any) {
                 // Token de "lembrar" também expirou ou é inválido
                 localStorage.removeItem('rememberMeToken');
@@ -79,16 +106,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               rememberMeToken,
             });
             const { token: newToken, user: userData, rememberMeToken: newRememberMeToken } = response.data.data;
+            let userDataMutable = userData;
 
+            // Se for SELLER ou AFFILIATE, busca dados adicionais do profile
+            if (userDataMutable.role === 'SELLER' || userDataMutable.role === 'AFFILIATE') {
+              try {
+                const profileResponse = await api.get('/seller/profile');
+                const profileData = profileResponse.data.data;
+                // Atualiza userData com qrCodeUrl do profile
+                userDataMutable = { ...userDataMutable, qrCodeUrl: profileData.qrCodeUrl, qrCode: profileData.qrCode };
+              } catch (profileError) {
+                console.warn('Erro ao buscar profile do seller:', profileError);
+                // Continua sem qrCodeUrl se falhar
+              }
+            }
 
             // Salva os novos tokens
             localStorage.setItem('token', newToken);
-            localStorage.setItem('user', JSON.stringify(userData));
+            localStorage.setItem('user', JSON.stringify(userDataMutable));
             if (newRememberMeToken) {
               localStorage.setItem('rememberMeToken', newRememberMeToken);
             }
 
-            setUser(userData);
+            setUser(userDataMutable);
           } catch (error: any) {
             // Token de "lembrar" expirou ou é inválido
             localStorage.removeItem('rememberMeToken');
@@ -174,7 +214,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     try {
       const response = await api.get('/auth/me');
-      const userData = response.data.data;
+      let userData = response.data.data;
+      
+      // Se for SELLER ou AFFILIATE, busca dados adicionais do profile
+      if (userData.role === 'SELLER' || userData.role === 'AFFILIATE') {
+        try {
+          const profileResponse = await api.get('/seller/profile');
+          const profileData = profileResponse.data.data;
+          // Atualiza userData com qrCodeUrl do profile
+          userData = { ...userData, qrCodeUrl: profileData.qrCodeUrl, qrCode: profileData.qrCode };
+        } catch (profileError) {
+          console.warn('Erro ao buscar profile do seller:', profileError);
+          // Continua sem qrCodeUrl se falhar
+        }
+      }
+      
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
       return userData;

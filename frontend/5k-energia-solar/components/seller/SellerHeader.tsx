@@ -53,6 +53,11 @@ const SellerHeader = ({ seller, onOpenQR, onOpenCriativos, onLogout, blocked }: 
     router.push('/shop/my-orders');
   };
 
+  const handleWithdrawals = () => {
+    setIsMobileMenuOpen(false);
+    router.push('/shop/withdrawals');
+  };
+
   const handleDashboard = () => {
     setIsMobileMenuOpen(false);
     router.push('/seller/dashboard');
@@ -141,7 +146,21 @@ const SellerHeader = ({ seller, onOpenQR, onOpenCriativos, onLogout, blocked }: 
               <span className="hidden sm:inline font-medium">Meus Pedidos</span>
             </Button>
 
-            {seller?.qrCodeUrl && (
+            {/* Withdrawals Button */}
+            <Button
+              onClick={handleWithdrawals}
+              variant="outline-danger"
+              size='sm'
+              title="Saques"
+              className="flex gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
+              <span className="hidden sm:inline font-medium">Saques</span>
+            </Button>
+
+            {user?.qrCodeUrl && (user?.role === 'SELLER' || user?.role === 'AFFILIATE') && (
               <div className="flex gap-2">
                 <Button
                   onClick={onOpenQR}
@@ -306,7 +325,18 @@ const SellerHeader = ({ seller, onOpenQR, onOpenCriativos, onLogout, blocked }: 
                 <span className="font-medium">Meus Pedidos</span>
               </button>
 
-              {seller?.qrCodeUrl && (
+              {/* Withdrawals Button Mobile */}
+              <button
+                onClick={handleWithdrawals}
+                className="w-full px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+                <span className="font-medium">Saques</span>
+              </button>
+
+              {user?.qrCodeUrl && (user?.role === 'SELLER' || user?.role === 'AFFILIATE') && (
                 <div className="flex flex-col gap-2">
                   <button
                     onClick={() => {

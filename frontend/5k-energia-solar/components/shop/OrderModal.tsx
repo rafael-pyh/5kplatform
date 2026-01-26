@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import ResponsiveModal from '../ResponsiveModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { shopService } from '@/lib/services/shop.service';
+import { Button } from '../ui';
 
 interface OrderModalProps {
   kit: Kit | null;
@@ -103,7 +104,7 @@ export function OrderModal({ kit, isOpen, onClose, onSuccess }: OrderModalProps)
 
   return (
     <ResponsiveModal isOpen={isOpen} onClose={onClose} title={`Solicitar: ${kit.name}`}>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 p-2">
         {/* Resumo */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h4 className="font-semibold text-gray-900 mb-2">Resumo do Kit</h4>
@@ -255,21 +256,23 @@ export function OrderModal({ kit, isOpen, onClose, onSuccess }: OrderModalProps)
 
         {/* Botões */}
         <div className="flex gap-3 pt-4">
-          <button
+          <Button
             type="button"
+            variant="danger"
             onClick={onClose}
             disabled={loading || loadingKit || uploadingProof}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="flex-1"
           >
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
+            variant="primary"
             disabled={loading || loadingKit || uploadingProof}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="flex-1"
           >
             {uploadingProof ? 'Enviando comprovante...' : loading ? 'Processando...' : loadingKit ? 'Carregando...' : 'Confirmar Pedido'}
-          </button>
+          </Button>
         </div>
       </form>
     </ResponsiveModal>

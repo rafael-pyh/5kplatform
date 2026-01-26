@@ -177,8 +177,15 @@ export function AdminWithdrawalCard({ withdrawal, onActionSuccess }: AdminWithdr
               </div>
             </div>
             <div className="col-span-2">
-              <span className="text-gray-600">Saldo Atual:</span>
-              <p className="font-medium text-green-700">R$ {personDetails.creditBalance.toFixed(2)}</p>
+              <span className="text-gray-600">Saldo Total:</span>
+              <p className="font-medium text-green-700">
+                R$ {(
+                  personDetails.creditBalance + 
+                  (withdrawal.status === WithdrawalStatus.PENDING || withdrawal.status === WithdrawalStatus.APPROVED 
+                    ? Number(withdrawal.amount) 
+                    : 0)
+                ).toFixed(2)}
+              </p>
             </div>
           </div>
         ) : (
