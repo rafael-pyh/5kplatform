@@ -9,6 +9,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { useWithdrawals } from '@/hooks/useWithdrawals';
 import { OrderStatus } from '@/lib/types/shop.types';
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Button } from '@/components/ui';
 
 const statusLabels: Record<OrderStatus, string> = {
   [OrderStatus.PENDING_PAYMENT]: 'Aguardando Pagamento',
@@ -51,29 +52,25 @@ export default function AdminShopPage() {
     fetchWithdrawals();
   }, [fetchWithdrawals]);
 
+  console.log('orders', orders);
+  console.log('withdrawals', withdrawals);
+
   return (
     <ProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
       <DashboardLayout>
         <div className="w-full">
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-4">
             <h1 className="text-2xl font-bold text-slate-700">Gerenciamento de Shop</h1>
             <p className="text-gray-600">Aprove ou rejeite pedidos e processamento de saques</p>
-            <div className="mt-4">
-              <Link
-                href="/admin/shop/kits"
-                className="inline-flex items-center gap-2 px-4 py-2 border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-700 hover:text-white transition-colors"
-              >
-                Gerenciar Produtos e Kits
-              </Link>
-            </div>
           </div>
 
           {/* Tabs */}
           <div className="flex gap-4 mb-6 border-b border-gray-200">
-            <button
+            <Button
               onClick={() => setActiveTab('orders')}
-              className={`px-4 py-2 font-medium border-b-2 transition-colors flex items-center gap-2 ${
+              variant='none'
+              className={`px-4 py-2 font-medium border-b-2 transition-colors flex items-center gap-2 rounded-none ${
                 activeTab === 'orders'
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -85,10 +82,11 @@ export default function AdminShopPage() {
                   {pendingOrders.length}
                 </span>
               )}
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => setActiveTab('withdrawals')}
-              className={`px-4 py-2 font-medium border-b-2 transition-colors flex items-center gap-2 ${
+              variant='none'
+              className={`px-4 py-2 font-medium border-b-2 transition-colors flex items-center gap-2 rounded-none ${
                 activeTab === 'withdrawals'
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -100,7 +98,7 @@ export default function AdminShopPage() {
                   {pendingWithdrawals.length}
                 </span>
               )}
-            </button>
+            </Button>
           </div>
 
           {/* Pedidos */}
@@ -109,8 +107,9 @@ export default function AdminShopPage() {
               {/* Filtro */}
               <div className="flex gap-2 flex-wrap">
                 {(['all', OrderStatus.PENDING_APPROVAL, OrderStatus.APPROVED, OrderStatus.REJECTED] as const).map((status) => (
-                  <button
+                  <Button
                     key={status}
+                    variant='none'
                     onClick={() => setStatusFilter(status)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       statusFilter === status
@@ -119,12 +118,12 @@ export default function AdminShopPage() {
                     }`}
                   >
                     {status === 'all' ? 'Todos' : statusLabels[status]}
-                  </button>
+                  </Button>
                 ))}
               </div>
 
               {/* Orders */}
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {ordersLoading ? (
                   <div className="space-y-3">
                     {[...Array(5)].map((_, i) => (
@@ -150,7 +149,7 @@ export default function AdminShopPage() {
 
           {/* Saques */}
           {activeTab === 'withdrawals' && (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {withdrawalsLoading ? (
                 <div className="space-y-3">
                   {[...Array(5)].map((_, i) => (

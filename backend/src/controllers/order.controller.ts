@@ -106,6 +106,7 @@ export const listOrdersController = async (req: Request, res: Response) => {
         totalPrice: o.totalPrice,
         status: o.status,
         usesCredit: o.usesCredit,
+        notes: o.notes,
         hasPaymentProofs: (o.paymentProofs?.length || 0) > 0,
         approvedBy: o.approvedBy ? {
           id: o.approvedBy.id,

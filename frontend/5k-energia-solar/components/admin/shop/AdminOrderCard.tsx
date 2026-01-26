@@ -7,6 +7,7 @@ import ResponsiveModal from '@/components/ResponsiveModal';
 import { ImageModal } from '@/components/ImageModal';
 import { approveOrder, rejectOrder } from '@/app/actions/shop';
 import { shopService } from '@/lib/services/shop.service';
+import Button from '@/components/ui/Button';
 
 interface AdminOrderCardProps {
   order: Order;
@@ -182,6 +183,14 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
           </div>
         )}
 
+        {/* Observações */}
+        {order.notes && (
+          <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs font-semibold text-blue-900 mb-2">📝 Observações:</p>
+            <p className="text-sm text-blue-800 whitespace-pre-wrap">{order.notes}</p>
+          </div>
+        )}
+
         {error && (
           <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
             {error}
@@ -192,22 +201,24 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
         {(canApprove || canReject) && (
           <div className="flex gap-2">
             {canApprove && (
-              <button
+              <Button
+                variant='outline-success'
                 onClick={handleApprove}
                 disabled={loading}
-                className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="flex-1 w-full"
               >
                 {loading ? 'Processando...' : '✓ Aprovar'}
-              </button>
+              </Button>
             )}
             {canReject && (
-              <button
+              <Button 
                 onClick={() => setShowRejectModal(true)}
+                variant='outline-danger'
                 disabled={loading}
-                className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="flex-1 w-full"
               >
                 ✕ Rejeitar
-              </button>
+              </Button>
             )}
           </div>
         )}
@@ -236,7 +247,7 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
         }}
         title="Rejeitar Pedido"
       >
-        <form onSubmit={handleReject} className="space-y-4">
+        <form onSubmit={handleReject} className="space-y-4 p-4">
           <p className="text-sm text-gray-600">
             Pedido: <span className="font-mono font-bold">{order.orderCode}</span>
           </p>
@@ -263,21 +274,23 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
           )}
 
           <div className="flex gap-3">
-            <button
+            <Button
               type="button"
+              variant='outline'
               onClick={() => setShowRejectModal(false)}
               disabled={loading}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="flex-1"
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              disabled={loading}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 disabled:opacity-50"
+              variant="danger"
+              disabled={loading}              
+              className="flex-1"
             >
               {loading ? 'Processando...' : 'Rejeitar'}
-            </button>
+            </Button>
           </div>
         </form>
       </ResponsiveModal>
