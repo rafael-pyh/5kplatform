@@ -66,7 +66,7 @@ interface CreateOrderInput {
 
 /**
  * Criar novo pedido
- * Status inicial: PENDING_PAYMENT ou PAID (se usar créditos)
+ * Status inicial: PENDING_APPROVAL (todos os pedidos, com ou sem crédito, precisam de aprovação do admin)
  */
 export const createOrder = async (input: CreateOrderInput): Promise<Order> => {
   try {
@@ -110,7 +110,9 @@ export const createOrder = async (input: CreateOrderInput): Promise<Order> => {
     }
 
     // Criar pedido
-    const initialStatus = useCredit ? OrderStatus.PAID : OrderStatus.PENDING_PAYMENT;
+    // Todos os pedidos começam em PENDING_APPROVAL, independentemente de usar crédito ou não
+    // O admin precisa revisar e aprovar todos os pedidos
+    const initialStatus = OrderStatus.PENDING_APPROVAL;
 
     const order = await Order.create({
       orderCode,
@@ -176,6 +178,7 @@ export const listOrders = async (
       }
     }
 
+    console.debug('[listOrders] WHERE clause:', where);
     const { count, rows } = await Order.findAndCountAll({
       where: Object.keys(where).length > 0 ? where : undefined,
       include: [
@@ -192,6 +195,7 @@ export const listOrders = async (
       order: [['createdAt', 'DESC']],
     });
 
+    console.debug('[listOrders] Found', count, 'total,', rows.length, 'returned');
     return {
       total: count,
       orders: rows,

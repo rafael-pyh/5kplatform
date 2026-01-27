@@ -24,10 +24,10 @@ export default function LoginForm({ form, onSubmit, isLoading }: Props) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-100 to-green-100 px-4 text-slate-700">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8">
-          <div className="text-center mb-6">
-            <Image src="/5klogo.png" alt="5K Energia Logo" width={200} height={80} className="mx-auto mb-4" />
-            <p className="text-gray-600 mt-2">Faça login para acessar o sistema</p>
+        <div className="bg-white rounded-2xl shadow-xl p-4 md:p-6">
+          <div className="text-center">
+            <Image src="/5klogocomplete.png" alt="5K Energia Logo" width={300} height={80} className="mx-auto -mb-8 -mt-5" />
+            <p className="text-gray-600">Faça login para acessar o sistema</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

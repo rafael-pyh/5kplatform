@@ -89,8 +89,10 @@ export const listOrdersController = async (req: Request, res: Response) => {
     if (req.query.startDate) filters.startDate = new Date(req.query.startDate as string);
     if (req.query.endDate) filters.endDate = new Date(req.query.endDate as string);
 
+    console.debug('[listOrdersController] Filters:', filters);
     const { total, orders } = await listOrders(limit, offset, filters);
 
+    console.debug('[listOrdersController] Found', orders.length, 'orders with filters:', filters);
     return res.status(200).json({
       success: true,
       pagination: {

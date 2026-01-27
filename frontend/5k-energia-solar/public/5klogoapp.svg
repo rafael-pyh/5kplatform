@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: CorelDRAW -->
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="135.467mm" height="135.467mm" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 1032.24 1032.24"
+ xmlns:xlink="http://www.w3.org/1999/xlink"
+ xmlns:xodm="http://www.corel.com/coreldraw/odm/2003">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .fil2 {fill:none}
+    .fil1 {fill:#2F579F;fill-rule:nonzero}
+    .fil0 {fill:url(#id0)}
+   ]]>
+  </style>
+  <linearGradient id="id0" gradientUnits="userSpaceOnUse" x1="137.75" y1="516.12" x2="349.72" y2="516.12">
+   <stop offset="0" style="stop-opacity:1; stop-color:#C6D745"/>
+   <stop offset="0.541176" style="stop-opacity:1; stop-color:#91B953"/>
+   <stop offset="1" style="stop-opacity:1; stop-color:#5C9B62"/>
+  </linearGradient>
+ </defs>
+ <g id="Camada_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <g id="_2316152205920">
+   <path class="fil0" d="M142.21 450.77c0,0 -156.77,119.36 0,295.37l0 0c0,0 123.66,-86.26 142.83,-311.05l0 0c0,0 78.38,128.08 -119.32,322.38l0 0c0,0 190.73,-39.21 189.86,-223.05l0 0c-0.87,-183.84 -107.13,-259.64 -107.13,-259.64 0,0 -2.61,98.45 -106.25,176l0 0z"/>
+   <path class="fil1" d="M610 396.6l-148.34 0 -8.24 58.75c8.47,-0.98 15.58,-1.26 24.75,-1.26 36.49,0.12 73.98,8.55 100.87,27.7 28.75,19.76 46.34,51.71 46.34,96.5 0,71.65 -61.1,134.59 -164.17,134.59 -46.34,0 -85.01,-10.68 -106.5,-21.77l16.28 -67.47c16.94,8.41 51.62,19.18 86.11,19.18 37.2,0 76.62,-17.86 76.53,-58.67 -0.09,-39.31 -31.43,-63.73 -107.64,-63.73 -20.97,0 -35.92,1.48 -51.48,3.55l24.82 -201.27 210.67 0 0 73.91z"/>
+   <path class="fil1" d="M641.59 322.69l87.12 0 0 172.47 1.45 0c8.52,-14.77 17.81,-28.89 26.69,-42.52l88.03 -129.95 108.04 0 -128.63 166.06 135.42 224.13 -102.32 0 -95.68 -168.23 -33.01 40.8 0 127.42 -87.12 0 0 -390.19z"/>
+  </g>
+  <rect class="fil2" x="-0.01" y="-0" width="1032.24" height="1032.24"/>
+ </g>
+</svg>
