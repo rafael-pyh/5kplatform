@@ -3,7 +3,12 @@ set -e
 
 echo "📌 Entrypoint iniciado..."
 echo "🔧 NODE_ENV: $NODE_ENV"
-echo "🔧 DATABASE_URL: ${DATABASE_URL:0:50}..." # Mostrar apenas parte inicial por segurança
+
+# Mostrar apenas parte inicial do DATABASE_URL por segurança (sintaxe POSIX)
+if [ -n "$DATABASE_URL" ]; then
+  DB_URL_SHORT=$(echo "$DATABASE_URL" | cut -c1-50)
+  echo "🔧 DATABASE_URL: ${DB_URL_SHORT}..."
+fi
 
 # Verificar DATABASE_URL
 if [ -z "$DATABASE_URL" ]; then
