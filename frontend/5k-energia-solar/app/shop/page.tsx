@@ -4,25 +4,36 @@ import DashboardLayout from '@/components/DashboardLayout';
 import SellerDashboardLayout from '@/components/SellerDashboardLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { KitCard } from '@/components/shop/KitCard';
+import { ProductCard } from '@/components/shop/ProductCard';
+import ShopTabs from '@/components/shop/ShopTabs';
 import { OrderModal } from '@/components/shop/OrderModal';
 import { useShop } from '@/hooks/useShop';
 import { useAuth } from '@/contexts/AuthContext';
-import { Kit } from '@/lib/types/shop.types';
+import { Kit, Product } from '@/lib/types/shop.types';
 import { useState } from 'react';
 
 export default function ShopPage() {
-  const { kits, loading } = useShop();
+  const { kits, products, loading } = useShop();
   const { user } = useAuth();
   const [selectedKit, setSelectedKit] = useState<Kit | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'kits' | 'products'>('kits');
 
   const handleOrderSuccess = (orderCode: string) => {
     setOrderSuccess(orderCode);
     setShowOrderModal(false);
     setSelectedKit(null);
+    setSelectedProduct(null);
     // Reset mensagem depois de 5 segundos
     setTimeout(() => setOrderSuccess(null), 5000);
+  };
+
+  const handleProductOrder = (product: Product) => {
+    // Por enquanto, apenas mostrar uma mensagem
+    // Futuramente pode abrir um modal de contato ou pedido individual
+    alert(`Produto "${product.name}" - Entre em contato conosco para solicitar este produto.\n\nPreço: R$ ${product.price.toFixed(2)}\nEstoque: ${product.stock} unidades`);
   };
 
   // Determinar qual layout usar baseado no tipo de usuário
@@ -35,8 +46,8 @@ export default function ShopPage() {
         <div className="w-full">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-slate-700">Kits Disponíveis</h1>
-            <p className="text-gray-600">Escolha um kit e faça sua solicitação</p>
+            <h1 className="text-2xl font-bold text-slate-700">Loja</h1>
+            <p className="text-gray-600">Kits e produtos disponíveis para solicitação</p>
           </div>
 
           {/* Mensagem de sucesso */}
@@ -47,6 +58,14 @@ export default function ShopPage() {
             </div>
           )}
 
+          {/* Tabs */}
+          <ShopTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            kitsCount={kits.length}
+            productsCount={products.length}
+          />
+
           {/* Loading */}
           {loading && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -56,24 +75,50 @@ export default function ShopPage() {
             </div>
           )}
 
-          {/* Kits Grid */}
-          {!loading && kits.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-4xl mb-4">📦</div>
-              <p className="text-gray-600 text-lg">Nenhum kit disponível no momento</p>
+          {/* Kits Tab Content */}
+          {!loading && activeTab === 'kits' && (
+            <div>
+              {kits.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-4xl mb-4">📦</div>
+                  <p className="text-gray-600 text-lg">Nenhum kit disponível no momento</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {kits.map((kit) => (
+                    <KitCard
+                      key={kit.id}
+                      kit={kit}
+                      onOrderClick={(kit) => {
+                        setSelectedKit(kit);
+                        setShowOrderModal(true);
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {kits.map((kit) => (
-                <KitCard
-                  key={kit.id}
-                  kit={kit}
-                  onOrderClick={(kit) => {
-                    setSelectedKit(kit);
-                    setShowOrderModal(true);
-                  }}
-                />
-              ))}
+          )}
+
+          {/* Products Tab Content */}
+          {!loading && activeTab === 'products' && (
+            <div>
+              {products.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-4xl mb-4">🛒</div>
+                  <p className="text-gray-600 text-lg">Nenhum produto disponível no momento</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {products.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onOrderClick={handleProductOrder}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

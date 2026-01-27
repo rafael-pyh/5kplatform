@@ -2,10 +2,11 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { shopService } from '@/lib/services/shop.service';
-import { Kit, Order, CreditStats, WithdrawalRequest } from '@/lib/types/shop.types';
+import { Kit, Product, Order, CreditStats, WithdrawalRequest } from '@/lib/types/shop.types';
 
 interface UseShopState {
   kits: Kit[];
+  products: Product[];
   loading: boolean;
   error: string | null;
 }
@@ -13,6 +14,7 @@ interface UseShopState {
 export function useShop() {
   const [state, setState] = useState<UseShopState>({
     kits: [],
+    products: [],
     loading: false,
     error: null,
   });
@@ -31,6 +33,37 @@ export function useShop() {
     }
   }, []);
 
+  const fetchProducts = useCallback(async () => {
+    setState((prev) => ({ ...prev, loading: true, error: null }));
+    try {
+      const products = await shopService.products.getAll();
+      setState((prev) => ({ ...prev, products, loading: false }));
+    } catch (error: any) {
+      setState((prev) => ({
+        ...prev,
+        error: error.message || 'Erro ao carregar produtos',
+        loading: false,
+      }));
+    }
+  }, []);
+
+  const fetchAll = useCallback(async () => {
+    setState((prev) => ({ ...prev, loading: true, error: null }));
+    try {
+      const [kits, products] = await Promise.all([
+        shopService.kits.getAll(),
+        shopService.products.getAll(),
+      ]);
+      setState((prev) => ({ ...prev, kits, products, loading: false }));
+    } catch (error: any) {
+      setState((prev) => ({
+        ...prev,
+        error: error.message || 'Erro ao carregar dados da loja',
+        loading: false,
+      }));
+    }
+  }, []);
+
   const getKitById = useCallback(async (id: string) => {
     try {
       return await shopService.kits.getById(id);
@@ -43,15 +76,31 @@ export function useShop() {
     }
   }, []);
 
+  const getProductById = useCallback(async (id: string) => {
+    try {
+      return await shopService.products.getById(id);
+    } catch (error: any) {
+      setState((prev) => ({
+        ...prev,
+        error: error.message || 'Erro ao carregar produto',
+      }));
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
-    fetchKits();
-  }, [fetchKits]);
+    fetchAll();
+  }, [fetchAll]);
 
   return {
     kits: state.kits,
+    products: state.products,
     loading: state.loading,
     error: state.error,
     fetchKits,
+    fetchProducts,
+    fetchAll,
     getKitById,
+    getProductById,
   };
 }

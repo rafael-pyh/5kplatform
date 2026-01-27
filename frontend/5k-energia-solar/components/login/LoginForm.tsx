@@ -26,7 +26,7 @@ export default function LoginForm({ form, onSubmit, isLoading }: Props) {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-4 md:p-6">
           <div className="text-center">
-            <Image src="/5klogocomplete.png" alt="5K Energia Logo" width={300} height={80} className="mx-auto md:-mb-8 md:-mt-5" />
+            <Image src="/5klogocomplete.png" alt="5K Energia Logo" width={300} height={80} className="mx-auto my-1" />
             <p className="text-gray-600">Faça login para acessar o sistema</p>
           </div>
 
