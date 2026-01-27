@@ -23,22 +23,23 @@ FROM --platform=linux/amd64 node:20-slim AS runtime
 
 WORKDIR /app
 
-# Instalar PostgreSQL client e netcat
+# Instalar PostgreSQL client, netcat e curl
 RUN apt-get update -y && \
-    apt-get install -y postgresql-client netcat-openbsd && \
+    apt-get install -y postgresql-client netcat-openbsd curl && \
     rm -rf /var/lib/apt/lists/*
 
 # Copiar package.json
 COPY backend/package*.json ./
 
-# Instalar apenas dependências de produção
-RUN npm install --omit=dev
+# Instalar dependências (incluir dev para ter sequelize-cli)
+RUN npm install
 
 # Copiar Sequelize config e migrations
 COPY backend/config ./config
 COPY backend/.sequelizerc ./
 COPY backend/src/migrations ./src/migrations
 COPY backend/src/seeders ./src/seeders
+COPY backend/create-credit-tables.sql ./create-credit-tables.sql
 
 # Copiar build da stage anterior
 COPY --from=builder /app/dist ./dist
