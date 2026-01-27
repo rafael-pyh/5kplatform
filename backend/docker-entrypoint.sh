@@ -2,6 +2,8 @@
 set -e
 
 echo "📌 Entrypoint iniciado..."
+echo "🔧 NODE_ENV: $NODE_ENV"
+echo "🔧 DATABASE_URL: ${DATABASE_URL:0:50}..." # Mostrar apenas parte inicial por segurança
 
 # Verificar DATABASE_URL
 if [ -z "$DATABASE_URL" ]; then
@@ -43,18 +45,7 @@ fi
 
 echo "✅ Configuração do Sequelize encontrada"
 
-# Verificar se há migrations pendentes
-echo "🔍 Verificando status das migrations..."
-if command -v npx >/dev/null 2>&1; then
-  echo "=== Status das Migrations ===" 
-  npx sequelize-cli db:migrate:status 2>&1 || true
-  echo "=============================="
-else
-  echo "❌ npx não disponível!"
-  exit 1
-fi
-
-# Executar migrations do Sequelize com retry
+# Executar migrations do Sequelize
 echo "🔄 Executando migrations do Sequelize..."
 MIGRATION_ATTEMPTS=0
 MIGRATION_MAX_ATTEMPTS=3
@@ -62,15 +53,17 @@ MIGRATION_SUCCESS=false
 
 while [ $MIGRATION_ATTEMPTS -lt $MIGRATION_MAX_ATTEMPTS ]; do
   MIGRATION_ATTEMPTS=$((MIGRATION_ATTEMPTS + 1))
-  echo "   Tentativa $MIGRATION_ATTEMPTS/$MIGRATION_MAX_ATTEMPTS..."
+  echo ""
+  echo "   === Tentativa $MIGRATION_ATTEMPTS/$MIGRATION_MAX_ATTEMPTS ==="
   
-  if npx sequelize-cli db:migrate --debug 2>&1; then
+  # Tentar migration
+  if npx sequelize-cli db:migrate 2>&1; then
     echo "✅ Migrations aplicadas com sucesso!"
     MIGRATION_SUCCESS=true
     break
   else
     MIGRATION_ERROR=$?
-    echo "❌ Erro ao executar migrations (Código: $MIGRATION_ERROR)"
+    echo "⚠️  Tentativa $MIGRATION_ATTEMPTS falhou (Código: $MIGRATION_ERROR)"
     if [ $MIGRATION_ATTEMPTS -lt $MIGRATION_MAX_ATTEMPTS ]; then
       echo "   Aguardando 5s antes de tentar novamente..."
       sleep 5
@@ -79,45 +72,71 @@ while [ $MIGRATION_ATTEMPTS -lt $MIGRATION_MAX_ATTEMPTS ]; do
 done
 
 if [ "$MIGRATION_SUCCESS" != "true" ]; then
-  echo "❌ ERRO: Migrations falharam após $MIGRATION_MAX_ATTEMPTS tentativas!"
-  echo "🔧 Tentando executar SQL fallback como último recurso..."
+  echo ""
+  echo "❌ AVISO: Migrations falharam após $MIGRATION_MAX_ATTEMPTS tentativas"
+  echo "🔧 Tentando fallback SQL direto..."
+  echo ""
   
-  if [ -f "create-credit-tables.sql" ]; then
-    if psql "$DATABASE_URL" -f create-credit-tables.sql 2>&1; then
-      echo "✅ Tabelas criadas via SQL fallback!"
-      MIGRATION_SUCCESS=true
-    else
-      echo "❌ ERRO CRÍTICO: Ambas migrations e SQL fallback falharam!"
-      exit 1
-    fi
+  if [ ! -f "create-credit-tables.sql" ]; then
+    echo "❌ ERRO CRÍTICO: Arquivo SQL fallback (create-credit-tables.sql) não encontrado!"
+    ls -la | grep -i credit || echo "   Nenhum arquivo com 'credit' encontrado"
+    exit 1
+  fi
+  
+  echo "📋 Executando SQL fallback..."
+  if psql "$DATABASE_URL" -f create-credit-tables.sql 2>&1; then
+    echo "✅ Tabelas de crédito criadas via SQL fallback!"
+    MIGRATION_SUCCESS=true
   else
-    echo "❌ ERRO CRÍTICO: Arquivo SQL fallback não encontrado!"
+    PSQL_ERROR=$?
+    echo "❌ ERRO CRÍTICO: SQL fallback também falhou (Código: $PSQL_ERROR)!"
+    echo "   Verifique os logs acima para detalhes."
     exit 1
   fi
 fi
 
-# Verificar se as tabelas foram criadas
-echo "🔍 Verificando se as tabelas críticas foram criadas..."
+# Verificação pós-migration
+echo ""
+echo "🔍 Verificando se as tabelas foram criadas..."
 if command -v psql >/dev/null 2>&1; then
-  # Extrair credenciais do DATABASE_URL
-  DB_CONNECTION_STRING=$(echo $DATABASE_URL | sed 's|postgresql://||')
-  TABLES_EXIST=$(psql "$DATABASE_URL" -tc "SELECT COUNT(*) FROM information_schema.tables WHERE table_name IN ('CreditWallet', 'CreditTransaction') AND table_schema = 'public';" 2>&1 | xargs || echo "0")
+  echo "   Consultando information_schema..."
   
-  if [ "$TABLES_EXIST" = "2" ]; then
-    echo "✅ Tabelas críticas (CreditWallet, CreditTransaction) existem!"
+  TABLE_COUNT=$(psql "$DATABASE_URL" -tc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('CreditWallet', 'CreditTransaction');" 2>&1 | xargs || echo "0")
+  
+  echo "   Tabelas encontradas: $TABLE_COUNT/2"
+  
+  if [ "$TABLE_COUNT" = "2" ]; then
+    echo "✅ Tabelas críticas (CreditWallet, CreditTransaction) confirmadas!"
+    
+    # Listar as tabelas como confirmação extra
+    echo ""
+    echo "📊 Estrutura das tabelas:"
+    echo "   CreditWallet:"
+    psql "$DATABASE_URL" -tc "\d+ \"CreditWallet\"" 2>&1 | head -5 || echo "     (Não foi possível listar)"
+    echo "   CreditTransaction:"
+    psql "$DATABASE_URL" -tc "\d+ \"CreditTransaction\"" 2>&1 | head -5 || echo "     (Não foi possível listar)"
   else
-    echo "⚠️  Aviso: Nem todas as tabelas críticas existem. Encontradas: $TABLES_EXIST/2"
-    echo "   Isso pode indicar que as migrations não foram completadas."
+    echo "⚠️  AVISO: Nem todas as tabelas críticas foram criadas!"
+    echo ""
+    echo "   Tabelas existentes no banco:"
+    psql "$DATABASE_URL" -tc "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;" 2>&1 | head -20
+    exit 1
   fi
 else
   echo "⚠️  psql não disponível, pulando verificação de tabelas"
 fi
 
-# Executar seeds (opcional, pode falhar sem problemas)
-echo "🌱 Executando seeds..."
-if command -v npx >/dev/null 2>&1; then
-  npx sequelize-cli db:seed:all 2>&1 | grep -v "^$" || echo "⚠️  Seeds falharam ou não existem, continuando..."
+# Executar seeds (opcional)
+echo ""
+echo "🌱 Verificando seeds..."
+if [ -d "src/seeders" ] && [ "$(ls -A src/seeders 2>/dev/null)" ]; then
+  echo "   Executando seeders..."
+  npx sequelize-cli db:seed:all 2>&1 || echo "⚠️  Seeds falharam ou não existem, continuando..."
+else
+  echo "   Nenhum seeder encontrado"
 fi
 
+echo ""
 echo "🚀 Iniciando aplicação..."
+echo "================================"
 exec npm start

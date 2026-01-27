@@ -1,12 +1,19 @@
 -- Fallback SQL para criar as tabelas de crédito se as migrations falharem
 -- Este arquivo é um backup para garantir que as tabelas sejam criadas
+-- Executar com: psql $DATABASE_URL -f create-credit-tables.sql
+
+\set ON_ERROR_STOP on
+
+BEGIN;
 
 -- Criar ENUM para CreditTransactionType se não existir
-DO $$ BEGIN
+DO $enum_block$ BEGIN
     CREATE TYPE "CreditTransactionType" AS ENUM ('COMMISSION', 'KIT_PURCHASE', 'WITHDRAW_REQUEST', 'ADJUSTMENT');
+    RAISE NOTICE 'ENUM CreditTransactionType criado';
 EXCEPTION
-    WHEN duplicate_object THEN null;
-END $$;
+    WHEN duplicate_object THEN
+        RAISE NOTICE 'ENUM CreditTransactionType já existe, pulando...';
+END $enum_block$;
 
 -- Criar tabela CreditWallet se não existir
 CREATE TABLE IF NOT EXISTS "CreditWallet" (
@@ -51,3 +58,22 @@ CREATE INDEX IF NOT EXISTS "IDX_CreditTransaction_orderId" ON "CreditTransaction
 CREATE INDEX IF NOT EXISTS "IDX_CreditTransaction_withdrawalRequestId" ON "CreditTransaction"("withdrawalRequestId");
 CREATE INDEX IF NOT EXISTS "IDX_CreditTransaction_adjustedByUserId" ON "CreditTransaction"("adjustedByUserId");
 CREATE INDEX IF NOT EXISTS "IDX_CreditTransaction_createdAt" ON "CreditTransaction"("createdAt");
+
+-- Verificar tabelas foram criadas
+DO $verify_block$ BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'CreditWallet') THEN
+        RAISE NOTICE '✅ Tabela CreditWallet verificada';
+    ELSE
+        RAISE EXCEPTION 'Erro: Tabela CreditWallet não foi criada!';
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'CreditTransaction') THEN
+        RAISE NOTICE '✅ Tabela CreditTransaction verificada';
+    ELSE
+        RAISE EXCEPTION 'Erro: Tabela CreditTransaction não foi criada!';
+    END IF;
+END $verify_block$;
+
+COMMIT;
+
+\echo '✅ Script de fallback executado com sucesso!'

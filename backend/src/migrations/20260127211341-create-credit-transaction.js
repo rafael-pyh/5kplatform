@@ -3,6 +3,16 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
+    // Criar ENUM type primeiro
+    await queryInterface.sequelize.query(`
+      DO $$ BEGIN
+        CREATE TYPE "CreditTransactionType" AS ENUM ('COMMISSION', 'KIT_PURCHASE', 'WITHDRAW_REQUEST', 'ADJUSTMENT');
+      EXCEPTION
+        WHEN duplicate_object THEN null;
+      END $$;
+    `);
+
+    // Criar tabela
     await queryInterface.createTable('CreditTransaction', {
       id: {
         type: Sequelize.UUID,
@@ -21,8 +31,7 @@ module.exports = {
         onDelete: 'CASCADE',
       },
       type: {
-        type: Sequelize.ENUM,
-        values: ['COMMISSION', 'KIT_PURCHASE', 'WITHDRAW_REQUEST', 'ADJUSTMENT'],
+        type: Sequelize.TEXT, // Usar TEXT e converter para ENUM via raw SQL
         allowNull: false,
       },
       amount: {
@@ -73,6 +82,12 @@ module.exports = {
       },
     });
 
+    // Alterar coluna tipo para usar o ENUM criado
+    await queryInterface.sequelize.query(`
+      ALTER TABLE "CreditTransaction" 
+      ALTER COLUMN "type" TYPE "CreditTransactionType" USING "type"::"CreditTransactionType";
+    `);
+
     // Add indexes for performance
     await queryInterface.addIndex('CreditTransaction', ['personId']);
     await queryInterface.addIndex('CreditTransaction', ['orderId']);
@@ -83,5 +98,10 @@ module.exports = {
 
   async down (queryInterface, Sequelize) {
     await queryInterface.dropTable('CreditTransaction');
+    
+    // Drop ENUM type
+    await queryInterface.sequelize.query(`
+      DROP TYPE IF EXISTS "CreditTransactionType";
+    `);
   }
 };
