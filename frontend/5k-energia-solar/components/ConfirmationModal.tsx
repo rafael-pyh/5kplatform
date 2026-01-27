@@ -38,7 +38,7 @@ function ConfirmationModal({
 
   const modalContent = (
     <div 
-      className="fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 flex items-center justify-center"
+      className="fixed inset-0 z-[100] bg-black/50 transition-opacity duration-300 flex items-center justify-center"
       onClick={handleBackdropClick}
     >
       {/* Modal */}

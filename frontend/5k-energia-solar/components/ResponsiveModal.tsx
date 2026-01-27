@@ -145,7 +145,7 @@ function MobileBottomSheet({ onClose, children, snapPoints = [50, 100] }: Mobile
     <>
       {/* Backdrop - cobre toda a tela */}
       <div
-        className="fixed inset-0 z-40 bg-black/40 transition-opacity duration-300"
+        className="fixed inset-0 z-[100] bg-black/40 transition-opacity duration-300"
         onClick={handleBackdropClick}
         aria-hidden="true"
       />
@@ -217,7 +217,7 @@ function DesktopModal({
 
   return (
     <div
-      className="fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] bg-black/50 transition-opacity duration-300 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
       aria-hidden="true"
     >

@@ -129,7 +129,7 @@ export default function QRPositioningModal({
 
   return (
     <div 
-      className="fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] bg-black/50 transition-opacity duration-300 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
