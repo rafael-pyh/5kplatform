@@ -5,6 +5,7 @@ import { formatDate } from '@/lib/utils/dateUtils';
 import { useState, useEffect } from 'react';
 import ResponsiveModal from '@/components/ResponsiveModal';
 import { ImageModal } from '@/components/ImageModal';
+import { AdminOrderDetailsModal } from './AdminOrderDetailsModal';
 import { approveOrder, rejectOrder } from '@/app/actions/shop';
 import { shopService } from '@/lib/services/shop.service';
 import Button from '@/components/ui/Button';
@@ -38,6 +39,7 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
   const [paymentProofs, setPaymentProofs] = useState<PaymentProof[]>(order.paymentProofs || []);
   const [loadingProofs, setLoadingProofs] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{ url: string; name: string; fileType: 'image' | 'pdf' } | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   // Buscar paymentProofs se não foram fornecidos
   useEffect(() => {
@@ -117,7 +119,10 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
 
   return (
     <>
-      <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white">
+      <div 
+        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white cursor-pointer"
+        onClick={() => setShowDetailsModal(true)}
+      >
         <div className="flex items-start justify-between mb-3">
           <div>
             <p className="text-sm text-gray-600">Pedido</p>
@@ -305,6 +310,12 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
           fileType={selectedImage.fileType}
         />
       )}
+
+      <AdminOrderDetailsModal
+        order={order}
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+      />
     </>
   );
 }

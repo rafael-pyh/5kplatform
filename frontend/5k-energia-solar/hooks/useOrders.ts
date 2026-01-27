@@ -31,6 +31,7 @@ export function useOrders(options?: UseOrdersOptions) {
       setState((prev) => ({ ...prev, loading: true, error: null }));
       try {
         const finalOpts = { ...(options || {}), ...opts };
+        console.debug('[useOrders] Fetching with options:', finalOpts);
         const result = await shopService.orders.getAll(
           finalOpts.limit || 50,
           finalOpts.offset || 0,
@@ -38,6 +39,7 @@ export function useOrders(options?: UseOrdersOptions) {
             status: finalOpts.status,
           }
         );
+        console.debug('[useOrders] Fetch complete, got', result.data.length, 'orders');
         setState((prev) => ({
           ...prev,
           orders: result.data,
@@ -45,6 +47,7 @@ export function useOrders(options?: UseOrdersOptions) {
           loading: false,
         }));
       } catch (error: any) {
+        console.error('[useOrders] Error:', error);
         setState((prev) => ({
           ...prev,
           error: error.message || 'Erro ao carregar pedidos',
@@ -52,7 +55,7 @@ export function useOrders(options?: UseOrdersOptions) {
         }));
       }
     },
-    [options] // Include options since it's used inside
+    [] // Empty array - don't depend on options since we merge it dynamically
   );
 
   const getOrderById = useCallback(async (id: string) => {

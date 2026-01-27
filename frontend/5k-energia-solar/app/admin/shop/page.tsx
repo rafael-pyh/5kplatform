@@ -21,19 +21,22 @@ const statusLabels: Record<OrderStatus, string> = {
 
 export default function AdminShopPage() {
   const [activeTab, setActiveTab] = useState<'orders' | 'withdrawals'>('orders');
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
-  const ordersOptions = useMemo(() => ({ autoFetch: false }), []);
-  const withdrawalsOptions = useMemo(() => ({ autoFetch: false }), []);
-  const { orders, loading: ordersLoading, fetchOrders } = useOrders(ordersOptions);
-  const { withdrawals, loading: withdrawalsLoading, fetchWithdrawals } = useWithdrawals(withdrawalsOptions);
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>(OrderStatus.PENDING_APPROVAL);
+  const { orders, loading: ordersLoading, fetchOrders } = useOrders({ autoFetch: false });
+  const { withdrawals, loading: withdrawalsLoading, fetchWithdrawals } = useWithdrawals({ autoFetch: false });
 
-  // Recarregar pedidos quando o filtro mudar
+  // Carregar pedidos na montagem e quando o filtro mudar
   useEffect(() => {
+    console.debug('[AdminShopPage] Status filter changed to:', statusFilter);
+
+    const fetchStatus =
+      statusFilter === 'all' || statusFilter === OrderStatus.PENDING_APPROVAL
+        ? undefined
+        : (statusFilter as OrderStatus);
     fetchOrders({
-      status: statusFilter === 'all' ? undefined : (statusFilter as OrderStatus),
+      status: fetchStatus,
     });
   }, [statusFilter, fetchOrders]);
-
   // Carregar saques quando a aba for selecionada
   useEffect(() => {
     if (activeTab === 'withdrawals') {
@@ -41,12 +44,37 @@ export default function AdminShopPage() {
     }
   }, [activeTab, fetchWithdrawals]);
 
-  const pendingOrders = useMemo(() => orders.filter((o) => o.status === OrderStatus.PENDING_APPROVAL), [orders]);
+  const pendingOrders = useMemo(
+    () =>
+      orders.filter(
+        (o) =>
+          o.status === OrderStatus.PENDING_APPROVAL ||
+          (o.status === OrderStatus.PAID && !o.approvedAt)
+      ),
+    [orders]
+  );
+
   const pendingWithdrawals = useMemo(() => withdrawals.filter((w) => w.status === 'PENDING'), [withdrawals]);
 
+  const filteredOrders = useMemo(() => {
+    if (statusFilter === 'all') return orders;
+    if (statusFilter === OrderStatus.PENDING_APPROVAL) {
+      return orders.filter(
+        (o) =>
+          o.status === OrderStatus.PENDING_APPROVAL ||
+          (o.status === OrderStatus.PAID && !o.approvedAt)
+      );
+    }
+    return orders.filter((o) => o.status === (statusFilter as OrderStatus));
+  }, [orders, statusFilter]);
+
   const handleOrderActionSuccess = useCallback(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    const fetchStatus =
+      statusFilter === 'all' || statusFilter === OrderStatus.PENDING_APPROVAL
+        ? undefined
+        : (statusFilter as OrderStatus);
+    fetchOrders({ status: fetchStatus });
+  }, [fetchOrders, statusFilter]);
 
   const handleWithdrawalActionSuccess = useCallback(() => {
     fetchWithdrawals();
@@ -108,7 +136,6 @@ export default function AdminShopPage() {
                     key={status}
                     variant={statusFilter === status ? 'outline-blue' : 'outline'}
                     onClick={() => setStatusFilter(status)}
-                    
                   >
                     {status === 'all' ? 'Todos' : statusLabels[status]}
                   </Button>
@@ -123,17 +150,13 @@ export default function AdminShopPage() {
                       <div key={i} className="h-32 bg-gray-100 rounded animate-pulse"></div>
                     ))}
                   </div>
-                ) : orders.length === 0 ? (
+                ) : filteredOrders.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-lg shadow col-span-full">
                     <p className="text-gray-600">Nenhum pedido encontrado</p>
                   </div>
                 ) : (
-                  orders.map((order) => (
-                    <AdminOrderCard
-                      key={order.id}
-                      order={order}
-                      onActionSuccess={handleOrderActionSuccess}
-                    />
+                  filteredOrders.map((order) => (
+                    <AdminOrderCard key={order.id} order={order} onActionSuccess={handleOrderActionSuccess} />
                   ))
                 )}
               </div>

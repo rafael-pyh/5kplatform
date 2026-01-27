@@ -162,6 +162,9 @@ export const shopService = {
       if (filters?.personId) params.append('personId', filters.personId);
 
       const queryString = params.toString();
+      // DEBUG: log the constructed query string for diagnosis
+      console.debug('[shop.service] GET', `${ORDERS_URL}${queryString ? `?${queryString}` : ''}`);
+
       const response = await api.get<{
         success: boolean;
         data: Order[];
@@ -169,6 +172,8 @@ export const shopService = {
       }>(
         `${ORDERS_URL}${queryString ? `?${queryString}` : ''}`
       );
+      // DEBUG: log summary of response
+      console.debug('[shop.service] Orders response count:', response.data.data?.length, 'pagination:', response.data.pagination);
       return {
         data: response.data.data,
         pagination: response.data.pagination,

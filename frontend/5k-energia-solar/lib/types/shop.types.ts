@@ -68,6 +68,9 @@ export interface KitItem {
   quantity: number;
   notes?: string;
   product?: Product;
+  // Propriedades adicionais retornadas pela API de detalhes do pedido
+  productName?: string;
+  unitPrice?: number;
 }
 
 export interface CreateKitDTO {
