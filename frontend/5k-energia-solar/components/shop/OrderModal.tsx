@@ -1,6 +1,6 @@
 'use client';
 
-import { Kit } from '@/lib/types/shop.types';
+import { Kit, Product } from '@/lib/types/shop.types';
 import { useState, useEffect } from 'react';
 import ResponsiveModal from '../ResponsiveModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,12 +9,13 @@ import { Button } from '../ui';
 
 interface OrderModalProps {
   kit: Kit | null;
+  product: Product | null;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (orderCode: string) => void;
 }
 
-export function OrderModal({ kit, isOpen, onClose, onSuccess }: OrderModalProps) {
+export function OrderModal({ kit, product, isOpen, onClose, onSuccess }: OrderModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
@@ -45,7 +46,7 @@ export function OrderModal({ kit, isOpen, onClose, onSuccess }: OrderModalProps)
     }
   }, [isOpen, kit?.id]);
 
-  if (!kit) return null;
+  if (!kit && !product) return null;
 
   const currentKit = fullKit || kit;
 
@@ -63,7 +64,8 @@ export function OrderModal({ kit, isOpen, onClose, onSuccess }: OrderModalProps)
       }
 
       const result = await shopService.orders.create({
-        kitId: kit.id,
+        kitId: kit?.id,
+        productId: product?.id,
         useCredit,
         notes,
       });
@@ -103,63 +105,83 @@ export function OrderModal({ kit, isOpen, onClose, onSuccess }: OrderModalProps)
   };
 
   return (
-    <ResponsiveModal isOpen={isOpen} onClose={onClose} title={`Solicitar: ${kit.name}`}>
+    <ResponsiveModal isOpen={isOpen} onClose={onClose} title={`Solicitar: ${kit ? kit.name : product?.name || 'Produto'}`}>
       <form onSubmit={handleSubmit} className="space-y-4 p-2">
         {/* Resumo */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-semibold text-gray-900 mb-2">Resumo do Kit</h4>
-          
-          {/* Produtos no Kit */}
-          <div className="mb-3">
-            <h5 className="text-sm font-medium text-gray-700 mb-2">Produtos incluídos:</h5>
-            {loadingKit ? (
-              <div className="space-y-2">
-                <div className="animate-pulse">
-                  <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2 bg-white rounded border p-3">
-                {currentKit.items && currentKit.items.length > 0 ? (
-                  currentKit.items.map((item, idx) => {
-                    // A API pode retornar productName/productPrice diretamente ou um objeto product
-                    const productName = item.product?.name || (item as any).productName || 'Produto sem nome';
-                    const productPrice = item.product?.price || (item as any).productPrice;
-                    
-                    return (
-                      <div key={idx} className="flex justify-between items-center py-1">
-                        <div className="flex-1">
-                          <span className="text-sm font-medium text-gray-900">
-                            {productName}
-                          </span>
-                          {item.notes && (
-                            <p className="text-xs text-gray-500 mt-1">{item.notes}</p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <span className="text-sm text-gray-600">×{item.quantity}</span>
-                          {productPrice && (
-                            <span className="text-sm text-gray-500 ml-2">
-                              R$ {(Number(productPrice) * item.quantity).toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
+          <h4 className="font-semibold text-gray-900 mb-2">
+            Resumo {kit ? 'do Kit' : 'do Produto'}
+          </h4>
+
+          {kit ? (
+            <>
+              {/* Produtos no Kit */}
+              <div className="mb-3">
+                <h5 className="text-sm font-medium text-gray-700 mb-2">Produtos incluídos:</h5>
+                {loadingKit ? (
+                  <div className="space-y-2">
+                    <div className="animate-pulse">
+                      <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                    </div>
+                  </div>
                 ) : (
-                  <div className="text-sm text-gray-500 py-2">
-                    Nenhum produto encontrado neste kit
+                  <div className="space-y-2 bg-white rounded border p-3">
+                    {currentKit && currentKit.items && currentKit.items.length > 0 ? (
+                      currentKit.items.map((item, idx) => {
+                        // A API pode retornar productName/productPrice diretamente ou um objeto product
+                        const productName = item.product?.name || (item as any).productName || 'Produto sem nome';
+                        const productPrice = item.product?.price || (item as any).productPrice;
+
+                        return (
+                          <div key={idx} className="flex justify-between items-center py-1">
+                            <div className="flex-1">
+                              <span className="text-sm font-medium text-gray-900">
+                                {productName}
+                              </span>
+                              {item.notes && (
+                                <p className="text-xs text-gray-500 mt-1">{item.notes}</p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <span className="text-sm text-gray-600">×{item.quantity}</span>
+                              {productPrice && (
+                                <span className="text-sm text-gray-500 ml-2">
+                                  R$ {(Number(productPrice) * item.quantity).toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-sm text-gray-500 py-2">
+                        Nenhum produto encontrado neste kit
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
-          
+            </>
+          ) : product ? (
+            <div className="mb-3">
+              <div className="bg-white rounded border p-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-900">{product.name}</span>
+                  <span className="text-sm text-gray-500">R$ {Number(product.price).toFixed(2)}</span>
+                </div>
+                {product.description && (
+                  <p className="text-xs text-gray-500 mt-1">{product.description}</p>
+                )}
+              </div>
+            </div>
+          ) : null}
+
           <div className="flex justify-between items-center">
             <span className="font-semibold text-gray-900">Total:</span>
-            <span className="text-xl font-bold text-green-600">R$ {Number(kit.price).toFixed(2)}</span>
+            <span className="text-xl font-bold text-green-600">
+              R$ {Number(kit ? kit.price : product?.price || 0).toFixed(2)}
+            </span>
           </div>
         </div>
 

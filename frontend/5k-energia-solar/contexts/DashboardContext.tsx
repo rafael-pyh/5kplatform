@@ -56,28 +56,16 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     // Só carrega dados de dashboard para ADMINs
     if (!isAdminDashboard) {
       setIsInitialized(true);
-      // Ainda carrega dados de forma limitada para mostrar antes do redirect
-      try {
-        setLoading(true);
-        const [personsRes, newLeads] = await Promise.all([
-          cachedPersonService.getAll(),
-          cachedLeadService.getNewLeads(),
-        ]);
-
-        // Update state com dados limitados
-        setPersons(personsRes);
-        setRecentLeads(newLeads.slice(0, 5));
-        setStats({
-          totalPersons: personsRes.length,
-          activePersons: personsRes.filter((p: any) => p.active).length,
-          totalLeads: 0,
-          newLeads: newLeads.length,
-        });
-      } catch (err: any) {
-        console.error('Error loading partial dashboard:', err);
-      } finally {
-        setLoading(false);
-      }
+      // Para usuários não-admin, não carrega dados que requerem permissões admin
+      setPersons([]);
+      setRecentLeads([]);
+      setStats({
+        totalPersons: 0,
+        activePersons: 0,
+        totalLeads: 0,
+        newLeads: 0,
+      });
+      setLoading(false);
       return;
     }
 

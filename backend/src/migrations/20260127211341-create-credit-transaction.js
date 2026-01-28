@@ -6,7 +6,7 @@ module.exports = {
     // Criar ENUM type primeiro
     await queryInterface.sequelize.query(`
       DO $$ BEGIN
-        CREATE TYPE "CreditTransactionType" AS ENUM ('COMMISSION', 'KIT_PURCHASE', 'WITHDRAW_REQUEST', 'ADJUSTMENT');
+        CREATE TYPE "CreditTransactionType" AS ENUM ('COMMISSION', 'KIT_PURCHASE', 'PRODUCT_PURCHASE', 'WITHDRAW_REQUEST', 'ADJUSTMENT');
       EXCEPTION
         WHEN duplicate_object THEN null;
       END $$;
@@ -82,13 +82,7 @@ module.exports = {
       },
     });
 
-    // Alterar coluna tipo para usar o ENUM criado
-    await queryInterface.sequelize.query(`
-      ALTER TABLE "CreditTransaction" 
-      ALTER COLUMN "type" TYPE "CreditTransactionType" USING "type"::"CreditTransactionType";
-    `);
-
-    // Add indexes for performance
+    // Adicionar indexes para performance
     await queryInterface.addIndex('CreditTransaction', ['personId']);
     await queryInterface.addIndex('CreditTransaction', ['orderId']);
     await queryInterface.addIndex('CreditTransaction', ['withdrawalRequestId']);

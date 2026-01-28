@@ -93,12 +93,6 @@ module.exports = {
       },
     });
 
-    // Alterar coluna status para usar o ENUM criado
-    await queryInterface.sequelize.query(`
-      ALTER TABLE "WithdrawalRequest" 
-      ALTER COLUMN "status" TYPE "WithdrawalStatus" USING "status"::"WithdrawalStatus";
-    `);
-
     // Add indexes for performance
     await queryInterface.addIndex('WithdrawalRequest', ['personId']);
     await queryInterface.addIndex('WithdrawalRequest', ['status']);

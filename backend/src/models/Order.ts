@@ -14,6 +14,7 @@ import {
 } from 'sequelize-typescript';
 import { Person } from './Person';
 import { Kit } from './Kit';
+import { Product } from './Product';
 import { PaymentProof } from './PaymentProof';
 import { CreditTransaction } from './CreditTransaction';
 
@@ -35,7 +36,7 @@ export enum OrderStatus {
 
 /**
  * Order Model
- * Representa um pedido de um Person para adquirir um Kit
+ * Representa um pedido de um Person para adquirir um Kit ou Produto
  * Suporta pagamento por transferência (com comprovante) ou créditos
  */
 @Table({
@@ -69,14 +70,26 @@ export class Order extends Model {
   person?: Person;
 
   @ForeignKey(() => Kit)
+  @AllowNull(true)
   @Column({
     type: DataType.UUID,
     field: 'kitId',
   })
-  kitId!: string;
+  kitId?: string;
 
   @BelongsTo(() => Kit, 'kitId')
   kit?: Kit;
+
+  @ForeignKey(() => Product)
+  @AllowNull(true)
+  @Column({
+    type: DataType.UUID,
+    field: 'productId',
+  })
+  productId?: string;
+
+  @BelongsTo(() => Product, 'productId')
+  product?: Product;
 
   @Column(DataType.DECIMAL(10, 2))
   totalPrice!: number; // Preço total do pedido

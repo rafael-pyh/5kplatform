@@ -25,6 +25,7 @@ import { WithdrawalRequest } from './WithdrawalRequest';
 export enum CreditTransactionType {
   COMMISSION = 'COMMISSION',
   KIT_PURCHASE = 'KIT_PURCHASE',
+  PRODUCT_PURCHASE = 'PRODUCT_PURCHASE',
   WITHDRAW_REQUEST = 'WITHDRAW_REQUEST',
   ADJUSTMENT = 'ADJUSTMENT',
 }

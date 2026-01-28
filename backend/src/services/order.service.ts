@@ -1,6 +1,7 @@
 import { Order, OrderStatus } from '../models/Order';
 import { PaymentProof } from '../models/PaymentProof';
 import { Kit } from '../models/Kit';
+import { Product } from '../models/Product';
 import { Person } from '../models/Person';
 import { uploadFileToMinIO } from './storage.service';
 import { Op } from 'sequelize';
@@ -59,7 +60,8 @@ const generateOrderCode = (): string => {
 
 interface CreateOrderInput {
   personId: string;
-  kitId: string;
+  kitId?: string;
+  productId?: string;
   useCredit?: boolean;
   notes?: string;
 }
@@ -70,7 +72,16 @@ interface CreateOrderInput {
  */
 export const createOrder = async (input: CreateOrderInput): Promise<Order> => {
   try {
-    const { personId, kitId, useCredit = false, notes } = input;
+    const { personId, kitId, productId, useCredit = false, notes } = input;
+
+    // Validar que pelo menos um item foi especificado
+    if (!kitId && !productId) {
+      throw new Error('kitId ou productId deve ser especificado');
+    }
+
+    if (kitId && productId) {
+      throw new Error('Apenas kitId ou productId pode ser especificado, não ambos');
+    }
 
     // Validar pessoa
     const person = await Person.findByPk(personId);
@@ -78,25 +89,46 @@ export const createOrder = async (input: CreateOrderInput): Promise<Order> => {
       throw new Error('Pessoa não encontrada');
     }
 
-    // Validar kit
-    const kit = await Kit.findByPk(kitId, {
-      include: ['items'],
-    });
-    if (!kit) {
-      throw new Error('Kit não encontrado');
-    }
+    let itemName: string;
+    let itemPrice: number;
 
-    if (!kit.active) {
-      throw new Error('Kit não está ativo');
+    if (kitId) {
+      // Validar kit
+      const kit = await Kit.findByPk(kitId, {
+        include: ['items'],
+      });
+      if (!kit) {
+        throw new Error('Kit não encontrado');
+      }
+
+      if (!kit.active) {
+        throw new Error('Kit não está ativo');
+      }
+
+      itemName = kit.name;
+      itemPrice = kit.price;
+    } else {
+      // Validar produto
+      const product = await Product.findByPk(productId);
+      if (!product) {
+        throw new Error('Produto não encontrado');
+      }
+
+      if (!product.active) {
+        throw new Error('Produto não está ativo');
+      }
+
+      itemName = product.name;
+      itemPrice = product.price;
     }
 
     // Se usar créditos, verificar se tem saldo suficiente
     if (useCredit) {
       const { getCreditBalance } = await getCreditServiceModule();
       const balance = await getCreditBalance(personId);
-      if (balance < kit.price) {
+      if (balance < itemPrice) {
         throw new Error(
-          `Saldo insuficiente. Disponível: R$ ${balance.toFixed(2)}, Necessário: R$ ${kit.price.toFixed(2)}`
+          `Saldo insuficiente. Disponível: R$ ${balance.toFixed(2)}, Necessário: R$ ${itemPrice.toFixed(2)}`
         );
       }
     }
@@ -117,8 +149,9 @@ export const createOrder = async (input: CreateOrderInput): Promise<Order> => {
     const order = await Order.create({
       orderCode,
       personId,
-      kitId,
-      totalPrice: kit.price,
+      kitId: kitId || undefined,
+      productId: productId || undefined,
+      totalPrice: itemPrice,
       status: initialStatus,
       usesCredit: useCredit,
       notes,
@@ -129,9 +162,9 @@ export const createOrder = async (input: CreateOrderInput): Promise<Order> => {
       const { addCreditTransaction } = await getCreditServiceModule();
       const params: CreditTransactionParams = {
         personId,
-        type: CreditTransactionType.KIT_PURCHASE,
-        amount: -kit.price,
-        description: `Compra de kit ${kit.name} (Pedido: ${orderCode})`,
+        type: kitId ? CreditTransactionType.KIT_PURCHASE : CreditTransactionType.PRODUCT_PURCHASE,
+        amount: -itemPrice,
+        description: `Compra de ${kitId ? 'kit' : 'produto'} ${itemName} (Pedido: ${orderCode})`,
         orderId: order.id,
       };
       await addCreditTransaction(params);
@@ -187,6 +220,7 @@ export const listOrders = async (
           association: 'kit',
           include: [{ association: 'items', include: ['product'] }],
         },
+        { association: 'product' },
         { association: 'paymentProofs' },
         { association: 'approvedBy', attributes: ['id', 'name', 'email'] },
       ],

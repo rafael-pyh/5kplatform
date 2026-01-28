@@ -40,7 +40,16 @@ if command -v npx >/dev/null 2>&1; then
   if npx sequelize-cli db:migrate; then
     echo "✅ Migrations aplicadas com sucesso!"
   else
-    echo "⚠️ Erro ao executar migrations, mas continuando..."
+    echo "⚠️ Algumas migrations falharam, mas continuando..."
+    # Tentar aplicar migrations específicas que podem ter falhado
+    npx sequelize-cli db:migrate:status | grep down | awk '{print $1}' | while read -r migration; do
+      echo "Tentando aplicar migration: $migration"
+      if npx sequelize-cli db:migrate --name "$migration" 2>/dev/null; then
+        echo "✅ Migration $migration aplicada com sucesso"
+      else
+        echo "❌ Migration $migration falhou, pulando..."
+      fi
+    done
   fi
 else
   echo "❌ npx não disponível!"

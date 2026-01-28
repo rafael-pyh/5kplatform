@@ -116,7 +116,8 @@ export interface Order {
   id: string;
   orderCode: string;
   personId: string;
-  kitId: string;
+  kitId?: string;
+  productId?: string;
   totalPrice: number;
   status: OrderStatus;
   usesCredit: boolean;
@@ -126,6 +127,7 @@ export interface Order {
   rejectionReason?: string;
   paymentProofs?: PaymentProof[];
   kit?: Kit;
+  product?: Product;
   person?: {
     id: string;
     name: string;
@@ -139,13 +141,15 @@ export interface Order {
   // Campos adicionais retornados pela API de listagem
   personName?: string;
   kitName?: string;
+  productName?: string;
   hasPaymentProofs?: boolean;
   createdAt: string | Date;
   updatedAt: string | Date;
 }
 
 export interface CreateOrderDTO {
-  kitId: string;
+  kitId?: string;
+  productId?: string;
   useCredit?: boolean;
   notes?: string;
 }

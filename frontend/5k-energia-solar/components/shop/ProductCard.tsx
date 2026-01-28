@@ -3,6 +3,7 @@
 import { Product } from '@/lib/types/shop.types';
 import Image from 'next/image';
 import { useState } from 'react';
+import { Button } from '../ui';
 
 interface ProductCardProps {
   product: Product;
@@ -72,12 +73,13 @@ export function ProductCard({ product, onOrderClick }: ProductCardProps) {
         )}
 
         {/* Botão de Pedido */}
-        <button
+        <Button
+          variant="outline-green"
           onClick={() => onOrderClick(product)}
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+          className="w-full"
         >
           Solicitar Produto
-        </button>
+        </Button>
       </div>
     </div>
   );

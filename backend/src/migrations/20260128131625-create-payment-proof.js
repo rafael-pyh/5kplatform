@@ -57,12 +57,6 @@ module.exports = {
       },
     });
 
-    // Alterar coluna fileType para usar o ENUM criado
-    await queryInterface.sequelize.query(`
-      ALTER TABLE "PaymentProof" 
-      ALTER COLUMN "fileType" TYPE "PaymentProofFileType" USING "fileType"::"PaymentProofFileType";
-    `);
-
     // Add indexes for performance
     await queryInterface.addIndex('PaymentProof', ['orderId']);
     await queryInterface.addIndex('PaymentProof', ['createdAt']);

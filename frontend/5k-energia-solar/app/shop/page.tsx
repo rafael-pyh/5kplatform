@@ -31,9 +31,8 @@ export default function ShopPage() {
   };
 
   const handleProductOrder = (product: Product) => {
-    // Por enquanto, apenas mostrar uma mensagem
-    // Futuramente pode abrir um modal de contato ou pedido individual
-    alert(`Produto "${product.name}" - Entre em contato conosco para solicitar este produto.\n\nPreço: R$ ${product.price.toFixed(2)}\nEstoque: ${product.stock} unidades`);
+    setSelectedProduct(product);
+    setShowOrderModal(true);
   };
 
   // Determinar qual layout usar baseado no tipo de usuário
@@ -126,10 +125,12 @@ export default function ShopPage() {
         {/* Modal */}
         <OrderModal
           kit={selectedKit}
+          product={selectedProduct}
           isOpen={showOrderModal}
           onClose={() => {
             setShowOrderModal(false);
             setSelectedKit(null);
+            setSelectedProduct(null);
           }}
           onSuccess={handleOrderSuccess}
         />

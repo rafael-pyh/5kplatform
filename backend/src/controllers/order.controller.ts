@@ -21,11 +21,11 @@ import { Order } from '../models/Order';
 /**
  * POST /api/orders
  * Criar novo pedido
- * Body: { kitId, useCredit?, notes? }
+ * Body: { kitId | productId, useCredit?, notes? }
  */
 export const createOrderController = async (req: Request, res: Response) => {
   try {
-    const { kitId, useCredit = false, notes } = req.body;
+    const { kitId, productId, useCredit = false, notes } = req.body;
     const personId = (req as any).user?.userId;
 
     if (!personId) {
@@ -35,16 +35,24 @@ export const createOrderController = async (req: Request, res: Response) => {
       });
     }
 
-    if (!kitId) {
+    if (!kitId && !productId) {
       return res.status(400).json({
         success: false,
-        message: 'kitId é obrigatório',
+        message: 'kitId ou productId é obrigatório',
+      });
+    }
+
+    if (kitId && productId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Apenas kitId ou productId pode ser especificado',
       });
     }
 
     const order = await createOrder({
       personId,
       kitId,
+      productId,
       useCredit,
       notes,
     });
@@ -105,6 +113,7 @@ export const listOrdersController = async (req: Request, res: Response) => {
         orderCode: o.orderCode,
         personName: o.person?.name,
         kitName: o.kit?.name,
+        productName: o.product?.name,
         totalPrice: o.totalPrice,
         status: o.status,
         usesCredit: o.usesCredit,
@@ -166,17 +175,23 @@ export const getOrderController = async (req: Request, res: Response) => {
           email: order.person?.email,
           pixKey: order.person?.pixKey,
         },
-        kit: {
-          id: order.kit?.id,
-          name: order.kit?.name,
-          price: order.kit?.price,
-          items: order.kit?.items?.map((item) => ({
+        kit: order.kit ? {
+          id: order.kit.id,
+          name: order.kit.name,
+          price: order.kit.price,
+          items: order.kit.items?.map((item) => ({
             id: item.id,
             productName: item.product?.name,
             quantity: item.quantity,
             unitPrice: item.product?.price,
           })) || [],
-        },
+        } : null,
+        product: order.product ? {
+          id: order.product.id,
+          name: order.product.name,
+          price: order.product.price,
+          description: order.product.description,
+        } : null,
         totalPrice: order.totalPrice,
         status: order.status,
         usesCredit: order.usesCredit,

@@ -140,6 +140,13 @@ export interface OrderKitInfo {
   items?: KitItemResponse[];
 }
 
+export interface OrderProductInfo {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+}
+
 export interface PaymentProofResponse {
   id: string;
   fileUrl: string;
@@ -154,6 +161,7 @@ export interface OrderResponse {
   orderCode: string;
   person?: OrderPersonInfo;
   kit?: OrderKitInfo;
+  product?: OrderProductInfo;
   totalPrice: number;
   status: OrderStatus;
   usesCredit: boolean;
