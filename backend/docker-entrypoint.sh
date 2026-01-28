@@ -174,4 +174,27 @@ fi
 echo ""
 echo "🚀 Iniciando aplicação..."
 echo "================================"
+
+# Verificação final antes de iniciar
+echo "🔍 Verificação final do banco antes de iniciar aplicação..."
+if command -v psql >/dev/null 2>&1; then
+  echo "   Verificando conectividade com banco..."
+  if psql "$DATABASE_URL" -c "SELECT 1;" >/dev/null 2>&1; then
+    echo "✅ Conexão com banco OK"
+    
+    # Verificar novamente a coluna kitId
+    FINAL_KITID_CHECK=$(psql "$DATABASE_URL" -tc "SELECT is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'Order' AND column_name = 'kitId';" 2>&1 | xargs || echo "UNKNOWN")
+    echo "   Coluna kitId nullable: $FINAL_KITID_CHECK"
+    
+    if [ "$FINAL_KITID_CHECK" != "YES" ]; then
+      echo "❌ ALERTA: Coluna kitId ainda não está nullable! Aplicação pode falhar."
+    fi
+  else
+    echo "❌ ERRO: Não foi possível conectar ao banco!"
+  fi
+else
+  echo "⚠️  psql não disponível para verificação final"
+fi
+
+echo "================================"
 exec npm start

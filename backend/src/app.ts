@@ -109,7 +109,102 @@ app.get("/health", (req, res) => {
     success: true,
     message: "API está funcionando!",
     timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
   });
+});
+
+// Rota de diagnóstico para verificar migrations e schema
+app.get("/diagnostics", async (req, res) => {
+  try {
+    const diagnostics = {
+      success: true,
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      database: {
+        connected: false,
+        tables: [],
+        orderTable: {
+          exists: false,
+          kitIdNullable: false,
+          productIdNullable: false,
+        }
+      },
+      migrations: {
+        status: 'unknown',
+        pending: [],
+        applied: []
+      }
+    };
+
+    // Verificar conexão com banco
+    try {
+      await sequelize.authenticate();
+      diagnostics.database.connected = true;
+    } catch (dbError) {
+      diagnostics.database.error = dbError.message;
+    }
+
+    if (diagnostics.database.connected) {
+      // Verificar tabelas
+      const [tables] = await sequelize.query(`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        ORDER BY table_name
+      `);
+      diagnostics.database.tables = tables.map((t: any) => t.table_name);
+
+      // Verificar tabela Order
+      if (diagnostics.database.tables.includes('Order')) {
+        diagnostics.database.orderTable.exists = true;
+
+        const [columns] = await sequelize.query(`
+          SELECT column_name, is_nullable, data_type
+          FROM information_schema.columns
+          WHERE table_schema = 'public' 
+            AND table_name = 'Order'
+            AND column_name IN ('kitId', 'productId')
+        `);
+
+        columns.forEach((col: any) => {
+          if (col.column_name === 'kitId') {
+            diagnostics.database.orderTable.kitIdNullable = col.is_nullable === 'YES';
+          }
+          if (col.column_name === 'productId') {
+            diagnostics.database.orderTable.productIdNullable = col.is_nullable === 'YES';
+          }
+        });
+      }
+
+      // Verificar status das migrations
+      try {
+        const { execSync } = require('child_process');
+        const output = execSync('npx sequelize-cli db:migrate:status', { encoding: 'utf8' });
+        diagnostics.migrations.status = 'checked';
+        
+        // Parse output to get applied/pending migrations
+        const lines = output.split('\n');
+        lines.forEach((line: string) => {
+          if (line.includes('up ')) {
+            diagnostics.migrations.applied.push(line.trim());
+          } else if (line.includes('down ')) {
+            diagnostics.migrations.pending.push(line.trim());
+          }
+        });
+      } catch (migrateError) {
+        diagnostics.migrations.error = migrateError.message;
+      }
+    }
+
+    res.json(diagnostics);
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: "Erro ao executar diagnóstico",
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // Swagger Documentation
