@@ -146,16 +146,27 @@ export const createOrder = async (input: CreateOrderInput): Promise<Order> => {
     // O admin precisa revisar e aprovar todos os pedidos
     const initialStatus = OrderStatus.PENDING_APPROVAL;
 
-    const order = await Order.create({
+    // Criar objeto dinamicamente para evitar incluir campos null/undefined
+    const orderData: any = {
       orderCode,
       personId,
-      kitId: kitId || undefined,
-      productId: productId || undefined,
       totalPrice: itemPrice,
       status: initialStatus,
       usesCredit: useCredit,
       notes,
-    });
+    };
+
+    // Adicionar kitId apenas se existir
+    if (kitId) {
+      orderData.kitId = kitId;
+    }
+
+    // Adicionar productId apenas se existir
+    if (productId) {
+      orderData.productId = productId;
+    }
+
+    const order = await Order.create(orderData);
 
     // Se usar créditos, criar transação imediatamente
     if (useCredit) {
