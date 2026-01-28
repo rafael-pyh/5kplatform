@@ -114,21 +114,38 @@ export function AdminOrderDetailsModal({ order, isOpen, onClose }: AdminOrderDet
               </div>
             </div>
 
-            {/* Informações do Kit */}
+            {/* Informações do Produto/Kit */}
             <div className="border-t pt-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Kit</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                {displayOrder.productId ? 'Produto' : 'Kit'}
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <p className="text-sm text-gray-600">Nome do Kit</p>
-                  <p className="font-medium text-gray-900">{displayOrder.kitName || displayOrder.kit?.name || 'N/A'}</p>
+                  <p className="text-sm text-gray-600">
+                    {displayOrder.productId ? 'Nome do Produto' : 'Nome do Kit'}
+                  </p>
+                  <p className="font-medium text-gray-900">
+                    {displayOrder.productId 
+                      ? (displayOrder.product?.name || 'Produto') 
+                      : (displayOrder.kitName || displayOrder.kit?.name || 'N/A')
+                    }
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Preço do Kit</p>
-                  <p className="font-medium text-gray-900">R$ {displayOrder.kit?.price ? Number(displayOrder.kit.price).toFixed(2) : 'N/A'}</p>
+                  <p className="text-sm text-gray-600">
+                    {displayOrder.productId ? 'Preço do Produto' : 'Preço do Kit'}
+                  </p>
+                  <p className="font-medium text-gray-900">
+                    R$ {displayOrder.productId 
+                      ? (displayOrder.product?.price ? Number(displayOrder.product.price).toFixed(2) : 'N/A')
+                      : (displayOrder.kit?.price ? Number(displayOrder.kit.price).toFixed(2) : 'N/A')
+                    }
+                  </p>
                 </div>
               </div>
 
-              {displayOrder.kit?.items && displayOrder.kit.items.length > 0 && (
+              {/* Mostrar itens do kit apenas se for kit */}
+              {!displayOrder.productId && displayOrder.kit?.items && displayOrder.kit.items.length > 0 && (
                 <div>
                   <p className="text-sm text-gray-600 mb-2">Itens do Kit:</p>
                   <div className="space-y-2">
@@ -147,6 +164,16 @@ export function AdminOrderDetailsModal({ order, isOpen, onClose }: AdminOrderDet
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Mostrar descrição do produto se for produto */}
+              {displayOrder.productId && displayOrder.product?.description && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">Descrição do Produto:</p>
+                  <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
+                    {displayOrder.product.description}
+                  </p>
                 </div>
               )}
             </div>

@@ -74,7 +74,8 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
     order.status
   );
 
-  const handleApprove = async () => {
+  const handleApprove = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Previne que o clique abra o modal de detalhes
     setLoading(true);
     setError(null);
 
@@ -139,8 +140,13 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
             <p className="font-medium text-gray-900">{order.personName || order.person?.name || 'N/A'}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-600">Kit</p>
-            <p className="font-medium text-gray-900">{order.kitName || order.kit?.name || 'N/A'}</p>
+            <p className="text-xs text-gray-600">{order.productId ? 'Produto' : 'Kit'}</p>
+            <p className="font-medium text-gray-900">
+              {order.productId 
+                ? (order.product?.name || 'Produto') 
+                : (order.kitName || order.kit?.name || 'N/A')
+              }
+            </p>
           </div>
           <div>
             <p className="text-xs text-gray-600">Total</p>
@@ -217,7 +223,10 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
             )}
             {canReject && (
               <Button 
-                onClick={() => setShowRejectModal(true)}
+                onClick={(e) => {
+                  e.stopPropagation(); // Previne que o clique abra o modal de detalhes
+                  setShowRejectModal(true);
+                }}
                 variant='outline-danger'
                 disabled={loading}
                 className="flex-1 w-full"

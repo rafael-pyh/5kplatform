@@ -111,6 +111,9 @@ export const listOrdersController = async (req: Request, res: Response) => {
       data: orders.map((o) => ({
         id: o.id,
         orderCode: o.orderCode,
+        personId: o.personId,
+        kitId: o.kitId,
+        productId: o.productId,
         personName: o.person?.name,
         kitName: o.kit?.name,
         productName: o.product?.name,
@@ -119,6 +122,10 @@ export const listOrdersController = async (req: Request, res: Response) => {
         usesCredit: o.usesCredit,
         notes: o.notes,
         hasPaymentProofs: (o.paymentProofs?.length || 0) > 0,
+        paymentProofs: o.paymentProofs,
+        kit: o.kit,
+        product: o.product,
+        person: o.person,
         approvedBy: o.approvedBy ? {
           id: o.approvedBy.id,
           name: o.approvedBy.name,
@@ -169,6 +176,9 @@ export const getOrderController = async (req: Request, res: Response) => {
       data: {
         id: order.id,
         orderCode: order.orderCode,
+        personId: order.personId,
+        kitId: order.kitId,
+        productId: order.productId,
         person: {
           id: order.person?.id,
           name: order.person?.name,

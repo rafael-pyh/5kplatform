@@ -263,6 +263,7 @@ export const getOrderById = async (orderId: string): Promise<Order | null> => {
           association: 'kit',
           include: [{ association: 'items', include: ['product'] }],
         },
+        { association: 'product' },
         { association: 'paymentProofs' },
         { association: 'approvedBy', attributes: ['id', 'name', 'email'] },
       ],
