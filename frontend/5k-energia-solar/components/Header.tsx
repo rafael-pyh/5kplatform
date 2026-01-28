@@ -128,7 +128,7 @@ export default function Header({ className }: { className?: string }) {
   }
 
   return (
-    <header className={`bg-linear-to-r from-blue-50 to-green-50 border-b border-gray-300 fixed top-0 w-full mb-10 z-10 ${className || ''}`}>
+    <header className={`bg-linear-to-r from-blue-50 to-green-50 border-b border-gray-300 fixed top-0 w-full mb-10  ${className || ''}`}>
       <div className="px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}

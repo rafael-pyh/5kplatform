@@ -282,7 +282,9 @@ export function AdminOrderCard({ order, onActionSuccess }: AdminOrderCardProps) 
             <Button
               type="button"
               variant='outline'
-              onClick={() => setShowRejectModal(false)}
+              onClick={() => {
+                setShowRejectModal(false)
+              }}
               disabled={loading}
               className="flex-1"
             >

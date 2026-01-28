@@ -52,6 +52,10 @@ echo "✅ Configuração do Sequelize encontrada"
 
 # Executar migrations do Sequelize
 echo "🔄 Executando migrations do Sequelize..."
+echo "   NODE_ENV: $NODE_ENV"
+echo "   DATABASE_URL presente: $([ -n "$DATABASE_URL" ] && echo 'SIM' || echo 'NÃO')"
+echo "   Arquivos de migration encontrados: $(ls -1 src/migrations/*.js 2>/dev/null | wc -l)"
+
 MIGRATION_ATTEMPTS=0
 MIGRATION_MAX_ATTEMPTS=3
 MIGRATION_SUCCESS=false
@@ -61,10 +65,19 @@ while [ $MIGRATION_ATTEMPTS -lt $MIGRATION_MAX_ATTEMPTS ]; do
   echo ""
   echo "   === Tentativa $MIGRATION_ATTEMPTS/$MIGRATION_MAX_ATTEMPTS ==="
   
+  # Mostrar status antes da migration
+  echo "   📊 Status das migrations ANTES:"
+  npx sequelize-cli db:migrate:status 2>&1 | tail -10 || echo "   (Não foi possível obter status)"
+  
   # Tentar migration
+  echo "   🔄 Executando: npx sequelize-cli db:migrate"
   if npx sequelize-cli db:migrate 2>&1; then
     echo "✅ Migrations aplicadas com sucesso!"
     MIGRATION_SUCCESS=true
+    
+    # Mostrar status depois da migration
+    echo "   📊 Status das migrations DEPOIS:"
+    npx sequelize-cli db:migrate:status 2>&1 | tail -5 || echo "   (Não foi possível obter status)"
     break
   else
     MIGRATION_ERROR=$?
@@ -107,20 +120,36 @@ echo "🔍 Verificando se as tabelas foram criadas..."
 if command -v psql >/dev/null 2>&1; then
   echo "   Consultando information_schema..."
   
-  TABLE_COUNT=$(psql "$DATABASE_URL" -tc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('CreditWallet', 'CreditTransaction', 'WithdrawalRequest', 'PaymentProof');" 2>&1 | xargs || echo "0")
+  TABLE_COUNT=$(psql "$DATABASE_URL" -tc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('CreditWallet', 'CreditTransaction', 'WithdrawalRequest', 'PaymentProof', 'Order');" 2>&1 | xargs || echo "0")
   
-  echo "   Tabelas encontradas: $TABLE_COUNT/4"
+  echo "   Tabelas encontradas: $TABLE_COUNT/5"
   
-  if [ "$TABLE_COUNT" = "4" ]; then
-    echo "✅ Tabelas críticas (CreditWallet, CreditTransaction, WithdrawalRequest, PaymentProof) confirmadas!"
+  if [ "$TABLE_COUNT" = "5" ]; then
+    echo "✅ Tabelas críticas confirmadas!"
+    
+    # Verificar especificamente a tabela Order e coluna kitId
+    echo ""
+    echo "🔍 Verificando tabela Order e coluna kitId..."
+    KITID_NULLABLE=$(psql "$DATABASE_URL" -tc "SELECT is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'Order' AND column_name = 'kitId';" 2>&1 | xargs || echo "UNKNOWN")
+    
+    if [ "$KITID_NULLABLE" = "YES" ]; then
+      echo "✅ Coluna kitId da tabela Order está corretamente configurada como nullable!"
+    else
+      echo "❌ PROBLEMA: Coluna kitId da tabela Order não está nullable (atual: $KITID_NULLABLE)"
+      echo "   Tentando corrigir manualmente..."
+      
+      if psql "$DATABASE_URL" -c 'ALTER TABLE "Order" ALTER COLUMN "kitId" DROP NOT NULL;' 2>&1; then
+        echo "✅ Coluna kitId corrigida para nullable!"
+      else
+        echo "❌ Falha ao corrigir coluna kitId"
+      fi
+    fi
     
     # Listar as tabelas como confirmação extra
     echo ""
     echo "📊 Estrutura das tabelas:"
-    echo "   CreditWallet:"
-    psql "$DATABASE_URL" -tc "\d+ \"CreditWallet\"" 2>&1 | head -5 || echo "     (Não foi possível listar)"
-    echo "   CreditTransaction:"
-    psql "$DATABASE_URL" -tc "\d+ \"CreditTransaction\"" 2>&1 | head -5 || echo "     (Não foi possível listar)"
+    echo "   Order:"
+    psql "$DATABASE_URL" -tc "\d+ \"Order\"" 2>&1 | head -5 || echo "     (Não foi possível listar)"
   else
     echo "⚠️  AVISO: Nem todas as tabelas críticas foram criadas!"
     echo ""
