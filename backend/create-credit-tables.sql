@@ -6,14 +6,32 @@
 
 BEGIN;
 
--- Criar ENUM para WithdrawalStatus se não existir
-DO $enum_withdrawal_block$ BEGIN
-    CREATE TYPE "WithdrawalStatus" AS ENUM ('PENDING', 'APPROVED', 'PAID', 'REJECTED');
-    RAISE NOTICE 'ENUM WithdrawalStatus criado';
+-- Criar ENUM para PaymentProofFileType se não existir
+DO $enum_payment_proof_block$ BEGIN
+    CREATE TYPE "PaymentProofFileType" AS ENUM ('image', 'pdf');
+    RAISE NOTICE 'ENUM PaymentProofFileType criado';
 EXCEPTION
     WHEN duplicate_object THEN
-        RAISE NOTICE 'ENUM WithdrawalStatus já existe, pulando...';
-END $enum_withdrawal_block$;
+        RAISE NOTICE 'ENUM PaymentProofFileType já existe, pulando...';
+END $enum_payment_proof_block$;
+
+-- Criar tabela PaymentProof se não existir
+CREATE TABLE IF NOT EXISTS "PaymentProof" (
+    "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "orderId" UUID NOT NULL,
+    "fileUrl" VARCHAR(255) NOT NULL,
+    "fileType" "PaymentProofFileType" NOT NULL DEFAULT 'image',
+    "originalFileName" VARCHAR(255),
+    "fileSize" INTEGER,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+    "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_paymentproof_order FOREIGN KEY ("orderId") 
+        REFERENCES "Order"(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+-- Criar índices para PaymentProof
+CREATE INDEX IF NOT EXISTS "IDX_PaymentProof_orderId" ON "PaymentProof"("orderId");
+CREATE INDEX IF NOT EXISTS "IDX_PaymentProof_createdAt" ON "PaymentProof"("createdAt");
 
 -- Criar tabela WithdrawalRequest se não existir
 CREATE TABLE IF NOT EXISTS "WithdrawalRequest" (
@@ -173,6 +191,12 @@ DO $verify_block$ BEGIN
         RAISE NOTICE '✅ Tabela WithdrawalRequest verificada';
     ELSE
         RAISE EXCEPTION 'Erro: Tabela WithdrawalRequest não foi criada!';
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'PaymentProof') THEN
+        RAISE NOTICE '✅ Tabela PaymentProof verificada';
+    ELSE
+        RAISE EXCEPTION 'Erro: Tabela PaymentProof não foi criada!';
     END IF;
 END $verify_block$;
 

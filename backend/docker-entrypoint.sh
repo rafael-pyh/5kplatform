@@ -107,12 +107,12 @@ echo "🔍 Verificando se as tabelas foram criadas..."
 if command -v psql >/dev/null 2>&1; then
   echo "   Consultando information_schema..."
   
-  TABLE_COUNT=$(psql "$DATABASE_URL" -tc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('CreditWallet', 'CreditTransaction', 'WithdrawalRequest');" 2>&1 | xargs || echo "0")
+  TABLE_COUNT=$(psql "$DATABASE_URL" -tc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('CreditWallet', 'CreditTransaction', 'WithdrawalRequest', 'PaymentProof');" 2>&1 | xargs || echo "0")
   
-  echo "   Tabelas encontradas: $TABLE_COUNT/3"
+  echo "   Tabelas encontradas: $TABLE_COUNT/4"
   
-  if [ "$TABLE_COUNT" = "3" ]; then
-    echo "✅ Tabelas críticas (CreditWallet, CreditTransaction, WithdrawalRequest) confirmadas!"
+  if [ "$TABLE_COUNT" = "4" ]; then
+    echo "✅ Tabelas críticas (CreditWallet, CreditTransaction, WithdrawalRequest, PaymentProof) confirmadas!"
     
     # Listar as tabelas como confirmação extra
     echo ""
