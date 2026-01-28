@@ -6,14 +6,45 @@
 
 BEGIN;
 
--- Criar ENUM para CreditTransactionType se não existir
-DO $enum_block$ BEGIN
-    CREATE TYPE "CreditTransactionType" AS ENUM ('COMMISSION', 'KIT_PURCHASE', 'WITHDRAW_REQUEST', 'ADJUSTMENT');
-    RAISE NOTICE 'ENUM CreditTransactionType criado';
+-- Criar ENUM para WithdrawalStatus se não existir
+DO $enum_withdrawal_block$ BEGIN
+    CREATE TYPE "WithdrawalStatus" AS ENUM ('PENDING', 'APPROVED', 'PAID', 'REJECTED');
+    RAISE NOTICE 'ENUM WithdrawalStatus criado';
 EXCEPTION
     WHEN duplicate_object THEN
-        RAISE NOTICE 'ENUM CreditTransactionType já existe, pulando...';
-END $enum_block$;
+        RAISE NOTICE 'ENUM WithdrawalStatus já existe, pulando...';
+END $enum_withdrawal_block$;
+
+-- Criar tabela WithdrawalRequest se não existir
+CREATE TABLE IF NOT EXISTS "WithdrawalRequest" (
+    "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "personId" UUID NOT NULL,
+    "amount" DECIMAL(15, 2) NOT NULL,
+    "status" "WithdrawalStatus" NOT NULL DEFAULT 'PENDING',
+    "bankAccountInfo" TEXT,
+    "notes" TEXT,
+    "approvedByUserId" UUID,
+    "approvedAt" TIMESTAMP,
+    "rejectedByUserId" UUID,
+    "rejectedAt" TIMESTAMP,
+    "rejectionReason" TEXT,
+    "paidAt" TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+    "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_withdrawalrequest_person FOREIGN KEY ("personId") 
+        REFERENCES "Person"(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_withdrawalrequest_approved_by FOREIGN KEY ("approvedByUserId") 
+        REFERENCES "Person"(id) ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_withdrawalrequest_rejected_by FOREIGN KEY ("rejectedByUserId") 
+        REFERENCES "Person"(id) ON UPDATE CASCADE ON DELETE SET NULL
+);
+
+-- Criar índices para WithdrawalRequest
+CREATE INDEX IF NOT EXISTS "IDX_WithdrawalRequest_personId" ON "WithdrawalRequest"("personId");
+CREATE INDEX IF NOT EXISTS "IDX_WithdrawalRequest_status" ON "WithdrawalRequest"("status");
+CREATE INDEX IF NOT EXISTS "IDX_WithdrawalRequest_approvedByUserId" ON "WithdrawalRequest"("approvedByUserId");
+CREATE INDEX IF NOT EXISTS "IDX_WithdrawalRequest_rejectedByUserId" ON "WithdrawalRequest"("rejectedByUserId");
+CREATE INDEX IF NOT EXISTS "IDX_WithdrawalRequest_createdAt" ON "WithdrawalRequest"("createdAt");
 
 -- Criar tabela CreditWallet se não existir
 CREATE TABLE IF NOT EXISTS "CreditWallet" (
@@ -136,6 +167,12 @@ DO $verify_block$ BEGIN
         RAISE NOTICE '✅ Tabela CreditTransaction verificada';
     ELSE
         RAISE EXCEPTION 'Erro: Tabela CreditTransaction não foi criada!';
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'WithdrawalRequest') THEN
+        RAISE NOTICE '✅ Tabela WithdrawalRequest verificada';
+    ELSE
+        RAISE EXCEPTION 'Erro: Tabela WithdrawalRequest não foi criada!';
     END IF;
 END $verify_block$;
 
