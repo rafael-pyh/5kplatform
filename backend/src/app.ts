@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import swaggerUi from "swagger-ui-express";
+import sequelize from "./database/sequelize";
 import { env } from "./config/env";
 import authRoutes from "./routes/auth.routes";
 import personRoutes from "./routes/person.routes";
