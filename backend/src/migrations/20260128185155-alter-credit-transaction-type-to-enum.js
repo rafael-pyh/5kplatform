@@ -3,28 +3,39 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
-    // Primeiro, garantir que o enum existe com todos os valores
+    // Usar SQL direto para adicionar o valor ao enum e alterar a coluna
     await queryInterface.sequelize.query(`
-      DO $$ BEGIN
-        -- Tentar adicionar PRODUCT_PURCHASE se não existir
-        ALTER TYPE "CreditTransactionType" ADD VALUE IF NOT EXISTS 'PRODUCT_PURCHASE';
-      EXCEPTION
-        WHEN duplicate_object THEN null;
-      END $$;
+      DO $$
+      BEGIN
+        -- Verificar se o enum existe
+        IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'CreditTransactionType') THEN
+          -- Verificar se PRODUCT_PURCHASE já existe
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_enum e
+            JOIN pg_type t ON e.enumtypid = t.oid
+            WHERE t.typname = 'CreditTransactionType' AND e.enumlabel = 'PRODUCT_PURCHASE'
+          ) THEN
+            -- Adicionar PRODUCT_PURCHASE ao enum
+            ALTER TYPE "CreditTransactionType" ADD VALUE 'PRODUCT_PURCHASE';
+          END IF;
+        ELSE
+          -- Criar o enum se não existir
+          CREATE TYPE "CreditTransactionType" AS ENUM ('COMMISSION', 'KIT_PURCHASE', 'PRODUCT_PURCHASE', 'WITHDRAW_REQUEST', 'ADJUSTMENT');
+        END IF;
+      END
+      $$;
     `);
 
-    // Alterar a coluna type para usar o enum
-    await queryInterface.changeColumn('CreditTransaction', 'type', {
-      type: Sequelize.ENUM('COMMISSION', 'KIT_PURCHASE', 'PRODUCT_PURCHASE', 'WITHDRAW_REQUEST', 'ADJUSTMENT'),
-      allowNull: false,
-    });
+    // Alterar a coluna para usar o enum
+    await queryInterface.sequelize.query(`
+      ALTER TABLE "CreditTransaction" ALTER COLUMN "type" TYPE "CreditTransactionType" USING "type"::"CreditTransactionType";
+    `);
   },
 
   async down (queryInterface, Sequelize) {
     // Reverter para TEXT
-    await queryInterface.changeColumn('CreditTransaction', 'type', {
-      type: Sequelize.TEXT,
-      allowNull: false,
-    });
+    await queryInterface.sequelize.query(`
+      ALTER TABLE "CreditTransaction" ALTER COLUMN "type" TYPE TEXT;
+    `);
   }
 };
