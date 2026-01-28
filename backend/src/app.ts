@@ -123,7 +123,8 @@ app.get("/diagnostics", async (req, res) => {
       environment: process.env.NODE_ENV,
       database: {
         connected: false,
-        tables: [],
+        error: null as string | null,
+        tables: [] as string[],
         orderTable: {
           exists: false,
           kitIdNullable: false,
@@ -131,9 +132,10 @@ app.get("/diagnostics", async (req, res) => {
         }
       },
       migrations: {
-        status: 'unknown',
-        pending: [],
-        applied: []
+        status: 'unknown' as string,
+        error: null as string | null,
+        pending: [] as string[],
+        applied: [] as string[]
       }
     };
 
@@ -141,7 +143,7 @@ app.get("/diagnostics", async (req, res) => {
     try {
       await sequelize.authenticate();
       diagnostics.database.connected = true;
-    } catch (dbError) {
+    } catch (dbError: any) {
       diagnostics.database.error = dbError.message;
     }
 
@@ -192,7 +194,7 @@ app.get("/diagnostics", async (req, res) => {
             diagnostics.migrations.pending.push(line.trim());
           }
         });
-      } catch (migrateError) {
+      } catch (migrateError: any) {
         diagnostics.migrations.error = migrateError.message;
       }
     }
