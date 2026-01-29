@@ -6,6 +6,7 @@ import {
   getStatsController,
   adjustCreditsController,
   exportLedgerController,
+  listCommissionsController,
   getWalletByPersonIdController,
 } from '../controllers/credit.controller';
 import { authenticate } from '../middlewares/auth.middleware';
@@ -43,6 +44,11 @@ router.get('/balance', authenticate, getBalanceController);
  * Listar transações do usuário
  */
 router.get('/transactions', authenticate, listTransactionsController);
+
+/**
+ * GET /api/credits/commissions?leadId=...&personId?
+ */
+router.get('/commissions', authenticate, listCommissionsController);
 
 /**
  * GET /api/credits/stats

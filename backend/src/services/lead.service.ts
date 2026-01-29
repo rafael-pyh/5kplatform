@@ -194,14 +194,13 @@ async function getAllLeads(filters?: {
 
   // Cria chave de cache com filtros
   const cacheKey = service.getCacheKey('list', JSON.stringify(filters || {}));
-
   return service.getCachedOrExecute(cacheKey, async () => {
     const limit = filters?.limit || 50; // Padrão: 50 itens
     const offset = filters?.offset || 0;
 
     return Lead.findAll({
       where,
-      attributes: ['id', 'name', 'status', 'createdAt', 'email', 'phone', 'ownerId', 'city', 'state', 'energyBill', 'roofPhoto'],
+      attributes: ['id', 'name', 'status', 'createdAt', 'email', 'phone', 'ownerId', 'city', 'state', 'energyBill', 'roofPhoto', 'commissionAmount'],
       include: [{
         model: Person,
         as: 'owner',
@@ -210,7 +209,7 @@ async function getAllLeads(filters?: {
       order: [['createdAt', 'DESC']],
       limit,
       offset,
-      raw: false, // Mantém instâncias para suportar includes
+      raw: false,
     });
   }, service.getTtlLists());
 }
@@ -227,21 +226,17 @@ async function getLeadsByOwner(ownerId: string, limit?: number, offset?: number)
   const service = new LeadService();
   const cacheKey = service.getCacheKey('by-owner', ownerId, limit, offset);
 
-async function getLeadsByOwner(ownerId: string, limit?: number, offset?: number) {
-  const service = new LeadService();
-  const cacheKey = service.getCacheKey('by-owner', ownerId, limit, offset);
-
   return service.getCachedOrExecute(cacheKey, async () => {
     const query = `
-      SELECT "id", "name", "status", "createdAt", "email", "phone", "energyBill", "roofPhoto", "city", "state",
+      SELECT l."id", l."name", l."status", l."createdAt", l."email", l."phone", l."energyBill", l."roofPhoto", l."city", l."state",
              COALESCE(ct.total_commission, 0) as "commissionAmount"
       FROM "Lead" l
       LEFT JOIN (
-        SELECT "leadId", SUM(amount) as total_commission
+        SELECT "leadId", "personId", SUM(amount) as total_commission
         FROM "CreditTransaction"
         WHERE type = 'COMMISSION'
-        GROUP BY "leadId"
-      ) ct ON l.id = ct."leadId"
+        GROUP BY "leadId", "personId"
+      ) ct ON l.id = ct."leadId" AND ct."personId" = $ownerId
       WHERE l."ownerId" = $ownerId
       ORDER BY l."createdAt" DESC
       LIMIT $limit OFFSET $offset
@@ -277,7 +272,6 @@ async function getLeadsByOwner(ownerId: string, limit?: number, offset?: number)
     return normalized;
   }, service.getTtlLists());
 }
-}
 
 /**
  * Busca um lead específico pelo ID
@@ -292,7 +286,7 @@ async function getLeadById(id: string) {
 
   return service.getCachedOrExecute(cacheKey, async () => {
     const lead = await Lead.findByPk(id, {
-      attributes: ['id', 'name', 'status', 'createdAt', 'email', 'phone', 'energyBill', 'roofPhoto', 'notes', 'city', 'state'],
+      attributes: ['id', 'name', 'status', 'createdAt', 'email', 'phone', 'energyBill', 'roofPhoto', 'notes', 'city', 'state', 'commissionAmount'],
       include: [{
         model: Person,
         as: 'owner',
@@ -487,16 +481,47 @@ async function getSellerLeads(sellerId: string, filters?: {
   const cacheKey = service.getCacheKey('seller', sellerId, JSON.stringify(filters || {}));
 
   return service.getCachedOrExecute(cacheKey, async () => {
-    const where: any = { ownerId: sellerId };
-    if (filters?.status) where.status = filters.status;
+    const whereStatus = filters?.status ? `AND l."status" = '${filters?.status}'` : '';
+    const limit = filters?.limit || 50;
+    const offset = filters?.offset || 0;
 
-    return Lead.findAll({
-      where,
-      attributes: ['id', 'name', 'email', 'phone', 'status', 'createdAt', 'updatedAt'],
-      order: [['createdAt', 'DESC']],
-      limit: filters?.limit || 50,
-      offset: filters?.offset || 0,
+    const query = `
+      SELECT l."id", l."name", l."email", l."phone", l."status", l."createdAt", l."updatedAt",
+             COALESCE(ct.total_commission, 0) as "commissionAmount"
+      FROM "Lead" l
+      LEFT JOIN (
+        SELECT "leadId", "personId", SUM(amount) as total_commission
+        FROM "CreditTransaction"
+        WHERE type = 'COMMISSION'
+        GROUP BY "leadId", "personId"
+      ) ct ON l.id = ct."leadId" AND ct."personId" = $sellerId
+      WHERE l."ownerId" = $sellerId ${whereStatus}
+      ORDER BY l."createdAt" DESC
+      LIMIT $limit OFFSET $offset
+    `;
+
+    const queryResult: any = await Lead.sequelize!.query(query, {
+      bind: { sellerId, limit, offset },
+      type: 'SELECT'
     });
+
+    let results: any[] = [];
+    if (Array.isArray(queryResult)) {
+      if (Array.isArray(queryResult[0])) {
+        results = queryResult[0];
+      } else {
+        results = queryResult as any[];
+      }
+    } else if (queryResult && Array.isArray(queryResult.rows)) {
+      results = queryResult.rows;
+    }
+
+    const normalized = results.map(r => ({
+      ...r,
+      commissionAmount: r && r.commissionAmount != null ? Number(r.commissionAmount) : 0,
+    }));
+
+    return normalized;
   }, service.getTtlLists());
 }
 
@@ -508,19 +533,29 @@ async function getSellerLeadById(sellerId: string, leadId: string) {
   const cacheKey = service.getCacheKey('seller-by-id', sellerId, leadId);
 
   return service.getCachedOrExecute(cacheKey, async () => {
-    const lead = await Lead.findOne({
-      where: {
-        id: leadId,
-        ownerId: sellerId,
-      },
-      attributes: ['id', 'name', 'email', 'phone', 'status', 'createdAt', 'updatedAt', 'energyBill', 'roofPhoto', 'notes'],
+    const query = `
+      SELECT l."id", l."name", l."email", l."phone", l."status", l."createdAt", l."updatedAt", l."energyBill", l."roofPhoto", l."notes",
+             COALESCE(ct.total_commission, 0) as "commissionAmount"
+      FROM "Lead" l
+      LEFT JOIN (
+        SELECT "leadId", "personId", SUM(amount) as total_commission
+        FROM "CreditTransaction"
+        WHERE type = 'COMMISSION'
+        GROUP BY "leadId", "personId"
+      ) ct ON l.id = ct."leadId" AND ct."personId" = $sellerId
+      WHERE l.id = $leadId AND l."ownerId" = $sellerId
+      LIMIT 1
+    `;
+
+    const qr: any = await Lead.sequelize!.query(query, {
+      bind: { sellerId, leadId },
+      type: 'SELECT'
     });
 
-    if (!lead) {
-      throw new Error("Lead não encontrado");
-    }
-
-    return lead;
+    const row = Array.isArray(qr) && qr.length ? (Array.isArray(qr[0]) ? qr[0][0] : qr[0]) : null;
+    if (!row) throw new Error("Lead não encontrado");
+    row.commissionAmount = row.commissionAmount != null ? Number(row.commissionAmount) : 0;
+    return row;
   }, service.getTtlDetail());
 }
 
@@ -573,11 +608,11 @@ async function getLeadsByPersonRole(userId: string, userRole: string, limit?: nu
              COALESCE(ct.total_commission, 0) as "commissionAmount"
       FROM "Lead" l
       LEFT JOIN (
-        SELECT "leadId", SUM(amount) as total_commission
+        SELECT "leadId", "personId", SUM(amount) as total_commission
         FROM "CreditTransaction"
         WHERE type = 'COMMISSION'
-        GROUP BY "leadId"
-      ) ct ON l.id = ct."leadId"
+        GROUP BY "leadId", "personId"
+      ) ct ON l.id = ct."leadId" AND ct."personId" = $userId
       WHERE l."ownerId" = $userId
       ORDER BY l."createdAt" DESC
       LIMIT $limit OFFSET $offset

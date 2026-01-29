@@ -348,3 +348,34 @@ export const exportLedger = async (
     throw new Error(`Erro ao exportar ledger: ${error.message}`);
   }
 };
+
+/**
+ * Listar comissões por lead
+ * Se personId informado, filtra apenas pelas comissões daquele person
+ */
+export const listCommissionsByLead = async (
+  leadId: string,
+  personId?: string,
+  limit: number = 100,
+  offset: number = 0,
+): Promise<{ total: number; transactions: CreditTransaction[] }> => {
+  try {
+    const where: any = { leadId, type: CreditTransactionType.COMMISSION };
+    if (personId) where.personId = personId;
+
+    const { count, rows } = await CreditTransaction.findAndCountAll({
+      where,
+      include: [
+        { association: 'person', attributes: ['id', 'name', 'email'] },
+      ],
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+    });
+
+    return { total: count, transactions: rows };
+  } catch (error: any) {
+    console.error('Erro ao listar comissões por lead:', error);
+    throw new Error(`Erro ao listar comissões: ${error.message}`);
+  }
+};

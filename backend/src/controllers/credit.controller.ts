@@ -6,6 +6,7 @@ import {
   getCreditStats,
   adjustCredits,
   exportLedger,
+  listCommissionsByLead,
 } from '../services/credit.service';
 
 /**
@@ -52,6 +53,48 @@ export const getWalletController = async (req: Request, res: Response) => {
       success: false,
       message: error.message,
     });
+  }
+};
+
+/**
+ * GET /api/credits/commissions
+ * ?leadId=...&personId? (personId só pode ser usado por ADMIN; vendedor autenticado pode ver apenas as suas próprias comissões)
+ */
+export const listCommissionsController = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.userId;
+    if (!userId) return res.status(401).json({ success: false, message: 'Usuário não autenticado' });
+
+    const leadId = req.query.leadId as string;
+    if (!leadId) return res.status(400).json({ success: false, message: 'leadId é obrigatório' });
+
+    const requestedPersonId = req.query.personId as string | undefined;
+
+    // Se requestor não for ADMIN, forçar personId = userId
+    const isAdmin = (req as any).user && [ 'ADMIN', 'SUPER_ADMIN' ].includes((req as any).user.role);
+    const personId = isAdmin ? requestedPersonId : userId;
+
+    const limit = parseInt(req.query.limit as string) || 100;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    const { total, transactions } = await listCommissionsByLead(leadId, personId, limit, offset);
+
+    return res.status(200).json({
+      success: true,
+      pagination: { total, limit, offset },
+      data: transactions.map(t => ({
+        id: t.id,
+        personId: t.personId,
+        personName: t.person?.name,
+        amount: parseFloat(t.amount.toString()),
+        description: t.description,
+        leadId: t.leadId,
+        createdAt: t.createdAt,
+      }))
+    });
+  } catch (error: any) {
+    console.error('Erro ao listar comissões:', error);
+    return res.status(400).json({ success: false, message: error.message });
   }
 };
 
