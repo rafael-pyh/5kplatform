@@ -80,6 +80,13 @@ export class Lead extends Model {
   @Column(DataType.STRING)
   state?: string;
 
+  @AllowNull(true)
+  @Column({
+    type: DataType.DECIMAL(10, 2),
+    field: 'commissionAmount'
+  })
+  commissionAmount?: number;
+
   @CreatedAt
   @Column({
     type: DataType.DATE,
@@ -110,6 +117,7 @@ export class Lead extends Model {
       notes: this.notes || undefined,
       city: this.city || undefined,
       state: this.state || undefined,
+      commissionAmount: this.commissionAmount || undefined,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

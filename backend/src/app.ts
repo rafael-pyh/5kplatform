@@ -218,14 +218,19 @@ app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/auth", authLimiter, registrationRoutes);
 app.use("/api", authLimiter, manualRegisterRoutes);
 app.use("/api", authLimiter, emailActivationRouter);
+// QR Code routes são públicas (scan e criação de lead)
+app.use("/api/qrcode", qrcodeRoutes);
 
 // Middleware de autenticação para todas as rotas /api (exceto as públicas acima)
+// Observação: rotas públicas adicionais são declaradas antes deste middleware
+// para evitar que endpoints que devem ser públicos (ex: /api/qrcode) exijam token.
 app.use('/api', authenticate);
+
+// Nota: Montamos `/api/qrcode` como rota pública acima das rotas protegidas.
 
 // Rotas protegidas da API
 app.use("/api/person", personRoutes);
 app.use("/api/lead", leadRoutes);
-app.use("/api/qrcode", qrcodeRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/creatives", creativeRoutes);
 

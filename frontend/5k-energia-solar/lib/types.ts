@@ -145,6 +145,7 @@ export interface Lead {
   updatedAt: string;
   city?: string;
   state?: string;
+  commissionAmount?: number;
 }
 
 export interface CreateLeadDto {

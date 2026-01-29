@@ -5,8 +5,10 @@ import { sendApprovalOrRejectionEmail } from "../utils/email";
 import { env } from "../config/env";
 import { Validator } from "../shared/Validator";
 import { CachedService, CacheInvalidationManager } from "../cache/cache-invalidation";
-import { adjustCredits } from "./credit.service";
+import { adjustCredits, addCommissionCredits } from "./credit.service";
 import { uploadBase64ToS3 } from "./storage.service";
+import { addCreditTransaction } from "./credit.service";
+import { CreditTransactionType } from "../models/CreditTransaction";
 
 // ===================== TIPOS =====================
 export interface CreateLeadDto {
@@ -225,15 +227,56 @@ async function getLeadsByOwner(ownerId: string, limit?: number, offset?: number)
   const service = new LeadService();
   const cacheKey = service.getCacheKey('by-owner', ownerId, limit, offset);
 
+async function getLeadsByOwner(ownerId: string, limit?: number, offset?: number) {
+  const service = new LeadService();
+  const cacheKey = service.getCacheKey('by-owner', ownerId, limit, offset);
+
   return service.getCachedOrExecute(cacheKey, async () => {
-    return Lead.findAll({
-      where: { ownerId },
-      attributes: ['id', 'name', 'status', 'createdAt', 'email', 'phone', 'energyBill', 'roofPhoto', 'city', 'state'],
-      order: [['createdAt', 'DESC']],
-      limit: limit || 50,
-      offset: offset || 0,
+    const query = `
+      SELECT "id", "name", "status", "createdAt", "email", "phone", "energyBill", "roofPhoto", "city", "state",
+             COALESCE(ct.total_commission, 0) as "commissionAmount"
+      FROM "Lead" l
+      LEFT JOIN (
+        SELECT "leadId", SUM(amount) as total_commission
+        FROM "CreditTransaction"
+        WHERE type = 'COMMISSION'
+        GROUP BY "leadId"
+      ) ct ON l.id = ct."leadId"
+      WHERE l."ownerId" = $ownerId
+      ORDER BY l."createdAt" DESC
+      LIMIT $limit OFFSET $offset
+    `;
+
+    const queryResult: any = await Lead.sequelize!.query(query, {
+      bind: {
+        ownerId,
+        limit: limit || 50,
+        offset: offset || 0
+      },
+      type: 'SELECT'
     });
+
+    // Normalize different return shapes from sequelize.query
+    let results: any[] = [];
+    if (Array.isArray(queryResult)) {
+      if (Array.isArray(queryResult[0])) {
+        results = queryResult[0];
+      } else {
+        results = queryResult as any[];
+      }
+    } else if (queryResult && Array.isArray(queryResult.rows)) {
+      results = queryResult.rows;
+    }
+
+    // Normalize commissionAmount (Postgres returns numeric/decimal as strings)
+    const normalized = results.map(r => ({
+      ...r,
+      commissionAmount: r && r.commissionAmount != null ? Number(r.commissionAmount) : 0,
+    }));
+
+    return normalized;
   }, service.getTtlLists());
+}
 }
 
 /**
@@ -299,7 +342,7 @@ async function updateLead(id: string, data: UpdateLeadDto) {
  * Inclusões:
  * - Notifica vendedor se mudou para BOUGHT
  */
-async function updateLeadStatus(id: string, status: LeadStatus) {
+async function updateLeadStatus(id: string, status: LeadStatus, commissionAmount?: number) {
   const lead = await Lead.findByPk(id, {
     include: [{
       model: Person,
@@ -311,7 +354,12 @@ async function updateLeadStatus(id: string, status: LeadStatus) {
 
   const previousStatus = lead.status;
 
-  await lead.update({ status });
+  // Atualiza status e comissionAmount se fornecido
+  const updateData: any = { status };
+  if (commissionAmount != null) {
+    updateData.commissionAmount = commissionAmount;
+  }
+  await lead.update(updateData);
 
   // Recarrega para garantir owner atualizado
   await lead.reload({
@@ -325,35 +373,25 @@ async function updateLeadStatus(id: string, status: LeadStatus) {
   // Invalida caches
   CacheInvalidationManager.invalidateAfterUpdate('Lead', id);
 
-  // Se o status mudou para BOUGHT, notifica o vendedor (caso tenha email) e dá créditos
-  try {
-    if (previousStatus !== LeadStatus.BOUGHT && status === LeadStatus.BOUGHT) {
-      const owner = (lead as any).owner as Person | undefined;
-      if (owner && owner.email) {
-        const subject = '🎉 Cliente Finalizou Compra - 5K Energia Solar';
-        const message = `O cliente ${lead.name} finalizou a compra.`;
-        const buttonText = 'Ver no Painel';
-        const buttonUrl = `${env.FRONTEND_URL}/seller/dashboard`;
+  // Se o status mudou para BOUGHT, atribuir créditos
+  if (previousStatus !== LeadStatus.BOUGHT && status === LeadStatus.BOUGHT) {
+    const owner = (lead as any).owner as Person | undefined;
+    if (owner) {
+      const reason = `Lead convertido: ${lead.name}`;
 
-        await sendApprovalOrRejectionEmail(owner.email, owner.name, subject, message, buttonText, buttonUrl);
-      }
-
-      // Atribuir créditos ao owner do lead (SELLER ou AFFILIATE)
-      if (owner) {
-        const creditAmount = 10; // 10 créditos por lead convertido
-        const reason = `Lead convertido: ${lead.name}`;
-
-        try {
-          await adjustCredits(owner.id, creditAmount, reason, 'SYSTEM');
-          console.log(`Créditos atribuídos: ${creditAmount} para ${owner.name} (${owner.role}) pelo lead ${lead.name}`);
-        } catch (creditError) {
-          console.error('Erro ao atribuir créditos:', creditError);
-          // Não falha a operação se não conseguir dar créditos
-        }
+      try {
+        await addCreditTransaction({
+          personId: owner.id,
+          type: CreditTransactionType.COMMISSION,
+          amount: commissionAmount || 0, // Use provided commissionAmount or default to 0
+          description: reason,
+          leadId: lead.id,
+        });
+        console.log(`Créditos atribuídos: ${commissionAmount || 0} para ${owner.name} pelo lead ${lead.name}`);
+      } catch (creditError) {
+        console.error('Erro ao atribuir créditos:', creditError);
       }
     }
-  } catch (err) {
-    console.error('Erro ao enviar email de notificação de compra:', err);
   }
 
   return lead;
@@ -525,17 +563,54 @@ async function getLeadsByPersonRole(userId: string, userRole: string, limit?: nu
   const cacheKey = service.getCacheKey('by-role', userId, userRole, limit, offset);
 
   return service.getCachedOrExecute(cacheKey, async () => {
-    const attributes = userRole === 'AFFILIATE'
+    const baseAttributes = userRole === 'AFFILIATE'
       ? ['id', 'name', 'status', 'createdAt']
       : ['id', 'name', 'email', 'phone', 'status', 'createdAt', 'updatedAt', 'energyBill', 'roofPhoto', 'notes'];
 
-    return Lead.findAll({
-      where: { ownerId: userId },
-      attributes,
-      order: [['createdAt', 'DESC']],
-      limit: limit || 50,
-      offset: offset || 0,
+    // Usar query raw para incluir commissionAmount
+    const query = `
+      SELECT ${baseAttributes.map(attr => `"${attr}"`).join(', ')},
+             COALESCE(ct.total_commission, 0) as "commissionAmount"
+      FROM "Lead" l
+      LEFT JOIN (
+        SELECT "leadId", SUM(amount) as total_commission
+        FROM "CreditTransaction"
+        WHERE type = 'COMMISSION'
+        GROUP BY "leadId"
+      ) ct ON l.id = ct."leadId"
+      WHERE l."ownerId" = $userId
+      ORDER BY l."createdAt" DESC
+      LIMIT $limit OFFSET $offset
+    `;
+
+    const queryResult: any = await Lead.sequelize!.query(query, {
+      bind: {
+        userId,
+        limit: limit || 50,
+        offset: offset || 0
+      },
+      type: 'SELECT'
     });
+
+    // Normalize different return shapes from sequelize.query
+    let results: any[] = [];
+    if (Array.isArray(queryResult)) {
+      if (Array.isArray(queryResult[0])) {
+        results = queryResult[0];
+      } else {
+        results = queryResult as any[];
+      }
+    } else if (queryResult && Array.isArray(queryResult.rows)) {
+      results = queryResult.rows;
+    }
+
+    // Normalize commissionAmount (Postgres returns numeric/decimal as strings)
+    const normalized = results.map(r => ({
+      ...r,
+      commissionAmount: r && r.commissionAmount != null ? Number(r.commissionAmount) : 0,
+    }));
+
+    return normalized;
   }, service.getTtlLists());
 }
 

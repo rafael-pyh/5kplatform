@@ -18,6 +18,7 @@ export interface CreditTransactionParams {
   orderId?: string;
   withdrawalRequestId?: string;
   adjustedByUserId?: string;
+  leadId?: string;
 }
 
 /**
@@ -89,6 +90,7 @@ export const addCreditTransaction = async (
       orderId,
       withdrawalRequestId,
       adjustedByUserId,
+      leadId,
     } = params;
 
     // Validar pessoa
@@ -118,6 +120,7 @@ export const addCreditTransaction = async (
       orderId,
       withdrawalRequestId,
       adjustedByUserId,
+      leadId,
     });
 
     // Atualizar saldo da carteira
@@ -247,6 +250,35 @@ export const getCreditStats = async (personId: string): Promise<{
   } catch (error: any) {
     console.error('Erro ao obter estatísticas de crédito:', error);
     throw new Error(`Erro ao obter estatísticas: ${error.message}`);
+  }
+};
+
+/**
+ * Adicionar créditos de comissão por lead convertido
+ */
+export const addCommissionCredits = async (
+  personId: string,
+  amount: number,
+  leadId: string,
+  description?: string,
+): Promise<CreditTransaction> => {
+  try {
+    if (amount <= 0) {
+      throw new Error('Valor da comissão deve ser positivo');
+    }
+
+    const params: CreditTransactionParams = {
+      personId,
+      type: CreditTransactionType.COMMISSION,
+      amount,
+      description: description || `Comissão por lead convertido`,
+      leadId,
+    };
+
+    return await addCreditTransaction(params);
+  } catch (error: any) {
+    console.error('Erro ao adicionar créditos de comissão:', error);
+    throw new Error(`Erro ao adicionar comissão: ${error.message}`);
   }
 };
 

@@ -1,4 +1,4 @@
- 'use client';
+'use client';
 
 import { memo } from 'react';
 import { cn } from '@/lib/utils/cn';
@@ -14,6 +14,11 @@ interface LeadTableRowProps {
 }
 
 function LeadTableRow({ lead, onViewDetails, onUpdateStatus, className }: LeadTableRowProps) {
+  const handleUpdateStatus = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onUpdateStatus(lead);
+  };
+
   const getStatusBadge = (status: string) => {
     const variants: Record<string, 'success' | 'warning' | 'danger'> = {
       BOUGHT: 'success',
@@ -60,6 +65,12 @@ function LeadTableRow({ lead, onViewDetails, onUpdateStatus, className }: LeadTa
 
         <td className="p-4 hidden md:table-cell max-w-32 min-w-0">{getStatusBadge(lead.status)}</td>
 
+        <td className="p-4 hidden lg:table-cell max-w-32 min-w-0">
+          <div className="text-sm text-gray-900 truncate wrap-break-words">
+            {lead.commissionAmount != null ? Number(lead.commissionAmount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
+          </div>
+        </td>
+
         <td className="p-4 hidden lg:table-cell max-w-40 min-w-0">
           <div title={lead.createdAt ? new Date(lead.createdAt).toISOString() : '-'} className="text-sm text-gray-500 truncate">{formatDate(lead.createdAt)}</div>
         </td>
@@ -101,10 +112,7 @@ function LeadTableRow({ lead, onViewDetails, onUpdateStatus, className }: LeadTa
             <Button
               variant="outline-blue"
               size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onUpdateStatus(lead);
-              }}
+              onClick={handleUpdateStatus}
               className="hidden md:inline-flex"
             >
               Atualizar

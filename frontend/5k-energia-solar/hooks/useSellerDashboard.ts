@@ -13,6 +13,7 @@ type Lead = {
   phone?: string;
   status: string;
   createdAt: string;
+  commissionAmount?: number;
 };
 
 type Stats = {

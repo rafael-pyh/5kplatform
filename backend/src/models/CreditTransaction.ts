@@ -14,6 +14,7 @@ import {
 import { Person } from './Person';
 import { Order } from './Order';
 import { WithdrawalRequest } from './WithdrawalRequest';
+import { Lead } from './Lead';
 
 /**
  * Tipo de Transação de Crédito
@@ -90,6 +91,20 @@ export class CreditTransaction extends Model {
 
   @BelongsTo(() => Order, 'orderId')
   order?: Order;
+
+  /**
+   * Referência ao lead (se aplicável, para comissões)
+   */
+  @AllowNull(true)
+  @ForeignKey(() => Lead)
+  @Column({
+    type: DataType.UUID,
+    field: 'leadId',
+  })
+  leadId?: string;
+
+  @BelongsTo(() => Lead, 'leadId')
+  lead?: Lead;
 
   /**
    * Referência ao saque (se aplicável)

@@ -3,13 +3,25 @@ import { LeadServiceFunctions } from "../services/lead.service";
 import { ResponseBuilder } from "../shared/ResponseBuilder";
 import { LeadStatus } from "../models/Lead";
 
+// Helper: normalize commissionAmount returned as string (DECIMAL from PG) to number
+function normalizeCommission(items: any) {
+  if (!Array.isArray(items)) return items;
+  return items.map((it: any) => {
+    if (it && it.commissionAmount != null && typeof it.commissionAmount === 'string') {
+      const n = Number(it.commissionAmount);
+      // If parse fails, keep original value
+      it.commissionAmount = Number.isNaN(n) ? it.commissionAmount : n;
+    }
+    return it;
+  });
+}
 // ==================== LEAD CONTROLLER (Single Responsibility: HTTP handling) ====================
 
 export const createLead = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await LeadServiceFunctions.createLead(req.body);
     const jsonData = data.toJSON ? data.toJSON() : data;
-    return ResponseBuilder.created(res, jsonData);
+    return ResponseBuilder.created(res, normalizeCommission([jsonData])[0]);
   } catch (error) {
     next(error);
   }
@@ -26,7 +38,8 @@ export const getAllLeads = async (req: Request, res: Response, next: NextFunctio
     if (offset) filters.offset = parseInt(offset as string);
 
     const data = await LeadServiceFunctions.getAllLeads(filters);
-    const jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    let jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    jsonData = normalizeCommission(jsonData);
     return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
@@ -41,7 +54,8 @@ export const getLeadsByOwner = async (req: Request, res: Response, next: NextFun
       limit ? parseInt(limit as string) : undefined,
       offset ? parseInt(offset as string) : undefined,
     );
-    const jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    let jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    jsonData = normalizeCommission(jsonData);
     return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
@@ -52,7 +66,7 @@ export const getLeadById = async (req: Request, res: Response, next: NextFunctio
   try {
     const data = await LeadServiceFunctions.getLeadById(req.params.id);
     const jsonData = data.toJSON ? data.toJSON() : data;
-    return ResponseBuilder.success(res, jsonData);
+    return ResponseBuilder.success(res, normalizeCommission([jsonData])[0]);
   } catch (error) {
     next(error);
   }
@@ -62,7 +76,7 @@ export const updateLead = async (req: Request, res: Response, next: NextFunction
   try {
     const data = await LeadServiceFunctions.updateLead(req.params.id, req.body);
     const jsonData = data.toJSON ? data.toJSON() : data;
-    return ResponseBuilder.success(res, jsonData);
+    return ResponseBuilder.success(res, normalizeCommission([jsonData])[0]);
   } catch (error) {
     next(error);
   }
@@ -70,10 +84,15 @@ export const updateLead = async (req: Request, res: Response, next: NextFunction
 
 export const updateLeadStatus = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { status } = req.body;
-    const data = await LeadServiceFunctions.updateLeadStatus(req.params.id, status);
+    const { status, commissionAmount } = req.body; // Allow commissionAmount input
+
+    if (commissionAmount != null && isNaN(Number(commissionAmount))) {
+      return next(new Error('Invalid commission amount'));
+    }
+
+    const data = await LeadServiceFunctions.updateLeadStatus(req.params.id, status, Number(commissionAmount));
     const jsonData = data.toJSON ? data.toJSON() : data;
-    return ResponseBuilder.success(res, jsonData);
+    return ResponseBuilder.success(res, normalizeCommission([jsonData])[0]);
   } catch (error) {
     next(error);
   }
@@ -101,7 +120,8 @@ export const getNewLeads = async (req: Request, res: Response, next: NextFunctio
   try {
     const days = req.query.days ? parseInt(req.query.days as string) : 7;
     const data = await LeadServiceFunctions.getNewLeads(days);
-    const jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    let jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    jsonData = normalizeCommission(jsonData);
     return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
@@ -125,7 +145,8 @@ export const getMyLeads = async (req: Request, res: Response, next: NextFunction
       limit ? parseInt(limit as string) : undefined,
       offset ? parseInt(offset as string) : undefined,
     );
-    const jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    let jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    jsonData = normalizeCommission(jsonData);
     return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);

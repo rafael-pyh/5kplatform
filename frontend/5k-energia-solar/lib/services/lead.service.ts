@@ -42,9 +42,10 @@ export const leadService = {
   },
 
   // Atualizar status do lead
-  async updateStatus(id: string, status: LeadStatus): Promise<Lead> {
+  async updateStatus(id: string, status: LeadStatus, commissionAmount?: number): Promise<Lead> {
     const response = await api.patch<ApiResponse<Lead>>(`/lead/${id}/status`, {
       status,
+      commissionAmount,
     });
     return response.data.data!;
   },

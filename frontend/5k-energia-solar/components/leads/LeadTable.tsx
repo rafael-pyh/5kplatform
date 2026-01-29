@@ -74,6 +74,12 @@ function LeadTable({ leads, onViewDetails, onUpdateStatus, className }: LeadTabl
                 scope="col"
                 className="hidden lg:table-cell p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider truncate"
               >
+                Comissão
+              </th>
+              <th
+                scope="col"
+                className="hidden lg:table-cell p-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider truncate"
+              >
                 Data
               </th>
               <th

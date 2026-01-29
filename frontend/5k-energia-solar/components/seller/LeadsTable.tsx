@@ -9,6 +9,7 @@ type Lead = {
   phone?: string;
   status: string;
   createdAt: string;
+  commissionAmount?: number;
 };
 
 const getStatusBadge = (status: string) => {
@@ -30,7 +31,15 @@ interface LeadsTableProps {
 const isSeller = (role?: string) => role === 'SELLER' || role === 'ADMIN' || role === 'SUPER_ADMIN';
 
 const LeadsTable = ({ leads, userRole }: LeadsTableProps) => {
-  if (!leads || leads.length === 0) {
+  const leadsArray: Lead[] = Array.isArray(leads)
+    ? leads
+    : Array.isArray((leads as any)?.data)
+    ? (leads as any).data
+    : Array.isArray((leads as any)?.rows)
+    ? (leads as any).rows
+    : [];
+
+  if (!leadsArray || leadsArray.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">Nenhum lead cadastrado ainda.</p>
@@ -52,17 +61,19 @@ const LeadsTable = ({ leads, userRole }: LeadsTableProps) => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contato</th>
               )}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Comissão</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {leads.map((lead) => (
+            {leadsArray.map((lead) => (
               <tr key={lead.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{lead.name}</td>
                 {showFullData && (
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{lead.phone || lead.email || '-'}</td>
                 )}
                 <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(lead.status)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">R$ {Number(lead.commissionAmount || 0).toFixed(2)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(lead.createdAt).toLocaleDateString('pt-BR')}</td>
               </tr>
             ))}
@@ -72,7 +83,7 @@ const LeadsTable = ({ leads, userRole }: LeadsTableProps) => {
 
       {/* Mobile Cards */}
       <div className="sm:hidden space-y-3">
-        {leads.map((lead) => (
+        {leadsArray.map((lead) => (
           <div key={lead.id} className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
             {/* Header */}
             <div className="mb-3 pb-3 border-b border-gray-200">
@@ -91,6 +102,10 @@ const LeadsTable = ({ leads, userRole }: LeadsTableProps) => {
               <div>
                 <p className="text-xs text-gray-500">Status</p>
                 <div className="mt-1">{getStatusBadge(lead.status)}</div>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Comissão</p>
+                <p className="text-sm font-medium text-gray-900">R$ {Number(lead.commissionAmount || 0).toFixed(2)}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Data</p>
