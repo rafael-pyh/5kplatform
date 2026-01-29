@@ -70,6 +70,21 @@ async function createLead(data: CreateLeadDto) {
     hasRoofPhoto: !!data.roofPhoto,
   });
 
+  // CRITICAL VALIDATION: ownerId MUST be provided and valid
+  if (!data.ownerId || typeof data.ownerId !== 'string' || data.ownerId.trim() === '') {
+    console.error('[Lead Service] ❌ ERRO CRÍTICO: ownerId não fornecido ou inválido!', {
+      ownerId: data.ownerId,
+      type: typeof data.ownerId,
+    });
+    throw new Error('ownerId é obrigatório para criar um lead');
+  }
+
+  // Validate ownerId is a valid UUID
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.ownerId)) {
+    console.error('[Lead Service] ❌ ERRO: ownerId não é um UUID válido!', data.ownerId);
+    throw new Error(`ownerId fornecido não é um UUID válido: ${data.ownerId}`);
+  }
+
   const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
   
   // Validar e processar energyBill
@@ -164,6 +179,8 @@ async function createLead(data: CreateLeadDto) {
     phone: jsonData.phone,
     city: jsonData.city,
     state: jsonData.state,
+    ownerId: jsonData.ownerId,
+    owner: jsonData.owner ? { id: jsonData.owner.id, name: jsonData.owner.name } : null,
     hasEnergyBill: !!jsonData.energyBill,
     hasRoofPhoto: !!jsonData.roofPhoto,
   });
@@ -576,21 +593,71 @@ async function getSellerLeadsStats(sellerId: string) {
   const service = new LeadService();
   const cacheKey = service.getCacheKey('seller-stats', sellerId);
 
-  return service.getCachedOrExecute(cacheKey, async () => {
-    const [total, bought, negotiation, cancelled] = await Promise.all([
-      Lead.count({ where: { ownerId: sellerId } }),
-      Lead.count({ where: { ownerId: sellerId, status: LeadStatus.BOUGHT } }),
-      Lead.count({ where: { ownerId: sellerId, status: LeadStatus.NEGOTIATION } }),
-      Lead.count({ where: { ownerId: sellerId, status: LeadStatus.CANCELLED } }),
-    ]);
+  console.log('[LeadService.getSellerLeadsStats] Iniciando cálculo de stats para sellerId:', sellerId);
+  console.log('[LeadService.getSellerLeadsStats] Cache key:', cacheKey);
 
-    return {
-      total,
-      bought,
-      negotiation,
-      cancelled,
-      conversionRate: total > 0 ? ((bought / total) * 100).toFixed(2) + "%" : "0%",
-    };
+  return service.getCachedOrExecute(cacheKey, async () => {
+    console.log('[LeadService.getSellerLeadsStats] Executando query (não vindo de cache) para sellerId:', sellerId);
+    
+    // Validar que sellerId não é vazio/null
+    if (!sellerId || typeof sellerId !== 'string' || sellerId.trim() === '') {
+      console.error('[LeadService.getSellerLeadsStats] ❌ ERRO: sellerId inválido:', sellerId);
+      throw new Error(`sellerId inválido: ${sellerId}`);
+    }
+
+    try {
+      // Query com detalhes de debug
+      console.log('[LeadService.getSellerLeadsStats] Testando conexão com DB...');
+      
+      const [total, bought, negotiation, cancelled] = await Promise.all([
+        Lead.count({ where: { ownerId: sellerId } }),
+        Lead.count({ where: { ownerId: sellerId, status: LeadStatus.BOUGHT } }),
+        Lead.count({ where: { ownerId: sellerId, status: LeadStatus.NEGOTIATION } }),
+        Lead.count({ where: { ownerId: sellerId, status: LeadStatus.CANCELLED } }),
+      ]);
+
+      console.log('[LeadService.getSellerLeadsStats] Resultados da query:', {
+        sellerId,
+        total,
+        bought,
+        negotiation,
+        cancelled,
+      });
+
+      // Validação: Se total é 0, buscar todos os leads para verificar se há algum com esse ownerId
+      if (total === 0) {
+        console.warn('[LeadService.getSellerLeadsStats] ⚠️ AVISO: Total de leads é 0 para este vendedor');
+        
+        // Debug: Contar TODOS os leads e seus ownerIds
+        const allLeads = await Lead.findAll({
+          attributes: ['id', 'ownerId', 'name'],
+          limit: 5,
+        });
+        
+        console.warn('[LeadService.getSellerLeadsStats] Amostra de primeiros 5 leads do DB:', 
+          allLeads.map(l => ({
+            id: l.id,
+            ownerId: l.ownerId,
+            name: l.name,
+            isOwned: l.ownerId === sellerId
+          }))
+        );
+      }
+
+      const result = {
+        total,
+        bought,
+        negotiation,
+        cancelled,
+        conversionRate: total > 0 ? ((bought / total) * 100).toFixed(2) + "%" : "0%",
+      };
+
+      console.log('[LeadService.getSellerLeadsStats] Resultado final:', result);
+      return result;
+    } catch (queryError) {
+      console.error('[LeadService.getSellerLeadsStats] ❌ Erro ao executar query de stats:', queryError);
+      throw queryError;
+    }
   }, service.getTtlStats());
 }
 
