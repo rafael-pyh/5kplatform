@@ -26,6 +26,7 @@ export default function UpdateStatusModal({
 }: UpdateStatusModalProps) {
   const [loading, setLoading] = useState(false);
   const [showCommissionField, setShowCommissionField] = useState(false);
+  const hasCommission = lead && lead.commissionAmount != null && Number(lead.commissionAmount) > 0;
   const {
     register,
     handleSubmit,
@@ -41,9 +42,10 @@ export default function UpdateStatusModal({
   // Observar mudanças no status para mostrar/esconder campo de comissão
   const watchedStatus = watch('status');
   useEffect(() => {
-    // Mostrar campo de comissão sempre que houver um owner (vendedor/afiliado)
-    setShowCommissionField(!!lead.owner);
-  }, [lead.owner]);
+    // Mostrar campo de comissão somente se houver owner, ainda NÃO houver comissão atribuída
+    // e o status selecionado no formulário for BOUGHT (aparece após admin alterar para Comprou)
+    setShowCommissionField(!!lead.owner && !hasCommission && watchedStatus === 'BOUGHT');
+  }, [lead.owner, lead.commissionAmount, watchedStatus]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -67,7 +69,8 @@ export default function UpdateStatusModal({
 
       // Envia status e comissionAmount para o backend
       const updateData: any = { status: data.status };
-      if (data.commissionAmount != null) {
+      // Só enviar commissionAmount quando o campo estiver visível (evita re-enviar quando já existe)
+      if (showCommissionField && data.commissionAmount != null) {
         updateData.commissionAmount = Number(data.commissionAmount);
       }
 
@@ -118,8 +121,8 @@ if (!isOpen) return null;
               <p className="text-red-500 text-sm mt-1">{errors.status.message}</p>
             )}
           </div>
-          {/* Commission Field - Show when there's an owner */}
-          {showCommissionField && (
+          {/* Commission Field - Show when there's an owner and no commission yet. If commission exists, show read-only info */}
+          {showCommissionField ? (
             <div>
               <label htmlFor="commissionAmount" className="block text-sm font-medium text-gray-700 mb-1">
                 Comissão para {lead.owner?.name || 'Vendedor/Afiliado'} *
@@ -143,6 +146,15 @@ if (!isOpen) return null;
                 Valor em R$ que será atribuído como comissão ao vendedor/afiliado.
               </p>
             </div>
+          ) : (
+            hasCommission && (
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm font-medium text-gray-900">Comissão já atribuída</p>
+                <p className="text-sm text-gray-700">
+                  {Number(lead.commissionAmount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </p>
+              </div>
+            )
           )}
           {/* Actions */}
           <div className="flex gap-3 pt-4">

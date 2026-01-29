@@ -86,11 +86,16 @@ export const updateLeadStatus = async (req: Request, res: Response, next: NextFu
   try {
     const { status, commissionAmount } = req.body; // Allow commissionAmount input
 
-    if (commissionAmount != null && isNaN(Number(commissionAmount))) {
-      return next(new Error('Invalid commission amount'));
+    // Parse commissionAmount only if provided
+    let commissionNum: number | undefined = undefined;
+    if (commissionAmount != null) {
+      commissionNum = Number(commissionAmount);
+      if (isNaN(commissionNum)) {
+        return next(new Error('Invalid commission amount'));
+      }
     }
 
-    const data = await LeadServiceFunctions.updateLeadStatus(req.params.id, status, Number(commissionAmount));
+    const data = await LeadServiceFunctions.updateLeadStatus(req.params.id, status, commissionNum);
     const jsonData = data.toJSON ? data.toJSON() : data;
     return ResponseBuilder.success(res, normalizeCommission([jsonData])[0]);
   } catch (error) {

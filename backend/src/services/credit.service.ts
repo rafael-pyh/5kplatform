@@ -3,6 +3,7 @@ import { CreditTransaction, CreditTransactionType } from '../models/CreditTransa
 import { Person } from '../models/Person';
 import { Op } from 'sequelize';
 import { CacheInvalidationManager } from '../cache/cache-invalidation';
+import { Lead, LeadStatus } from '../models/Lead';
 
 /**
  * Credit Service
@@ -107,9 +108,22 @@ export const addCreditTransaction = async (
     }
 
     // Validar que saldo não fica negativo (exceto para ADJUSTMENT explícito)
+    // Validate amount is a finite number
+    if (typeof amount !== 'number' || !Number.isFinite(amount)) {
+      throw new Error('Invalid transaction amount');
+    }
+
     const newBalance = parseFloat(wallet.balance.toString()) + amount;
     if (newBalance < 0 && type !== CreditTransactionType.ADJUSTMENT) {
       throw new Error(`Saldo insuficiente. Disponível: R$ ${wallet.balance.toFixed(2)}`);
+    }
+
+    // Se for comissão e vinculada a um lead, garantir que não exista comissão anterior
+    if (leadId && type === CreditTransactionType.COMMISSION) {
+      const existing = await CreditTransaction.findOne({ where: { leadId, personId, type: CreditTransactionType.COMMISSION } });
+      if (existing) {
+        throw new Error('Comissão para este lead já foi atribuída e não pode ser adicionada novamente');
+      }
     }
 
     // Criar transação
@@ -285,7 +299,30 @@ export const addCommissionCredits = async (
       leadId,
     };
 
-    return await addCreditTransaction(params);
+    const transaction = await addCreditTransaction(params);
+
+    // Se possível, atualizar o lead para BOUGHT ao aplicar comissão
+    if (leadId) {
+      try {
+        const lead = await Lead.findByPk(leadId);
+        if (lead) {
+          const needsUpdate = lead.status !== LeadStatus.BOUGHT || !lead.commissionAmount || Number(lead.commissionAmount) === 0;
+          if (needsUpdate) {
+            await lead.update({ status: LeadStatus.BOUGHT, commissionAmount: amount });
+            // Garantir invalidação de cache também (caso não tenha sido feita pelo addCreditTransaction)
+            try {
+              CacheInvalidationManager.invalidateAfterUpdate('Lead', leadId);
+            } catch (err) {
+              console.error('Erro ao invalidar cache de Lead após atualização de status:', err);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao atualizar status do lead após comissão:', err);
+      }
+    }
+
+    return transaction;
   } catch (error: any) {
     console.error('Erro ao adicionar créditos de comissão:', error);
     throw new Error(`Erro ao adicionar comissão: ${error.message}`);

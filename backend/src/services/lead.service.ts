@@ -348,44 +348,52 @@ async function updateLeadStatus(id: string, status: LeadStatus, commissionAmount
 
   const previousStatus = lead.status;
 
-  // Atualiza status e comissionAmount se fornecido
-  const updateData: any = { status };
-  if (commissionAmount != null) {
-    updateData.commissionAmount = commissionAmount;
+  // Validate commissionAmount if provided
+  if (commissionAmount != null && (!Number.isFinite(commissionAmount) || commissionAmount < 0)) {
+    throw new Error('Invalid commission amount');
   }
-  await lead.update(updateData);
 
-  // Recarrega para garantir owner atualizado
-  await lead.reload({
-    include: [{
-      model: Person,
-      as: 'owner',
-      attributes: ['id', 'name', 'email'],
-    }],
-  });
-
-  // Invalida caches
-  CacheInvalidationManager.invalidateAfterUpdate('Lead', id);
-
-  // Se o status mudou para BOUGHT, atribuir créditos
-  if (previousStatus !== LeadStatus.BOUGHT && status === LeadStatus.BOUGHT) {
+  // If an explicit positive commissionAmount is provided, create commission (which will mark lead as BOUGHT)
+  if (commissionAmount != null && commissionAmount > 0) {
     const owner = (lead as any).owner as Person | undefined;
     if (owner) {
-      const reason = `Lead convertido: ${lead.name}`;
-
+      const reason = `Comissão atribuída via atualização de status: ${lead.name}`;
       try {
-        await addCreditTransaction({
-          personId: owner.id,
-          type: CreditTransactionType.COMMISSION,
-          amount: commissionAmount || 0, // Use provided commissionAmount or default to 0
-          description: reason,
-          leadId: lead.id,
+        await addCommissionCredits(owner.id, commissionAmount, lead.id, reason);
+        // reload lead after commission application (addCommissionCredits updates lead)
+        await lead.reload({
+          include: [{
+            model: Person,
+            as: 'owner',
+            attributes: ['id', 'name', 'email'],
+          }],
         });
-        console.log(`Créditos atribuídos: ${commissionAmount || 0} para ${owner.name} pelo lead ${lead.name}`);
       } catch (creditError) {
         console.error('Erro ao atribuir créditos:', creditError);
+        throw creditError;
       }
     }
+  } else {
+    // No positive commission provided: only update status (do not create zero-value commission)
+    const updateData: any = { status };
+    if (commissionAmount != null) {
+      // only set commissionAmount when explicitly provided (even if zero) to preserve intent
+      updateData.commissionAmount = commissionAmount;
+    }
+
+    await lead.update(updateData);
+
+    // Recarrega para garantir owner atualizado
+    await lead.reload({
+      include: [{
+        model: Person,
+        as: 'owner',
+        attributes: ['id', 'name', 'email'],
+      }],
+    });
+
+    // Invalida caches
+    CacheInvalidationManager.invalidateAfterUpdate('Lead', id);
   }
 
   return lead;
