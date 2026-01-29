@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { LeadServiceFunctions } from "../services/lead.service";
 import { ResponseBuilder } from "../shared/ResponseBuilder";
+import { fileLogger } from "../utils/file-logger";
 
 // ==================== SELLER LEADS CONTROLLER ====================
 
@@ -44,6 +45,15 @@ export const getMyStats = async (req: Request, res: Response, next: NextFunction
     const sellerId = req.user?.userId;
     const userEmail = req.user?.email;
     const userRole = req.user?.role;
+    
+    // Log IMEDIATO no arquivo
+    fileLogger.logStats({
+      context: 'getMyStats_start',
+      sellerId,
+      userEmail,
+      userRole,
+      timestamp: new Date().toISOString(),
+    });
     
     console.log('[MY-STATS] ========== INICIANDO BUSCA DE STATS ==========');
     console.log('[MY-STATS] Token decodificado:', {
@@ -106,25 +116,66 @@ export const getMyStats = async (req: Request, res: Response, next: NextFunction
       // Continue anyway, just log the error
     }
 
-    const stats = await LeadServiceFunctions.getSellerLeadsStats(sellerId);
-    
-    // Log detailed stats for debugging
+    let stats: any;
     try {
-      console.log('[MY-STATS] ✓ Stats calculadas:', {
-        sellerId,
-        stats: {
-          total: stats?.total || 0,
-          bought: stats?.bought || 0,
-          negotiation: stats?.negotiation || 0,
-          cancelled: stats?.cancelled || 0,
-          conversionRate: stats?.conversionRate || '0%',
-        }
-      });
-    } catch (e) {
-      console.error('[MY-STATS] ⚠️ Erro ao logar stats:', e);
+      stats = await LeadServiceFunctions.getSellerLeadsStats(sellerId);
+    } catch (statsError: any) {
+      console.error('[MY-STATS] ❌ Erro ao obter stats:', statsError);
+      // Fallback para objeto vazio se houver erro
+      stats = {
+        total: 0,
+        bought: 0,
+        negotiation: 0,
+        cancelled: 0,
+        conversionRate: '0%',
+        error: statsError?.message || 'Erro ao calcular stats',
+      };
     }
 
+    // Garantir que stats é sempre um objeto válido
+    if (!stats || typeof stats !== 'object') {
+      console.error('[MY-STATS] ❌ ERRO CRÍTICO: stats retornou valor inválido:', stats);
+      stats = {
+        total: 0,
+        bought: 0,
+        negotiation: 0,
+        cancelled: 0,
+        conversionRate: '0%',
+        error: 'Valor de stats inválido',
+      };
+    }
+    
+    // Log detailed stats for debugging
+    console.log('[MY-STATS] ✓ Stats finais:', {
+      sellerId,
+      stats: {
+        total: stats.total || 0,
+        bought: stats.bought || 0,
+        negotiation: stats.negotiation || 0,
+        cancelled: stats.cancelled || 0,
+        conversionRate: stats.conversionRate || '0%',
+        error: stats.error || undefined,
+      }
+    });
+
     console.log('[MY-STATS] ========== BUSCA DE STATS CONCLUÍDA ==========');
+    
+    // Log em arquivo também
+    fileLogger.logStats({
+      context: 'getMyStats_response',
+      sellerId,
+      stats,
+      timestamp: new Date().toISOString(),
+    });
+    
+    // Adicionar debug header na resposta para produção
+    res.set('X-Debug-Stats', JSON.stringify({
+      timestamp: new Date().toISOString(),
+      sellerId,
+      hasTotalField: 'total' in stats,
+      statsType: typeof stats,
+    }));
+    
     return ResponseBuilder.success(res, stats);
   } catch (error) {
     console.error('[MY-STATS] ❌ Erro na busca de stats:', error);
@@ -133,10 +184,42 @@ export const getMyStats = async (req: Request, res: Response, next: NextFunction
 };
 
 /**
- * DEBUG ENDPOINT: Diagnosticar problema de stats = 0
- * GET /api/seller-leads/debug/stats
+ * DEBUG ENDPOINT: Retornar logs de stats
+ * GET /api/seller-leads/debug/logs
  */
-export const debugStats = async (req: Request, res: Response, next: NextFunction) => {
+export const debugLogs = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { fileLogger } = require("../utils/file-logger");
+    const logContent = fileLogger.readStatsLog();
+    
+    return ResponseBuilder.success(res, {
+      debug: true,
+      logPath: fileLogger.getLogPath(),
+      logContent: logContent,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[DEBUG-LOGS] Erro:', error);
+    next(error);
+  }
+};
+  const timestamp = new Date().toISOString();
+  
+  console.log('[TEST-LOGGING] ========== TESTE DE LOGGING ==========');
+  console.log('[TEST-LOGGING] Timestamp:', timestamp);
+  console.log('[TEST-LOGGING] User:', req.user?.userId);
+  console.error('[TEST-LOGGING] ESTE É UM ERRO TESTE - deve aparecer em stderr');
+  console.warn('[TEST-LOGGING] ESTE É UM AVISO TESTE - deve aparecer em stdout');
+  
+  console.log('[TEST-LOGGING] ========== FIM DO TESTE ==========');
+
+  return ResponseBuilder.success(res, {
+    message: 'Teste de logging executado - verifique os logs do servidor',
+    timestamp,
+    userId: req.user?.userId,
+    loggingWorking: true,
+  });
+};
   try {
     const sellerId = req.user?.userId;
     
