@@ -46,6 +46,12 @@ export const getMyStats = async (req: Request, res: Response, next: NextFunction
     }
 
     const stats = await LeadServiceFunctions.getSellerLeadsStats(sellerId);
+    // Log sellerId and computed stats to help debug production issues
+    try {
+      console.log(`[MY-STATS] sellerId=${sellerId} stats=${JSON.stringify(stats)}`);
+    } catch (e) {
+      // ignore logging errors
+    }
     return ResponseBuilder.success(res, stats);
   } catch (error) {
     next(error);
