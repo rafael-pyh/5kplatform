@@ -51,6 +51,7 @@ export const getMyStats = async (req: Request, res: Response, next: NextFunction
       console.log(`[MY-STATS] sellerId=${sellerId} stats=${JSON.stringify(stats)}`);
     } catch (e) {
       // ignore logging errors
+      console.error('Error logging seller stats', e);
     }
     return ResponseBuilder.success(res, stats);
   } catch (error) {
