@@ -69,10 +69,25 @@ export class CacheInvalidationManager {
       console.log(`[CACHE INVALIDATED] ${modelName}:${id}`);
     }
     
-    // Invalida listas (findAll, getAllXxx)
-    const pattern = new RegExp(`^${modelName}:(list|findAll|all).*`, 'i');
-    const invalidated = cache.invalidateByPattern(pattern);
-    console.log(`[CACHE INVALIDATED] ${invalidated} list entries for ${modelName}`);
+    // Invalida listas e consultas relacionadas a owners/sellers e roles
+    // Isso garante que endpoints como: "Lead:seller:...", "Lead:by-owner:...", "Lead:by-role:..." sejam atualizados
+    const patterns = [
+      `^${modelName}:(list|findAll|all).*`,
+      `^${modelName}:seller.*`,
+      `^${modelName}:by-owner.*`,
+      `^${modelName}:by-role.*`,
+      `^${modelName}:seller-by-id.*`,
+      `^${modelName}:my-leads.*`,
+      `^${modelName}:new.*`,
+      `^${modelName}:stats.*`,
+    ];
+
+    let totalInvalidated = 0;
+    for (const p of patterns) {
+      const invalidated = cache.invalidateByPattern(new RegExp(p, 'i'));
+      totalInvalidated += invalidated;
+    }
+    console.log(`[CACHE INVALIDATED] ${totalInvalidated} related entries for ${modelName}`);
   }
 
   static invalidateAfterDestroy(modelName: string, id?: string | number) {
@@ -84,10 +99,24 @@ export class CacheInvalidationManager {
       console.log(`[CACHE INVALIDATED] ${modelName}:${id}`);
     }
     
-    // Invalida todas as listas
-    const pattern = new RegExp(`^${modelName}:(list|findAll|all).*`, 'i');
-    const invalidated = cache.invalidateByPattern(pattern);
-    console.log(`[CACHE INVALIDATED] ${invalidated} list entries for ${modelName}`);
+    // Invalida listas e consultas relacionadas a owners/sellers e roles
+    const patterns = [
+      `^${modelName}:(list|findAll|all).*`,
+      `^${modelName}:seller.*`,
+      `^${modelName}:by-owner.*`,
+      `^${modelName}:by-role.*`,
+      `^${modelName}:seller-by-id.*`,
+      `^${modelName}:my-leads.*`,
+      `^${modelName}:new.*`,
+      `^${modelName}:stats.*`,
+    ];
+
+    let totalInvalidated = 0;
+    for (const p of patterns) {
+      const invalidated = cache.invalidateByPattern(new RegExp(p, 'i'));
+      totalInvalidated += invalidated;
+    }
+    console.log(`[CACHE INVALIDATED] ${totalInvalidated} related entries for ${modelName}`);
   }
 
   /**

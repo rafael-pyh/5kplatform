@@ -2,6 +2,7 @@ import { CreditWallet } from '../models/CreditWallet';
 import { CreditTransaction, CreditTransactionType } from '../models/CreditTransaction';
 import { Person } from '../models/Person';
 import { Op } from 'sequelize';
+import { CacheInvalidationManager } from '../cache/cache-invalidation';
 
 /**
  * Credit Service
@@ -128,6 +129,15 @@ export const addCreditTransaction = async (
       balance: newBalance,
       lastTransactionAt: new Date(),
     });
+
+    // Se a transação está associada a um lead, invalidar caches relacionados ao modelo Lead
+    if (leadId) {
+      try {
+        CacheInvalidationManager.invalidateAfterUpdate('Lead', leadId);
+      } catch (err) {
+        console.error('Erro ao invalidar cache de Lead após transação de crédito:', err);
+      }
+    }
 
     return transaction;
   } catch (error: any) {
