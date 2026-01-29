@@ -184,25 +184,10 @@ export const getMyStats = async (req: Request, res: Response, next: NextFunction
 };
 
 /**
- * DEBUG ENDPOINT: Retornar logs de stats
- * GET /api/seller-leads/debug/logs
+ * DEBUG ENDPOINT: Verificar se logs estão funcionando em produção
+ * GET /api/seller-leads/test-logging
  */
-export const debugLogs = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { fileLogger } = require("../utils/file-logger");
-    const logContent = fileLogger.readStatsLog();
-    
-    return ResponseBuilder.success(res, {
-      debug: true,
-      logPath: fileLogger.getLogPath(),
-      logContent: logContent,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('[DEBUG-LOGS] Erro:', error);
-    next(error);
-  }
-};
+export const testLogging = async (req: Request, res: Response, next: NextFunction) => {
   const timestamp = new Date().toISOString();
   
   console.log('[TEST-LOGGING] ========== TESTE DE LOGGING ==========');
@@ -220,6 +205,12 @@ export const debugLogs = async (req: Request, res: Response, next: NextFunction)
     loggingWorking: true,
   });
 };
+
+/**
+ * DEBUG ENDPOINT: Diagnosticar problema de stats = 0
+ * GET /api/seller-leads/debug/stats
+ */
+export const debugStats = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const sellerId = req.user?.userId;
     
@@ -295,6 +286,27 @@ export const debugLogs = async (req: Request, res: Response, next: NextFunction)
     });
   } catch (error) {
     console.error('[DEBUG-STATS] ❌ Erro:', error);
+    next(error);
+  }
+};
+
+/**
+ * DEBUG ENDPOINT: Retornar logs de stats
+ * GET /api/seller-leads/debug/logs
+ */
+export const debugLogs = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { fileLogger } = require("../utils/file-logger");
+    const logContent = fileLogger.readStatsLog();
+    
+    return ResponseBuilder.success(res, {
+      debug: true,
+      logPath: fileLogger.getLogPath(),
+      logContent: logContent,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[DEBUG-LOGS] Erro:', error);
     next(error);
   }
 };
