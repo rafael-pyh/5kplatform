@@ -66,24 +66,38 @@ export default function useSellerDashboard() {
         }
 
         // AFFILIATE não precisa de profile e stats
-        if (currentUser.role === 'AFFILIATE') {
+        const userRoleUpper = currentUser.role?.toUpperCase();
+        if (userRoleUpper === 'AFFILIATE') {
           const leadsRes = await api.get('/lead/my-leads');
           setLeads(leadsRes.data.data || []);
           setBlockedReason(null);
           return;
         }
 
-        const profileRes = await api.get('/seller/profile');
-        setSeller(profileRes.data.data);
+        try {
+          const profileRes = await api.get('/seller/profile');
+          setSeller(profileRes.data.data);
+        } catch (profileError: any) {
+          console.error('Erro ao buscar profile do seller:', profileError);
+          // Se o profile falhar, tenta continuar para carregar pelo menos os leads
+          setSeller(null);
+        }
 
         if (currentUser.active === false) {
           setBlockedReason('inactive');
           return;
         }
 
-        const [leadsRes, statsRes] = await Promise.all([api.get('/lead/my-leads'), api.get('/seller/my-stats')]);
-        setLeads(leadsRes.data.data || []);
-        setStats(statsRes.data.data || null);
+        try {
+          const [leadsRes, statsRes] = await Promise.all([api.get('/lead/my-leads'), api.get('/seller/my-stats')]);
+          setLeads(leadsRes.data.data || []);
+          setStats(statsRes.data.data || null);
+        } catch (dataError: any) {
+          console.error('Erro ao carregar leads/stats:', dataError);
+          // Fallback para dados vazios se as requisições falharem
+          setLeads([]);
+          setStats(null);
+        }
         setBlockedReason(null);
       } catch (error: any) {
         console.error('Erro ao carregar dados:', error);
