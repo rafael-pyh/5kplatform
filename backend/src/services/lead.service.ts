@@ -698,9 +698,18 @@ async function getSellerLeadsStats(sellerId: string) {
     if (!result || typeof result !== 'object') {
       console.error('[LeadService.getSellerLeadsStats] ❌ ERRO CRÍTICO: resultado inválido:', result);
       fileLogger.logError('getSellerLeadsStats_invalid_result', new Error(`Resultado inválido: ${result}`));
-      throw new Error('Resultado de stats é inválido');
+      // Não cachear resultado inválido, retornar fallback
+      return {
+        total: 0,
+        bought: 0,
+        negotiation: 0,
+        cancelled: 0,
+        conversionRate: '0%',
+        error: 'Resultado de stats é inválido',
+      };
     }
     
+    // Resultado é válido, retornar
     return result;
   } catch (finalError) {
     console.error('[LeadService.getSellerLeadsStats] ❌ ERRO FATAL em getSellerLeadsStats:', finalError);

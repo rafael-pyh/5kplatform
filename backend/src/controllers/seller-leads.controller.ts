@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { LeadServiceFunctions } from "../services/lead.service";
 import { ResponseBuilder } from "../shared/ResponseBuilder";
 import { fileLogger } from "../utils/file-logger";
+import { Person } from "../models/Person";
 
 // ==================== SELLER LEADS CONTROLLER ====================
 
@@ -82,9 +83,6 @@ export const getMyStats = async (req: Request, res: Response, next: NextFunction
 
     // CRITICAL: Verify that the Person exists and matches the email
     try {
-      const LeadServiceFunctions = require("../services/lead.service").LeadServiceFunctions || require("../services/lead.service");
-      const Person = require("../models/Person").Person;
-      
       const personInDb = await Person.findByPk(sellerId);
       console.log('[MY-STATS] Person no DB:', {
         exists: !!personInDb,

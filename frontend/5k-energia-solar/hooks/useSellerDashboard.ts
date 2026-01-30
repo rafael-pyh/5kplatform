@@ -90,10 +90,28 @@ export default function useSellerDashboard() {
 
         try {
           const [leadsRes, statsRes] = await Promise.all([api.get('/lead/my-leads'), api.get('/seller/my-stats')]);
+          
+          // Debug logs
+          console.log('[useSellerDashboard] Leads response:', leadsRes.data);
+          console.log('[useSellerDashboard] Stats response:', statsRes.data);
+          
           setLeads(leadsRes.data.data || []);
-          setStats(statsRes.data.data || null);
+          
+          // Stats validation - ensure it's a proper object
+          const statsData = statsRes.data?.data;
+          if (statsData && typeof statsData === 'object') {
+            setStats(statsData);
+          } else {
+            console.warn('[useSellerDashboard] Invalid stats data received:', statsData);
+            setStats(null);
+          }
         } catch (dataError: any) {
           console.error('Erro ao carregar leads/stats:', dataError);
+          console.error('Error details:', {
+            status: dataError.response?.status,
+            data: dataError.response?.data,
+            message: dataError.message,
+          });
           // Fallback para dados vazios se as requisições falharem
           setLeads([]);
           setStats(null);
