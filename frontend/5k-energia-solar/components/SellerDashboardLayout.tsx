@@ -32,6 +32,7 @@ export default function SellerDashboardLayout({ children, className }: SellerDas
           qrCodeBase64={seller.qrCodeUrl}
           personName={seller.name}
           qrCode={seller.qrCode}
+          userRole={seller?.role as 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | 'AFFILIATE' | undefined}
           initialMode={qrModalMode}
         />
       )}

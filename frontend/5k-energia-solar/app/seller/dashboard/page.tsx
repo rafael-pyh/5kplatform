@@ -3,25 +3,17 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import QRCodeModal from '@/components/QRCodeModal';
-import SellerHeader from '@/components/seller/SellerHeader';
 import StatsCards from '@/components/seller/StatsCards';
 import LeadsTable from '@/components/seller/LeadsTable';
 import useSellerDashboard from '@/hooks/useSellerDashboard';
+import SellerDashboardLayout from '@/components/SellerDashboardLayout';
 
 export default function SellerDashboardPage() {
   const {
     loading,
     blockedReason,
-    seller,
     leads,
     stats,
-    isQRModalOpen,
-    qrModalMode,
-    openQRModal,
-    openQRCodeModal,
-    openCriativosModal,
-    closeQRModal,
     handleLogout,
     userRole,
   } = useSellerDashboard();
@@ -30,7 +22,7 @@ export default function SellerDashboardPage() {
 
   useEffect(() => {
     if (blockedReason) {
-      const message = blockedReason === 'pendingApproval' ? 'Sua conta está pendente de aprovação.' : blockedReason === 'unverified' ? 'E-mail de verificação necessário para acessar o dashboard.' : 'Sua conta está bloqueada. Entre em contato com o suporte.';
+      const message = blockedReason === 'pendingApproval' ? 'Sua conta está pendente de aprovação.' : blockedReason === 'unverified' ? 'E-mail de verificação necessário para acessar o dashboard.' : 'Sua conta está bloqueado. Entre em contato com o suporte.';
       toast.error(message, { duration: 1000 });
       setBlocked(true);
     } else {
@@ -38,7 +30,7 @@ export default function SellerDashboardPage() {
     }
   }, [blockedReason]);
 
-  console.log('[SellerDashboardPage] Rendered with seller:', seller, 'leads count:', leads.length, 'stats:', stats);
+  console.log('[SellerDashboardPage] Rendered with leads count:', leads.length, 'stats:', stats);
 
   if (loading) {
     return (
@@ -49,10 +41,8 @@ export default function SellerDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <SellerHeader seller={seller} onOpenQR={openQRCodeModal} onOpenCriativos={openCriativosModal} onLogout={handleLogout} blocked={blocked} />
-
-      <main className="w-full h-lvh mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-linear-to-br from-blue-50 to-green-50">
+    <SellerDashboardLayout>
+      <div className="space-y-6">
         <StatsCards stats={stats} />
 
         <div className="bg-white rounded-lg shadow">
@@ -63,19 +53,7 @@ export default function SellerDashboardPage() {
             <LeadsTable leads={leads} userRole={userRole} />
           </div>
         </div>
-      </main>
-
-      {seller?.qrCodeUrl && (
-        <QRCodeModal
-          isOpen={isQRModalOpen}
-          onClose={closeQRModal}
-          qrCodeBase64={seller.qrCodeUrl}
-          personName={seller.name}
-          qrCode={seller.qrCode}
-          userRole={userRole}
-          initialMode={qrModalMode}
-        />
-      )}
-    </div>
+      </div>
+    </SellerDashboardLayout>
   );
 }
