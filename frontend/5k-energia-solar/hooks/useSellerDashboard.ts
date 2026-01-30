@@ -65,22 +65,20 @@ export default function useSellerDashboard() {
           return;
         }
 
-        // AFFILIATE não precisa de profile e stats
+        // AFFILIATE não precisa de profile, mas precisa de stats e leads
         const userRoleUpper = currentUser.role?.toUpperCase();
         if (userRoleUpper === 'AFFILIATE') {
-          const leadsRes = await api.get('/lead/my-leads');
-          setLeads(leadsRes.data.data || []);
-          setBlockedReason(null);
-          return;
-        }
-
-        try {
-          const profileRes = await api.get('/seller/profile');
-          setSeller(profileRes.data.data);
-        } catch (profileError: any) {
-          console.error('Erro ao buscar profile do seller:', profileError);
-          // Se o profile falhar, tenta continuar para carregar pelo menos os leads
           setSeller(null);
+        } else if (userRoleUpper === 'SELLER') {
+          // SELLER carrega profile
+          try {
+            const profileRes = await api.get('/seller/profile');
+            setSeller(profileRes.data.data);
+          } catch (profileError: any) {
+            console.error('Erro ao buscar profile do seller:', profileError);
+            // Se o profile falhar, tenta continuar para carregar pelo menos os leads
+            setSeller(null);
+          }
         }
 
         if (currentUser.active === false) {
@@ -88,6 +86,7 @@ export default function useSellerDashboard() {
           return;
         }
 
+        // Ambos SELLER e AFFILIATE carregam leads e stats
         try {
           const [leadsRes, statsRes] = await Promise.all([api.get('/lead/my-leads'), api.get('/seller/my-stats')]);
           
