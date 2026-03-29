@@ -14,7 +14,8 @@ export const personService = {
     const params = activeOnly ? '?active=true' : '';
     const response = await api.get<ApiResponse<Person[]>>(`/person${params}`);
     const persons = response.data.data || [];
-    return persons.map(normalizePersonUrls);
+    const normalized = persons.map(normalizePersonUrls);
+    return normalized;
   },
 
   // Buscar vendedor por ID
@@ -31,7 +32,10 @@ export const personService = {
 
   // Criar novo vendedor
   async create(data: CreatePersonDto): Promise<Person> {
-    const response = await api.post<ApiResponse<Person>>('/person', data);
+    // Se o usuário estiver autenticado (token presente), cria via rota protegida /person
+    const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
+    const endpoint = hasToken ? '/person' : '/manual-register';
+    const response = await api.post<ApiResponse<Person>>(endpoint, data);
     return normalizePersonUrls(response.data.data!);
   },
 
@@ -44,6 +48,12 @@ export const personService = {
   // Desativar vendedor
   async deactivate(id: string): Promise<void> {
     await api.delete(`/person/${id}`);
+  },
+
+  // Reativar vendedor
+  async activate(id: string): Promise<Person> {
+    const response = await api.put<ApiResponse<Person>>(`/person/${id}/activate`);
+    return normalizePersonUrls(response.data.data!);
   },
 
   // Obter estatísticas do vendedor

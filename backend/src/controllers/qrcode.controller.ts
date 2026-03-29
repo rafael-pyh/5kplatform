@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import * as qrcodeService from "../services/qrcode.service";
 import * as personService from "../services/person.service";
-import * as leadService from "../services/lead.service";
+import { LeadServiceFunctions } from "../services/lead.service";
 import { ResponseBuilder } from "../shared/ResponseBuilder";
+import { NotFoundError } from "../shared/errors";
 
 // ==================== QRCODE CONTROLLER (Single Responsibility: HTTP handling) ====================
 
@@ -41,6 +42,9 @@ export const createLeadFromQR = async (req: Request, res: Response, next: NextFu
   try {
     const { qrCode } = req.params;
 
+    console.log('[QRCode Controller] Recebido request para criar lead com QR:', qrCode);
+    console.log('[QRCode Controller] Body do request:', req.body);
+
     // Busca o vendedor pelo QR Code
     const person = await personService.getByQRCode(qrCode);
 
@@ -50,10 +54,16 @@ export const createLeadFromQR = async (req: Request, res: Response, next: NextFu
       ownerId: person.id,
     };
 
-    const lead = await leadService.createLead(leadData);
+    console.log('[QRCode Controller] Chamando createLead com dados:', leadData);
 
-    return ResponseBuilder.created(res, lead, "Cadastro realizado com sucesso!");
+    const lead = await LeadServiceFunctions.createLead(leadData);
+    const jsonData = (lead as any).toJSON ? (lead as any).toJSON() : lead;
+
+    console.log('[QRCode Controller] Lead criado com sucesso. Dados retornados:', jsonData);
+
+    return ResponseBuilder.created(res, jsonData, "Cadastro realizado com sucesso!");
   } catch (error) {
+    console.error('[QRCode Controller] Erro ao criar lead:', error);
     next(error);
   }
 };
@@ -62,7 +72,22 @@ export const createLeadFromQR = async (req: Request, res: Response, next: NextFu
 export const getScansByPerson = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await qrcodeService.getScansByPerson(req.params.personId);
-    return ResponseBuilder.success(res, data);
+    const jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    return ResponseBuilder.success(res, jsonData);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Buscar scans do vendedor autenticado
+export const getMyScans = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const personId = req.user?.userId;
+    if (!personId) throw new Error('Usuário não autenticado');
+
+    const data = await qrcodeService.getScansByPerson(personId);
+    const jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -74,6 +99,28 @@ export const getScansStats = async (req: Request, res: Response, next: NextFunct
     const personId = req.query.personId as string | undefined;
     const data = await qrcodeService.getScansStats(personId);
     return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Endpoint para servir QR Code URL
+export const serveQRCode = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { personId } = req.params;
+
+    // Busca o vendedor pelo ID
+    const person = await personService.getById(personId);
+    if (!person || !person.qrCode) {
+      throw new NotFoundError("QR Code");
+    }
+
+    return ResponseBuilder.success(res, {
+      personId: person.id,
+      personName: person.name,
+      qrCode: person.qrCode,
+      qrCodeUrl: person.qrCodeUrl,
+    });
   } catch (error) {
     next(error);
   }

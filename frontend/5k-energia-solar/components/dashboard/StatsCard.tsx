@@ -29,8 +29,8 @@ function StatsCard({
       <CardContent>
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
+            <p className="text-sm font-medium text-slate-600 mb-1">{title}</p>
+            <p className="text-2xl font-bold text-slate-700">{value}</p>
             {trend && (
               <p
                 className={cn(
@@ -55,7 +55,7 @@ function StatsCard({
               </p>
             )}
           </div>
-          <div className={cn('p-3 rounded-full', iconBgColor)}>
+          <div className={cn('p-3 rounded-full hidden md:inline-flex', iconBgColor)}>
             <div className={cn('w-8 h-8', iconColor)}>{icon}</div>
           </div>
         </div>

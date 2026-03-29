@@ -1,23 +1,23 @@
 import QRCode from "qrcode";
-import { minioClient } from "./minio";
 import { env } from "../config/env";
-import { Readable } from "stream";
+import { uploadQRCodeToMinIO } from "../services/storage.service";
 
 // Gera um código único para o QR
 export const generateQRCode = (): string => {
   return `QR-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 };
 
-// Gera a imagem do QR Code e faz upload para o MinIO
-export const generateQRCodeImage = async (
-  qrCode: string,
-  personId: string
+/**
+ * Gera QR Code como imagem e salva no Minio, retornando a URL
+ */
+export const generateQRCodeAndUpload = async (
+  qrCode: string
 ): Promise<string> => {
   try {
     // URL que o QR code irá redirecionar (formulário público)
     const qrUrl = `${env.FRONTEND_URL}/lead/new?qr=${qrCode}`;
 
-    // Gera a imagem do QR code como buffer
+    // Gera a imagem do QR code como buffer PNG
     const qrBuffer = await QRCode.toBuffer(qrUrl, {
       width: 500,
       margin: 2,
@@ -27,21 +27,14 @@ export const generateQRCodeImage = async (
       },
     });
 
-    // Nome do arquivo no MinIO
-    const fileName = `qrcodes/${personId}-${qrCode}.png`;
+    // Faz upload do QR code para o Minio
+    const qrCodeUrl = await uploadQRCodeToMinIO(qrBuffer, qrCode);
 
-    // Converte buffer para stream
-    const stream = Readable.from(qrBuffer);
-
-    // Faz upload para o MinIO
-    await minioClient.putObject("uploads", fileName, stream, qrBuffer.length, {
-      "Content-Type": "image/png",
-    });
-
-    // Retorna a URL completa do MinIO
-    return `${env.MINIO_PUBLIC_URL}/uploads/${fileName}`;
+    return qrCodeUrl;
   } catch (error) {
-    console.error("Erro ao gerar QR Code:", error);
     throw new Error("Falha ao gerar QR Code");
   }
 };
+
+// Nota: QR codes são salvos exclusivamente como URLs S3
+// Removidos: generateQRCodeBase64, getQRCodeBase64ByCode

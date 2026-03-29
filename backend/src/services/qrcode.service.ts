@@ -1,4 +1,7 @@
-import prisma from "../database/prisma";
+import sequelize from "../database/sequelize";
+import { QRCodeScan } from "../models/QRCodeScan";
+import { Person } from "../models/Person";
+import { Op } from "sequelize";
 
 export interface QRCodeScanData {
   personId: string;
@@ -8,23 +11,15 @@ export interface QRCodeScanData {
 
 // Registrar uma visualização do QR Code
 export const registerScan = async (data: QRCodeScanData) => {
-  // Registra o scan
-  const scan = await prisma.qRCodeScan.create({
-    data: {
-      personId: data.personId,
-      ipAddress: data.ipAddress,
-      userAgent: data.userAgent,
-    },
-  });
+  // Registra o scan com scannedAt explícito
+  const scan = await QRCodeScan.create({
+    ...data,
+    scannedAt: new Date(),
+  } as any);
 
   // Incrementa o contador de scans da pessoa
-  await prisma.person.update({
+  await Person.increment('scanCount', {
     where: { id: data.personId },
-    data: {
-      scanCount: {
-        increment: 1,
-      },
-    },
   });
 
   return scan;
@@ -32,40 +27,40 @@ export const registerScan = async (data: QRCodeScanData) => {
 
 // Buscar histórico de scans de um vendedor
 export const getScansByPerson = async (personId: string) => {
-  return prisma.qRCodeScan.findMany({
+  return QRCodeScan.findAll({
     where: { personId },
-    orderBy: { scannedAt: "desc" },
-    take: 100,
+    order: [['scannedAt', 'DESC']],
+    limit: 100,
   });
 };
 
 // Estatísticas de scans
 export const getScansStats = async (personId?: string) => {
-  const where = personId ? { personId } : {};
+  const where: any = personId ? { personId } : {};
 
   const [total, today, thisWeek, thisMonth] = await Promise.all([
-    prisma.qRCodeScan.count({ where }),
-    prisma.qRCodeScan.count({
+    QRCodeScan.count({ where }),
+    QRCodeScan.count({
       where: {
         ...where,
         scannedAt: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          [Op.gte]: new Date(new Date().setHours(0, 0, 0, 0)),
         },
       },
     }),
-    prisma.qRCodeScan.count({
+    QRCodeScan.count({
       where: {
         ...where,
         scannedAt: {
-          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+          [Op.gte]: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         },
       },
     }),
-    prisma.qRCodeScan.count({
+    QRCodeScan.count({
       where: {
         ...where,
         scannedAt: {
-          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         },
       },
     }),
@@ -78,3 +73,5 @@ export const getScansStats = async (personId?: string) => {
     thisMonth,
   };
 };
+// Nota: QR codes agora são salvos exclusivamente como URLs S3
+// Função removida: getQRCodeBase64 - use qrCodeUrl em vez disso

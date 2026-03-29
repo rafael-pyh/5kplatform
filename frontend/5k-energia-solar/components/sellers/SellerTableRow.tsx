@@ -1,27 +1,92 @@
 'use client';
 
-import { memo } from 'react';
-import { Person } from '@/lib/types';
+import { memo, useState } from 'react';
+import { toast } from 'react-hot-toast';
+import { Person } from '@/types/Person';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import { Icon } from '../ui/Icon';
+import ConfirmationModal from '@/components/ConfirmationModal';
+import { resendVerificationEmailAction } from '@/app/actions/auth';
 
 interface SellerTableRowProps {
   person: Person;
   onViewQRCode: (person: Person) => void;
   onEdit: (person: Person) => void;
   onDeactivate: (id: string) => void;
+  onActivate: (id: string) => void;
+  onApprove: (id: string) => void;
+  onReject: (id: string) => void;
 }
 
-function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate }: SellerTableRowProps) {
+function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate, onActivate, onApprove, onReject }: SellerTableRowProps) {
+  const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState(false);
+
+  const handleDeactivateClick = () => {
+    setDeactivateModalOpen(true);
+  };
+
+  const handleConfirmDeactivate = () => {
+    setDeactivateModalOpen(false);
+    onDeactivate(person.id);
+  };
+
+  const handleRejectClick = () => {
+    setRejectModalOpen(true);
+  };
+
+  const handleConfirmReject = () => {
+    setRejectModalOpen(false);
+    onReject(person.id);
+  };
+
+  const handleResendVerificationEmail = async () => {
+    setResendingEmail(true);
+    try {
+      await resendVerificationEmailAction(person.email!);
+      toast.success('Email de verificação reenviado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao reenviar email:', error);
+      toast.error('Erro ao reenviar email de verificação');
+    } finally {
+      setResendingEmail(false);
+    }
+  };
+
   return (
-    <tr className="hover:bg-gray-50">
-      <td className="px-6 py-4 whitespace-nowrap">
+    <>
+      <ConfirmationModal
+        isOpen={deactivateModalOpen}
+        title="Desativar Vendedor"
+        message={`Tem certeza que deseja desativar o vendedor ${person.name}? Isso o impedirá de gerar novos leads.`}
+        confirmText="Desativar"
+        cancelText="Cancelar"
+        isDangerous={true}
+        onConfirm={handleConfirmDeactivate}
+        onCancel={() => setDeactivateModalOpen(false)}
+      />
+
+      <ConfirmationModal
+        isOpen={rejectModalOpen}
+        title="Reprovar Vendedor"
+        message={`Tem certeza que deseja reprovar o vendedor ${person.name}?`}
+        confirmText="Reprovar"
+        cancelText="Cancelar"
+        isDangerous={true}
+        onConfirm={handleConfirmReject}
+        onCancel={() => setRejectModalOpen(false)}
+      />
+
+      <tr className="hover:bg-gray-50 border-b border-slate-200">
+      <td className="px-2 py-4 whitespace-nowrap">
         <div className="flex items-center">
-          <div className="h-10 w-10 flex-shrink-0">
-            {person.photoUrl ? (
+          <div className="h-10 w-10 shrink-0">
+            {person.photoBase64 ? (
               <img
                 className="h-10 w-10 rounded-full object-cover"
-                src={person.photoUrl}
+                src={person.photoBase64}
                 alt={person.name}
               />
             ) : (
@@ -38,18 +103,37 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate }: SellerTa
           </div>
         </div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-2 py-4 whitespace-nowrap">
         <div className="text-sm text-gray-900">{person.phone}</div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-center">
+      <td className="px-2 py-4 whitespace-nowrap">
+        <div className="text-sm text-gray-900">{person.pixKey}</div>
+      </td>
+      <td className="px-2 py-4 whitespace-nowrap">
+        <div className="text-sm text-gray-900">{person.cpf || '-'}</div>
+      </td>
+      <td className="px-2 py-4 whitespace-nowrap">
+        <div className="text-sm text-gray-900">
+          {person.birthDate ? new Date(person.birthDate).toLocaleDateString('pt-BR') : '-'}
+        </div>
+      </td>
+      <td className="px-2 py-4 whitespace-nowrap text-center">
         <div className="text-sm text-gray-900">{person.scanCount || 0}</div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-2 py-4 whitespace-nowrap text-center">
+        <div className="text-sm text-gray-900">{person.city ? `${person.city}/${person.state}` : 'Não informado'}</div>
+      </td>
+      <td className="px-2 py-4 whitespace-nowrap">
+        <Badge variant={person.commissionType === 'FIXED' ? 'info' : 'warning'}>
+          {person.commissionType === 'FIXED' ? 'Valor Fixo' : 'Porcentagem'}
+        </Badge>
+      </td>
+      <td className="px-2 py-4 whitespace-nowrap">
         <Badge variant={person.active ? 'success' : 'danger'}>
           {person.active ? 'Ativo' : 'Inativo'}
         </Badge>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+      <td className="px-2 py-4 whitespace-nowrap text-right text-sm font-medium">
         <div className="flex items-center justify-end gap-2">
           <button
             onClick={() => onViewQRCode(person)}
@@ -91,16 +175,63 @@ function SellerTableRow({ person, onViewQRCode, onEdit, onDeactivate }: SellerTa
           </button>
           {person.active && (
             <Button
-              variant="danger"
+              variant="outline-danger"
               size="sm"
-              onClick={() => onDeactivate(person.id)}
+              onClick={handleDeactivateClick}
             >
-              Desativar
+              <Icon icon="mdi:account-off-outline" className="w-5 h-5" />
+            </Button>
+          )}
+          {!person.active && (
+            <Button
+              variant="outline-success"
+              size="sm"
+              onClick={() => onActivate(person.id)}
+            >
+              <Icon icon="mdi:account-check-outline" className="w-5 h-5" />
+            </Button>
+          )}
+          {person.approvalStatus === 'pending' && (
+            <>
+                <div className="relative group">
+                <Button
+                  variant="outline-success"
+                  size="sm"
+                  onClick={() => onApprove(person.id)}
+                  disabled={!person.emailVerified}
+                >
+                  Aprovar
+                </Button>
+                {!person.emailVerified && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/1 mb-2 px-3 py-2 text-sm text-white bg-gray-800 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                  Usuário não verificou o email ainda, quando for verificado a opção de aprovar será habilitada
+                  </div>
+                )}
+                </div>
+              <Button
+                variant="outline-danger"
+                size="sm"
+                onClick={handleRejectClick}
+              >
+                Rejeitar
+              </Button>
+            </>
+          )}
+          {!person.emailVerified && (
+            <Button
+              variant="outline-blue"
+              size="sm"
+              onClick={handleResendVerificationEmail}
+              disabled={resendingEmail}
+              title="Reenviar email de verificação"
+            >
+              <Icon icon="mdi:email-send-outline" className="w-5 h-5" />
             </Button>
           )}
         </div>
       </td>
     </tr>
+    </>
   );
 }
 

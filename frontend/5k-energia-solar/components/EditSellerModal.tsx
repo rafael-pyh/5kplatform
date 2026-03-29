@@ -3,15 +3,29 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
-import Button from '@/components/ui/Button';
 import { personService } from '@/lib/services';
 import { Person, UpdatePersonDto } from '@/lib/types';
+import ResponsiveModal from '@/components/ResponsiveModal';
+import CityAutocomplete from '@/components/ui/CityAutocomplete';
+import { getStates, getCitiesByState } from '@/lib/actions/locationActions';
+import { Button } from './ui';
 
 interface EditSellerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  person: Person;
+  person: any;
+}
+
+interface StateOption {
+  id: string;
+  name: string;
+  abbreviation: string;
+}
+
+interface CityOption {
+  id: string;
+  name: string;
 }
 
 export default function EditSellerModal({
@@ -21,21 +35,107 @@ export default function EditSellerModal({
   person,
 }: EditSellerModalProps) {
   const [loading, setLoading] = useState(false);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(person.photoUrl || null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(person.photoBase64 || null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [states, setStates] = useState<StateOption[]>([]);
+  const [cities, setCities] = useState<CityOption[]>([]);
+  const [citiesLoading, setCitiesLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
+    setValue,
   } = useForm<UpdatePersonDto>({
     defaultValues: {
       name: person.name,
       email: person.email,
       phone: person.phone,
+      pixKey: (person as any).pixKey || '',
+      city: (person as any).city || '',
+      state: (person as any).state || '',
+      cpf: (person as any).cpf || '',
+      birthDate: (person as any).birthDate || '',
+      role: (person as any).role || 'SELLER',
     },
   });
+
+  const watchState = watch('state');
+
+  // Load states on mount
+  useEffect(() => {
+    const loadStates = async () => {
+      try {
+        const statesData = await getStates();
+        setStates(statesData);
+      } catch (error) {
+        console.error('Error loading states:', error);
+        toast.error('Erro ao carregar estados');
+      }
+    };
+
+    if (isOpen) {
+      loadStates();
+    }
+  }, [isOpen]);
+
+  // Reset form with person data when modal opens or person changes
+  useEffect(() => {
+    if (isOpen && person) {
+      // Try to find the state abbreviation if the current value is a full name
+      let stateValue = (person as any).state || '';
+      if (stateValue && states.length > 0) {
+        // Check if it's already an abbreviation
+        const isAbbreviation = states.some(s => s.abbreviation === stateValue);
+        if (!isAbbreviation) {
+          // Try to find the abbreviation by name
+          const stateByName = states.find(s => s.name.toLowerCase() === stateValue.toLowerCase());
+          if (stateByName) {
+            stateValue = stateByName.abbreviation;
+          }
+        }
+      }
+
+      reset({
+        name: person.name || '',
+        email: person.email || '',
+        phone: person.phone || '',
+        pixKey: (person as any).pixKey || '',
+        city: (person as any).city || '',
+        state: stateValue,
+        cpf: (person as any).cpf || '',
+        birthDate: (person as any).birthDate || '',
+        role: (person as any).role || 'SELLER',
+      });
+      setPhotoPreview(person.photoBase64 || null);
+      setPhotoFile(null);
+    }
+  }, [isOpen, person, reset, states]);
+
+  // Load cities when state changes
+  useEffect(() => {
+    const loadCities = async () => {
+      if (!watchState) {
+        setCities([]);
+        return;
+      }
+
+      setCitiesLoading(true);
+      try {
+        const citiesData = await getCitiesByState(watchState);
+        setCities(citiesData);
+      } catch (error) {
+        console.error('Error loading cities:', error);
+        toast.error('Erro ao carregar cidades');
+      } finally {
+        setCitiesLoading(false);
+      }
+    };
+
+    loadCities();
+  }, [watchState]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -56,6 +156,11 @@ export default function EditSellerModal({
   const handlePhotoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Por favor, selecione uma imagem válida');
+        return;
+      }
       if (file.size > 5 * 1024 * 1024) {
         toast.error('A foto deve ter no máximo 5MB');
         return;
@@ -70,21 +175,50 @@ export default function EditSellerModal({
     }
   }, []);
 
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const onSubmit = async (data: UpdatePersonDto) => {
     try {
       setLoading(true);
 
-      const formData = new FormData();
-      if (data.name) formData.append('name', data.name);
-      if (data.email) formData.append('email', data.email);
-      if (data.phone) formData.append('phone', data.phone);
-      
+      let photoBase64: string | undefined = undefined;
+
+      // If user selected a file, convert to base64
       if (photoFile) {
-        formData.append('photo', photoFile);
+        try {
+          photoBase64 = await fileToBase64(photoFile);
+        } catch (err) {
+          console.error('Erro ao processar foto:', err);
+          toast.error('Erro ao processar foto. Tente novamente.');
+          setLoading(false);
+          return;
+        }
       }
 
-      await personService.update(person.id, formData as any);
-      
+      const updateData: any = {};
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.email !== undefined) updateData.email = data.email;
+      if (data.phone !== undefined) updateData.phone = data.phone;
+      if ((data as any).pixKey !== undefined) updateData.pixKey = (data as any).pixKey;
+      if (data.city !== undefined) updateData.city = data.city;
+      if (data.state !== undefined) updateData.state = data.state;
+      if ((data as any).cpf !== undefined) updateData.cpf = (data as any).cpf;
+      if ((data as any).birthDate !== undefined) updateData.birthDate = (data as any).birthDate;
+      if ((data as any).role !== undefined) updateData.role = (data as any).role;
+      if (photoBase64) updateData.photoBase64 = photoBase64;
+
+      await personService.update(person.id, updateData);
+
       toast.success('Vendedor atualizado com sucesso!');
       reset();
       setPhotoPreview(null);
@@ -109,39 +243,221 @@ export default function EditSellerModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn"
-      onClick={handleBackdropClick}
-    >
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-slideUp">
+    <ResponsiveModal isOpen={isOpen} onClose={onClose}>
+      <div className="p-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Editar Vendedor</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-            aria-label="Fechar modal"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+        <div className="text-start mb-4">
+          <h2 className="text-xl font-semibold text-gray-700">Editar Vendedor</h2>
+          <p className="text-sm text-gray-600 mt-1">Atualize as informações do vendedor</p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Photo Upload */}
+        <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Nome Completo
+            </label>
+            <input
+              id="name"
+              type="text"
+              maxLength={100}
+              {...register('name')}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              placeholder="Nome do vendedor"
+            />
+            {errors.name && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.name.message}</p>
+            )}
+          </div>
+
+          {/* Email */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              maxLength={120}
+              {...register('email', {
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: 'Email inválido',
+                },
+              })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              placeholder="email@exemplo.com"
+            />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.email.message}</p>
+            )}
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Telefone
+            </label>
+            <input
+              id="phone"
+              type="tel"
+              inputMode="numeric"
+              maxLength={20}
+              pattern="[\d\s\-\(\)]+"
+              {...register('phone')}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              placeholder="(00) 00000-0000"
+            />
+            {errors.phone && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.phone.message}</p>
+            )}
+          </div>
+
+          {/* Pix Key */}
+          <div>
+            <label htmlFor="pixKey" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Chave Pix
+            </label>
+            <input
+              id="pixKey"
+              type="text"
+              maxLength={150}
+              {...register('pixKey')}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              placeholder="CPF, email, telefone ou chave aleatória"
+            />
+            {errors && (errors as any).pixKey && (
+              <p className="text-red-500 text-xs mt-0.5">{(errors as any).pixKey.message}</p>
+            )}
+          </div>
+
+          {/* CPF */}
+          <div>
+            <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-0.5">
+              CPF
+            </label>
+            <input
+              id="cpf"
+              type="text"
+              maxLength={11}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              {...register('cpf', {
+                pattern: {
+                  value: /^\d{0,11}$/,
+                  message: 'CPF deve conter apenas números'
+                }
+              })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              placeholder="Somente números (ex: 12345678900)"
+            />
+            {errors && (errors as any).cpf && (
+              <p className="text-red-500 text-xs mt-0.5">{(errors as any).cpf.message}</p>
+            )}
+          </div>
+
+          {/* Data de Nascimento */}
+          <div>
+            <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Data de Nascimento
+            </label>
+            <input
+              id="birthDate"
+              type="date"
+              {...register('birthDate')}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+            />
+            {errors && (errors as any).birthDate && (
+              <p className="text-red-500 text-xs mt-0.5">{(errors as any).birthDate.message}</p>
+            )}
+          </div>
+
+          {/* State */}
+          <div>
+            <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Estado
+            </label>
+            <select
+              id="state"
+              {...register('state')}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+            >
+              <option value="">Selecione um estado</option>
+              {states.map((state) => (
+                <option key={state.abbreviation} value={state.abbreviation}>
+                  {state.name} ({state.abbreviation})
+                </option>
+              ))}
+            </select>
+            {errors.state && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.state.message}</p>
+            )}
+          </div>
+
+          {/* City */}
+          <div>
+            <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Cidade
+            </label>
+            {watchState ? (
+              citiesLoading ? (
+                <div className="w-full px-2 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 text-sm flex items-center justify-center">
+                  Carregando cidades...
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="hidden"
+                    {...register('city')}
+                  />
+                  <CityAutocomplete
+                    cities={cities}
+                    value={watch('city') || ''}
+                    onChange={(cityName) => setValue('city', cityName)}
+                    placeholder="Digite para filtrar a cidade"
+                    disabled={cities.length === 0 || citiesLoading}
+                  />
+                </>
+              )
+            ) : (
+              <div className="w-full px-2 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 text-sm">
+                Selecione um estado primeiro
+              </div>
+            )}
+            {errors.city && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.city.message}</p>
+            )}
+          </div>
+
+          {/* Role */}
+          <div>
+            <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-0.5">
+              Cargo (Role) *
+            </label>
+            <select
+              id="role"
+              {...register('role', { required: 'Cargo é obrigatório' })}
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+            >
+              <option value="">Selecione um cargo</option>
+              <option value="AFFILIATE">Afiliado</option>
+              <option value="SELLER">Vendedor</option>
+              <option value="ADMIN">Administrador</option>
+              <option value="SUPER_ADMIN">Super Administrador</option>
+            </select>
+            {errors.role && (
+              <p className="text-red-500 text-xs mt-0.5">{errors.role.message}</p>
+            )}
+          </div>
+
+          {/* Photo Upload - Full Width */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-0.5">
               Foto do Vendedor
             </label>
-            <div className="flex items-center gap-4">
-              <div className="h-20 w-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+            <div className="flex items-center gap-3">
+              <div className="h-16 w-16 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200">
                 {photoPreview ? (
                   <img
                     src={photoPreview}
@@ -150,7 +466,7 @@ export default function EditSellerModal({
                   />
                 ) : (
                   <svg
-                    className="w-10 h-10 text-gray-400"
+                    className="w-8 h-8 text-gray-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -165,7 +481,7 @@ export default function EditSellerModal({
                 )}
               </div>
               <label className="cursor-pointer">
-                <span className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition inline-block">
+                <span className="px-3 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-700 hover:text-white transition inline-block text-sm font-medium">
                   Alterar Foto
                 </span>
                 <input
@@ -178,80 +494,28 @@ export default function EditSellerModal({
             </div>
           </div>
 
-          {/* Name */}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Nome Completo *
-            </label>
-            <input
-              id="name"
-              type="text"
-              {...register('name', { required: 'Nome é obrigatório' })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="Nome do vendedor"
-            />
-            {errors.name && (
-              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
-            )}
-          </div>
-
-          {/* Email */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email *
-            </label>
-            <input
-              id="email"
-              type="email"
-              {...register('email', {
-                required: 'Email é obrigatório',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Email inválido',
-                },
-              })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="email@exemplo.com"
-            />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
-            )}
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-              Telefone *
-            </label>
-            <input
-              id="phone"
-              type="tel"
-              {...register('phone', { required: 'Telefone é obrigatório' })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="(00) 00000-0000"
-            />
-            {errors.phone && (
-              <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-4">
+          {/* Actions - Full Width */}
+          <div className="md:col-span-2 flex gap-2 pt-2">
+            <Button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              variant='outline-danger'
+              className="cursor-pointer w-full px-4 py-2 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              Cancelar
+            </Button>
             <Button
               type="submit"
-              variant="primary"
-              className="flex-1"
-              isLoading={loading}
               disabled={loading}
+              variant='gradient'
+              className="cursor-pointer w-full px-4 py-2 font-semibold rounded-lg text-sm"
             >
-              Salvar Alterações
-            </Button>
-            <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
-              Cancelar
+              {loading ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
           </div>
         </form>
       </div>
-    </div>
+    </ResponsiveModal>
   );
 }

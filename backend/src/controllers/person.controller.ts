@@ -1,13 +1,16 @@
 import { Request, Response, NextFunction } from "express";
 import * as service from "../services/person.service";
 import { ResponseBuilder } from "../shared/ResponseBuilder";
+import { transformPersonUrls, transformPersonsUrls } from "../utils/url-transformer";
 
 // ==================== PERSON CONTROLLER (Single Responsibility: HTTP handling) ====================
 
 export const createPerson = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.createPerson(req.body);
-    return ResponseBuilder.created(res, data);
+    const jsonData = data.toJSON ? data.toJSON() : data;
+    const transformed = transformPersonUrls(jsonData);
+    return ResponseBuilder.created(res, transformed);
   } catch (error) {
     next(error);
   }
@@ -17,7 +20,9 @@ export const getAll = async (req: Request, res: Response, next: NextFunction) =>
   try {
     const activeOnly = req.query.active === "true";
     const data = await service.getAll(activeOnly);
-    return ResponseBuilder.success(res, data);
+    const jsonData = data.map((item: any) => item.toJSON ? item.toJSON() : item);
+    const transformed = transformPersonsUrls(jsonData);
+    return ResponseBuilder.success(res, transformed);
   } catch (error) {
     next(error);
   }
@@ -26,7 +31,9 @@ export const getAll = async (req: Request, res: Response, next: NextFunction) =>
 export const getById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.getById(req.params.id);
-    return ResponseBuilder.success(res, data);
+    const jsonData = data.toJSON ? data.toJSON() : data;
+    const transformed = transformPersonUrls(jsonData);
+    return ResponseBuilder.success(res, transformed);
   } catch (error) {
     next(error);
   }
@@ -35,7 +42,9 @@ export const getById = async (req: Request, res: Response, next: NextFunction) =
 export const getByQRCode = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.getByQRCode(req.params.qrCode);
-    return ResponseBuilder.success(res, data);
+    const jsonData = data.toJSON ? data.toJSON() : data;
+    const transformed = transformPersonUrls(jsonData);
+    return ResponseBuilder.success(res, transformed);
   } catch (error) {
     next(error);
   }
@@ -44,7 +53,9 @@ export const getByQRCode = async (req: Request, res: Response, next: NextFunctio
 export const updateById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await service.updateById(req.params.id, req.body);
-    return ResponseBuilder.success(res, data);
+    const jsonData = data.toJSON ? data.toJSON() : data;
+    const transformed = transformPersonUrls(jsonData);
+    return ResponseBuilder.success(res, transformed);
   } catch (error) {
     next(error);
   }
@@ -54,6 +65,17 @@ export const deleteById = async (req: Request, res: Response, next: NextFunction
   try {
     const data = await service.deleteById(req.params.id);
     return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const activate = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await service.activate(req.params.id);
+    const jsonData = data.toJSON ? data.toJSON() : data;
+    const transformed = transformPersonUrls(jsonData);
+    return ResponseBuilder.success(res, transformed);
   } catch (error) {
     next(error);
   }
@@ -72,6 +94,46 @@ export const getStats = async (req: Request, res: Response, next: NextFunction) 
   try {
     const data = await service.getPersonStats(req.params.id);
     return ResponseBuilder.success(res, data);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getStates = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const states = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+    return ResponseBuilder.success(res, states);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPersonDetailsForAdmin = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const personId = req.params.id;
+    const person = await service.getById(personId);
+
+    if (!person) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pessoa não encontrada',
+      });
+    }
+
+    // Buscar saldo de créditos
+    const { getCreditBalance } = await import('../services/credit.service');
+    const creditBalance = await getCreditBalance(personId);
+
+    const jsonData = person.toJSON ? person.toJSON() : person;
+    const transformed = transformPersonUrls(jsonData);
+
+    // Adicionar saldo aos dados retornados
+    const personDetails = {
+      ...transformed,
+      creditBalance,
+    };
+
+    return ResponseBuilder.success(res, personDetails);
   } catch (error) {
     next(error);
   }

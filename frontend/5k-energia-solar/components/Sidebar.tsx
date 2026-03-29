@@ -1,20 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth';
-import { toast } from 'react-hot-toast';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import Image from 'next/image';
 
-export default function Sidebar() {
+export default function Sidebar({ className }: { className?: string }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user, clearAuth } = useAuthStore();
-
-  const handleLogout = () => {
-    clearAuth();
-    toast.success('Logout realizado com sucesso!');
-    router.push('/login');
-  };
+  const { user, logout } = useAuth();
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
@@ -79,26 +72,47 @@ export default function Sidebar() {
       label: 'Administradores',
       href: '/dashboard/admins',
     });
+
+    menuItems.push({
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+          />
+        </svg>
+      ),
+      label: 'Criativos',
+      href: '/dashboard/creatives',
+    });
   }
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen fixed left-0 top-0">
+    <div className={`w-64 bg-linear-to-b from-blue-50 to-green-50 border-r border-gray-200 flex flex-col h-screen fixed left-0 top-0 ${className || ''}`}>
       {/* Logo */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="pt-6 pl-6 flex flex-col gap-4 pb-4 border-b w-full border-gray-200">
+        <div className="flex items-center gap-3 mb-4">
+          <Image src="/5klogo.png" alt="5K Energia Logo" width={180} height={100} />
+        </div>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+          <div className="w-12 h-12 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center shrink-0">
+            {user?.photoBase64 ? (
+              <img
+                src={user.photoBase64}
+                alt={`${user.name} avatar`}
+                className="w-full h-full object-cover"
               />
-            </svg>
+            ) : (
+              <span className="text-blue-600 font-semibold text-lg">
+                {user?.name?.[0]?.toUpperCase() || 'U'}
+              </span>
+            )}
           </div>
-          <div>
-            <h2 className="font-bold text-gray-900">5K Energia</h2>
-            <p className="text-xs text-gray-500">Solar Admin</p>
+          <div className="flex-1 min-w-0">
+            <p className="ml-1 text-sm font-medium text-slate-700 truncate">{user?.name}</p>
+            <p className="ml-1 text-xs text-slate-500 truncate">{user?.email}</p>
           </div>
         </div>
       </div>
@@ -126,17 +140,8 @@ export default function Sidebar() {
 
       {/* User Info & Logout */}
       <div className="p-4 border-t border-gray-200">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-            <span className="text-blue-600 font-semibold">{user?.name?.[0] || 'U'}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
-            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-          </div>
-        </div>
         <button
-          onClick={handleLogout}
+          onClick={logout}
           className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

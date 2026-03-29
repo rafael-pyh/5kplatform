@@ -1,8 +1,15 @@
-import prisma from "../database/prisma";
+import sequelize from "../database/sequelize";
+import { Person, PersonRole } from "../models/Person";
+import { Lead } from "../models/Lead";
+import { QRCodeScan } from "../models/QRCodeScan";
 import { hashPassword, comparePassword } from "../utils/bcrypt";
 import { generateToken } from "../utils/jwt";
 import { Validator } from "../shared/Validator";
 import { UnauthorizedError, ConflictError } from "../shared/errors";
+import { uploadBase64ToS3 } from "./storage.service";
+import * as crypto from "crypto";
+import { sendPasswordResetEmail } from "../utils/email";
+import { Op } from "sequelize";
 
 // ==================== DTOs ====================
 export interface CreateUserDto {
@@ -15,6 +22,7 @@ export interface CreateUserDto {
 export interface LoginDto {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 // ==================== AUTH SERVICE (Single Responsibility) ====================
@@ -25,10 +33,14 @@ export const register = async (data: CreateUserDto) => {
   Validator.required(data.email, 'Email');
   Validator.required(data.password, 'Senha');
   Validator.email(data.email);
+  // Limites de tamanho para mitigar payloads muito grandes
+  Validator.maxLength(data.name, 100, 'Nome');
+  Validator.maxLength(data.email, 254, 'Email');
+  Validator.maxLength(data.password, 128, 'Senha');
   Validator.minLength(data.password, 6, 'Senha');
 
   // Verifica se o usuário já existe
-  const existingUser = await prisma.person.findUnique({
+  const existingUser = await Person.findOne({
     where: { email: data.email },
   });
 
@@ -39,35 +51,48 @@ export const register = async (data: CreateUserDto) => {
   // Hash da senha
   const hashedPassword = await hashPassword(data.password);
 
-  // Cria o usuário na tabela Person
-  const user = await prisma.person.create({
-    data: {
-      email: data.email,
-      password: hashedPassword,
-      name: data.name,
-      role: data.role || "ADMIN",
-      qrCode: `ADMIN-${Date.now()}`,
-      emailVerified: true,
-      active: true,
-    },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      active: true,
-      createdAt: true,
-    },
-  });
+  // Prepara os dados para criar o usuário
+  const createData: any = {
+    email: data.email,
+    password: hashedPassword,
+    name: data.name,
+    role: (data.role || "ADMIN") as PersonRole,
+    qrCode: `ADMIN-${Date.now()}`,
+    emailVerified: true,
+    active: true,
+  };
+
+  // Faz upload de photoBase64 para S3 se fornecido
+  if ((data as any).photoBase64) {
+    try {
+      const fileName = `${data.email.replace('@', '_').replace(/\./g, '_')}.jpg`;
+      const photoUrl = await uploadBase64ToS3((data as any).photoBase64, fileName, 'profile-photos');
+      createData.photoBase64 = photoUrl; // Salva apenas a URL, não o base64
+    } catch (error) {
+      throw error;
+    }
+  }
+  const user = await Person.create(createData);
 
   // Gera o token
   const token = generateToken({
     userId: user.id,
     email: user.email!,
-    role: user.role || 'ADMIN',
+    role: user.role || PersonRole.ADMIN,
   });
 
-  return { user, token };
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      active: user.active,
+      createdAt: user.createdAt,
+      photoBase64: (user as any).photoBase64,
+    },
+    token,
+  };
 };
 
 export const login = async (data: LoginDto) => {
@@ -75,9 +100,12 @@ export const login = async (data: LoginDto) => {
   Validator.required(data.email, 'Email');
   Validator.required(data.password, 'Senha');
   Validator.email(data.email);
+  // Limites de tamanho
+  Validator.maxLength(data.email, 254, 'Email');
+  Validator.maxLength(data.password, 128, 'Senha');
 
   // Busca o usuário na tabela Person (unificada)
-  const user = await prisma.person.findUnique({
+  const user = await Person.findOne({
     where: { email: data.email },
   });
 
@@ -86,6 +114,7 @@ export const login = async (data: LoginDto) => {
   }
 
   // Verificação crítica: usuário deve estar ativo
+  
   if (!user.active) {
     throw new UnauthorizedError("Conta desativada. Entre em contato com o administrador.");
   }
@@ -108,54 +137,61 @@ export const login = async (data: LoginDto) => {
   }
 
   // Define o role (se não tiver, assume SELLER)
-  const userRole = user.role || 'SELLER';
+  const userRole = user.role || PersonRole.SELLER;
 
-  // Gera o token
+  // Gera o token JWT
   const token = generateToken({
     userId: user.id,
     email: user.email,
     role: userRole,
   });
 
+  // Gera token de "Lembrar de mim" se solicitado (válido por 30 dias)
+  let rememberMeToken: string | undefined;
+  if (data.rememberMe) {
+    rememberMeToken = crypto.randomBytes(32).toString('hex');
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 30); // 30 dias
+    
+    await user.update({
+      rememberMeToken,
+      rememberMeExpiry: expiryDate,
+    });
+  }
+
   return {
     user: {
       id: user.id,
       email: user.email,
-      name: user.name || 'Usuário',
-      role: user.role || 'SELLER',
+      name: user.name,
+      role: user.role || PersonRole.SELLER,
+      registrationType: user.registrationType,
+      active: user.active,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      photoBase64: user.photoBase64,
+      emailVerified: user.emailVerified,
+      phone: user.phone,
+      pixKey: user.pixKey,
     },
     token,
+    rememberMeToken,
   };
 };
 
 export const getAllUsers = async () => {
-  return prisma.person.findMany({
+  return Person.findAll({
     where: {
-      role: { in: ['ADMIN', 'SUPER_ADMIN'] }
+      role: [PersonRole.ADMIN, PersonRole.SUPER_ADMIN],
     },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      active: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: "desc" },
+    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt', 'photoBase64', 'phone', 'pixKey'],
+    order: [['createdAt', 'DESC']],
   });
 };
 
 export const getUserById = async (id: string) => {
-  const user = await prisma.person.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      active: true,
-      createdAt: true,
-    },
+  const user = await Person.findByPk(id, {
+    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt', 'photoBase64', 'phone', 'pixKey'],
   });
 
   if (!user) {
@@ -169,6 +205,9 @@ export const updateUser = async (
   id: string,
   data: Partial<CreateUserDto> & { active?: boolean }
 ) => {
+  const user = await Person.findByPk(id);
+  if (!user) throw new Error("Usuário não encontrado");
+
   const updateData: any = {
     email: data.email,
     name: data.name,
@@ -176,34 +215,60 @@ export const updateUser = async (
     active: data.active,
   };
 
+  // Faz upload de photoBase64 para S3 se fornecido
+  if ((data as any).photoBase64) {
+    try {
+      const fileName = `${data.email?.replace('@', '_').replace(/\./g, '_') || user.id}.jpg`;
+      const photoUrl = await uploadBase64ToS3((data as any).photoBase64, fileName, 'profile-photos');
+      updateData.photoBase64 = photoUrl; // Salva apenas a URL, não o base64
+    } catch (error) {
+      throw error;
+    }
+  } else if ((data as any).avatar) {
+    try {
+      const fileName = `${data.email?.replace('@', '_').replace(/\./g, '_') || user.id}.jpg`;
+      const photoUrl = await uploadBase64ToS3((data as any).avatar, fileName, 'profile-photos');
+      updateData.photoBase64 = photoUrl; // Salva apenas a URL, não o base64
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // Se a senha foi fornecida, faz o hash
   if (data.password) {
     updateData.password = await hashPassword(data.password);
   }
 
-  return prisma.person.update({
-    where: { id },
-    data: updateData,
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      active: true,
-      createdAt: true,
-    },
-  });
+  // Additional person fields
+  if ((data as any).phone !== undefined) updateData.phone = (data as any).phone;
+  if ((data as any).pixKey !== undefined) updateData.pixKey = (data as any).pixKey;
+  if ((data as any).qrCodeUrl !== undefined) updateData.qrCodeUrl = (data as any).qrCodeUrl;
+  if ((data as any).emailVerified !== undefined) updateData.emailVerified = (data as any).emailVerified;
+
+  await user.update(updateData);
+  
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    active: user.active,
+    createdAt: user.createdAt,
+    photoBase64: (user as any).photoBase64,
+  };
 };
 
 export const deleteUser = async (id: string) => {
-  return prisma.person.delete({
-    where: { id },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-    },
-  });
+  const user = await Person.findByPk(id);
+  if (!user) throw new Error("Usuário não encontrado");
+
+  await user.destroy();
+  
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+  };
 };
 
 // Função para admins criarem outros usuários admin
@@ -221,7 +286,7 @@ export const createAdminUser = async (data: CreateUserDto, creatorRole: string) 
   }
 
   // Verifica se o usuário já existe
-  const existingUser = await prisma.person.findUnique({
+  const existingUser = await Person.findOne({
     where: { email: data.email },
   });
 
@@ -233,25 +298,218 @@ export const createAdminUser = async (data: CreateUserDto, creatorRole: string) 
   const hashedPassword = await hashPassword(data.password);
 
   // Cria o usuário admin na tabela Person
-  const user = await prisma.person.create({
-    data: {
-      email: data.email,
-      password: hashedPassword,
-      name: data.name,
-      role: data.role || "ADMIN",
-      qrCode: `ADMIN-${Date.now()}`,
-      emailVerified: true,
-      active: true,
+  const user = await Person.create({
+    email: data.email,
+    password: hashedPassword,
+    name: data.name,
+    role: (data.role || "ADMIN") as PersonRole,
+    qrCode: `ADMIN-${Date.now()}`,
+    emailVerified: true,
+    active: true,
+  });
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    active: user.active,
+    createdAt: user.createdAt,
+  };
+};
+
+export const confirmEmail = async (token: string) => {
+  // Valida se o token foi fornecido
+  if (!token || token.trim() === '') {
+    throw new Error("Token é obrigatório");
+  }
+  
+  const person = await Person.findOne({ where: { verificationToken: token } });
+
+  if (!person) {
+    throw new Error("Token inválido ou expirado.");
+  }
+
+  // Verifica se o token expirou
+  if (person.tokenExpiry && new Date() > person.tokenExpiry) {
+    throw new Error("Token expirado. Solicite um novo link de verificação.");
+  }
+
+  person.emailVerified = true;
+  person.verificationToken = undefined;
+  person.tokenExpiry = undefined;
+
+  await person.save();
+
+  return { message: "Email confirmado com sucesso." };
+};
+
+export const getCurrentUser = async (userId: string) => {
+  const user = await Person.findByPk(userId, {
+    attributes: ['id', 'email', 'name', 'role', 'active', 'createdAt', 'updatedAt', 'photoBase64', 'phone', 'pixKey', 'emailVerified', 'registration_type'],
+  });
+
+  if (!user) {
+    throw new Error("Usuário não encontrado");
+  }
+
+  if (!user.active) {
+    throw new UnauthorizedError("Conta desativada");
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role || PersonRole.SELLER,
+    active: user.active,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    photoBase64: user.photoBase64,
+    phone: user.phone,
+    pixKey: user.pixKey,
+    emailVerified: user.emailVerified,
+    registration_type: (user as any).registration_type,
+  };
+};
+
+// Valida e usa o token de "Lembrar de mim"
+export const validateRememberMeToken = async (rememberMeToken: string) => {
+  if (!rememberMeToken) {
+    throw new UnauthorizedError("Token 'Lembrar de mim' inválido");
+  }
+
+  const user = await Person.findOne({
+    where: { rememberMeToken },
+  });
+
+  if (!user) {
+    throw new UnauthorizedError("Token 'Lembrar de mim' inválido");
+  }
+
+  // Verifica se o token expirou
+  if (user.rememberMeExpiry && new Date() > user.rememberMeExpiry) {
+    // Limpa o token expirado
+    await user.update({
+      rememberMeToken: null,
+      rememberMeExpiry: null,
+    });
+    throw new UnauthorizedError("Token 'Lembrar de mim' expirado");
+  }
+
+  // Verifica se o usuário está ativo
+  if (!user.active) {
+    throw new UnauthorizedError("Conta desativada");
+  }
+
+  // Gera novo token JWT
+  const token = generateToken({
+    userId: user.id,
+    email: user.email!,
+    role: user.role || PersonRole.SELLER,
+  });
+
+  // Regenera o token de "lembrar" (refresh)
+  const newRememberMeToken = crypto.randomBytes(32).toString('hex');
+  const newExpiryDate = new Date();
+  newExpiryDate.setDate(newExpiryDate.getDate() + 30);
+
+  await user.update({
+    rememberMeToken: newRememberMeToken,
+    rememberMeExpiry: newExpiryDate,
+  });
+
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role || PersonRole.SELLER,
+      registration_type: (user as any).registration_type,
+      active: user.active,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      photoBase64: user.photoBase64,
+      phone: user.phone,
+      pixKey: user.pixKey,
+      emailVerified: user.emailVerified,
     },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      active: true,
-      createdAt: true,
+    token,
+    rememberMeToken: newRememberMeToken,
+  };
+};
+
+export const requestPasswordReset = async (email: string) => {
+  Validator.required(email, 'Email');
+  Validator.email(email);
+
+  const user = await Person.findOne({
+    where: { email },
+  });
+
+  if (!user) {
+    // Não revela se o email existe por segurança
+    return { message: "Se o email existir, um link de redefinição será enviado" };
+  }
+
+  // Gera novo token com 24 horas de validade
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const expiryDate = new Date();
+  expiryDate.setHours(expiryDate.getHours() + 24); // 24 horas
+
+  await user.update({
+    resetPasswordToken: resetToken,
+    resetPasswordExpiry: expiryDate,
+  });
+
+  // Envia email com link de reset
+  await sendPasswordResetEmail(user.email || email, user.name, resetToken);
+
+  return { message: "Se o email existir, um link de redefinição será enviado" };
+};
+
+export const resetPassword = async (token: string, newPassword: string) => {
+  Validator.required(token, 'Token');
+  Validator.required(newPassword, 'Nova senha');
+  Validator.minLength(newPassword, 6, 'Nova senha');
+
+  const user = await Person.findOne({
+    where: {
+      resetPasswordToken: token,
+      resetPasswordExpiry: {
+        [Op.gte]: new Date(),
+      },
     },
   });
 
-  return user;
+  if (!user) {
+    throw new UnauthorizedError("Link de redefinição inválido ou expirado");
+  }
+
+  const hashedPassword = await hashPassword(newPassword);
+
+  await user.update({
+    password: hashedPassword,
+    resetPasswordToken: null,
+    resetPasswordExpiry: null,
+  });
+
+  // Gera token JWT para fazer login automático
+  const jwtToken = generateToken({
+    userId: user.id,
+    email: user.email!,
+    role: user.role || PersonRole.SELLER,
+  });
+
+  return {
+    message: "Senha redefinida com sucesso",
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role || PersonRole.SELLER,
+    },
+    token: jwtToken,
+  };
 };
+

@@ -41,11 +41,21 @@ export const authenticate = async (
     // Verifica o token
     const decoded = verifyToken(token);
 
+    // Log para debug em produção
+    console.log('[AUTHENTICATE] Token decodificado com sucesso:', {
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role,
+      roleType: typeof decoded.role,
+      roleUpperCase: decoded.role?.toUpperCase?.(),
+    });
+
     // Adiciona os dados do usuário ao request
     req.user = decoded;
 
     next();
   } catch (error: any) {
+    console.error('[AUTHENTICATE] Erro ao validar token:', error.message);
     return res.status(401).json({
       success: false,
       message: error.message || "Token inválido",
@@ -59,7 +69,8 @@ export const requireSuperAdmin = (
   res: Response,
   next: NextFunction
 ) => {
-  if (req.user?.role !== "SUPER_ADMIN") {
+  const userRole = req.user?.role?.toUpperCase();
+  if (userRole !== "SUPER_ADMIN") {
     return res.status(403).json({
       success: false,
       message: "Acesso negado. Apenas SUPER_ADMIN pode acessar este recurso.",
@@ -74,7 +85,8 @@ export const requireAdmin = (
   res: Response,
   next: NextFunction
 ) => {
-  if (!req.user?.role || (req.user.role !== "ADMIN" && req.user.role !== "SUPER_ADMIN")) {
+  const userRole = req.user?.role?.toUpperCase();
+  if (!userRole || (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN")) {
     return res.status(403).json({
       success: false,
       message: "Acesso negado. Apenas administradores podem acessar este recurso.",
@@ -83,28 +95,30 @@ export const requireAdmin = (
   next();
 };
 
-// Middleware para verificar se é SELLER (vendedor)
+// Middleware para verificar se é SELLER (vendedor) ou AFFILIATE
 export const requireSeller = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  if (req.user?.role !== "SELLER") {
+  const userRole = req.user?.role?.toUpperCase();
+  if (userRole !== "SELLER" && userRole !== "AFFILIATE") {
     return res.status(403).json({
       success: false,
-      message: "Acesso negado. Apenas vendedores podem acessar este recurso.",
+      message: "Acesso negado. Apenas vendedores e afiliados podem acessar este recurso.",
     });
   }
   next();
 };
 
-// Middleware para verificar se é ADMIN ou SELLER
+// Middleware para verificar se é ADMIN ou SELLER ou AFFILIATE
 export const requireAdminOrSeller = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  if (!req.user?.role || (req.user.role !== "ADMIN" && req.user.role !== "SUPER_ADMIN" && req.user.role !== "SELLER")) {
+  const userRole = req.user?.role?.toUpperCase();
+  if (!userRole || (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN" && userRole !== "SELLER" && userRole !== "AFFILIATE")) {
     return res.status(403).json({
       success: false,
       message: "Acesso negado.",

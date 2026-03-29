@@ -1,6 +1,7 @@
-'use client';
+ 'use client';
 
 import { memo } from 'react';
+import { cn } from '@/lib/utils/cn';
 
 interface LeadTabsProps {
   activeTab: 'all' | 'bought' | 'negotiation' | 'cancelled';
@@ -11,9 +12,10 @@ interface LeadTabsProps {
     negotiation: number;
     cancelled: number;
   };
+  className?: string;
 }
 
-function LeadTabs({ activeTab, onTabChange, counts }: LeadTabsProps) {
+function LeadTabs({ activeTab, onTabChange, counts, className }: LeadTabsProps) {
   const tabs = [
     { id: 'all' as const, label: 'Todos', count: counts.all },
     { id: 'bought' as const, label: 'Compraram', count: counts.bought },
@@ -22,14 +24,14 @@ function LeadTabs({ activeTab, onTabChange, counts }: LeadTabsProps) {
   ];
 
   return (
-    <div className="border-b border-gray-200">
-      <nav className="-mb-px flex space-x-8">
+    <div className={cn('border-b border-gray-200', className)}>
+      <nav className="-mb-px flex md:space-x-8 overflow-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={`
-              whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
+              whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer
               ${
                 activeTab === tab.id
                   ? 'border-green-500 text-green-600'

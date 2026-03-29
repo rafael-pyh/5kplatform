@@ -3,51 +3,96 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'SUPER_ADMIN';
+  role: 'ADMIN' | 'SUPER_ADMIN' | 'SELLER' | 'AFFILIATE';
+  registration_type?: 'PUBLIC' | 'ADMIN';
   active?: boolean;
   createdAt: string;
   updatedAt: string;
+  photoBase64?: string;
+  emailVerified?: boolean;
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  qrCode?: string;
+  qrCodeUrl?: string;
+  phone?: string;
+  pixKey?: string;
 }
 
 export interface LoginCredentials {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface AuthResponse {
   token: string;
+  rememberMeToken?: string;
   user: User;
+}
+
+export interface CreateAffiliateDto {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  pixKey: string;
+  cpf: string; // Obrigatório
+  birthDate: string | Date; // Obrigatório
+  state?: string;
+  city?: string;
+}
+
+export interface CreateSellerDto {
+  name: string;
+  email: string;
+  phone?: string;
+  pixKey?: string;
+  state?: string;
+  city?: string;
+  role?: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | 'AFFILIATE';
 }
 
 export interface CreateAdminDto {
   name: string;
   email: string;
   password: string;
-  role: 'ADMIN' | 'SUPER_ADMIN';
+  role: 'ADMIN' | 'SUPER_ADMIN' | 'SELLER' | 'AFFILIATE';
 }
 
 export interface UpdateAdminDto {
   name?: string;
   email?: string;
   password?: string;
-  role?: 'ADMIN' | 'SUPER_ADMIN';
+  role?: 'ADMIN' | 'SUPER_ADMIN' | 'SELLER' | 'AFFILIATE';
   active?: boolean;
+  phone?: string;
+  pixKey?: string;
+  photoBase64?: string;
+  qrCodeUrl?: string;
+  emailVerified?: boolean;
 }
 
 // ========== PERSON (VENDEDOR) ==========
 export interface Person {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  pixKey: string;
-  photoUrl?: string;
+  email?: string;
+  phone?: string;
+  pixKey?: string;
+  photoBase64?: string; // Base64 data URL da foto de perfil
   qrCode: string;
-  qrCodeUrl?: string;
+  qrCodeUrl?: string; // URL S3 do QR code
   scanCount: number;
   active: boolean;
-  createdAt: string;
-  updatedAt: string;
+  role: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | 'AFFILIATE';
+  emailVerified: boolean;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  city: string;
+  state: string;
+  cpf?: string; // CPF do usuário (somente números)
+  birthDate?: string | Date; // Data de nascimento
+  commissionType?: 'FIXED' | 'PERCENTAGE';
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 export interface CreatePersonDto {
@@ -55,7 +100,13 @@ export interface CreatePersonDto {
   email: string;
   phone: string;
   pixKey: string;
-  photoUrl?: string;
+  city: string;
+  state: string;
+  cpf: string; // Obrigatório
+  birthDate: string | Date; // Obrigatório
+  role?: string;
+  photoBase64?: string;
+  commissionType?: 'FIXED' | 'PERCENTAGE';
 }
 
 export interface UpdatePersonDto {
@@ -63,8 +114,14 @@ export interface UpdatePersonDto {
   email?: string;
   phone?: string;
   pixKey?: string;
-  photoUrl?: string;
+  city?: string;
+  state?: string;
+  cpf?: string;
+  birthDate?: string | Date;
+  photoBase64?: string;
   active?: boolean;
+  role?: 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | 'AFFILIATE';
+  commissionType?: 'FIXED' | 'PERCENTAGE';
 }
 
 // ========== LEAD (INTERESSADO) ==========
@@ -86,6 +143,9 @@ export interface Lead {
   owner?: Person;
   createdAt: string;
   updatedAt: string;
+  city?: string;
+  state?: string;
+  commissionAmount?: number;
 }
 
 export interface CreateLeadDto {
@@ -95,6 +155,8 @@ export interface CreateLeadDto {
   energyBillUrl?: string;
   roofPhotoUrl?: string;
   ownerId: string;
+  city?: string;
+  state?: string;
 }
 
 export interface UpdateLeadDto {
@@ -104,6 +166,8 @@ export interface UpdateLeadDto {
   energyBillUrl?: string;
   roofPhotoUrl?: string;
   status?: LeadStatus;
+  city?: string;
+  state?: string;
 }
 
 // ========== QR CODE SCAN ==========
@@ -153,6 +217,33 @@ export interface PaginatedResponse<T> {
   total: number;
   page: number;
   limit: number;
+}
+
+// ========== WHATSAPP TEMPLATES ==========
+export interface WhatsappTemplate {
+  id: string;
+  name: string;
+  message: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateWhatsappTemplateDto {
+  name: string;
+  message: string;
+}
+
+export interface UpdateWhatsappTemplateDto {
+  name?: string;
+  message?: string;
+  isActive?: boolean;
+}
+
+export interface ProcessedMessage {
+  templateId: string;
+  customerName: string;
+  message: string;
 }
 
 // ========== FILTERS ==========

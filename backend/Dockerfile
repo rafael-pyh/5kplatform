@@ -1,54 +1,58 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM --platform=linux/amd64 node:20-slim AS builder
 
 WORKDIR /app
 
+RUN apt-get update -y && apt-get install -y openssl libssl-dev
+
 # Copiar arquivos de dependências
-COPY package*.json ./
-COPY prisma ./prisma/
+COPY backend/package*.json ./
 
 # Instalar dependências
 RUN npm install
 
 # Copiar código fonte
-COPY .env .env
-COPY . .
+COPY backend/tsconfig.json ./tsconfig.json
+COPY backend/src ./src
 
-# Gerar Prisma Client
-RUN npx prisma generate
-
-# Compilar TypeScript (src)
+# Compilar TypeScript
 RUN npm run build
 
-# Compilar seed.ts separadamente
-RUN npx tsc prisma/seed.ts --outDir dist/prisma --esModuleInterop --skipLibCheck --resolveJsonModule
-
 # Production stage
-FROM node:20-alpine
+FROM --platform=linux/amd64 node:20-slim AS runtime
 
 WORKDIR /app
 
-# Copiar arquivos de dependências
-COPY package*.json ./
-COPY prisma ./prisma/
+# Instalar PostgreSQL client, netcat e curl
+RUN apt-get update -y && \
+    apt-get install -y postgresql-client netcat-openbsd curl && \
+    rm -rf /var/lib/apt/lists/*
 
-# Instalar apenas dependências de produção
-RUN npm install --omit=dev
+# Copiar package.json
+COPY backend/package*.json ./
 
-# Gerar Prisma Client
-RUN npx prisma generate
+# Instalar dependências (incluir dev para ter sequelize-cli)
+RUN npm install
+
+# Copiar Sequelize config e migrations
+COPY backend/config ./config
+COPY backend/.sequelizerc ./
+COPY backend/src/migrations ./src/migrations
+COPY backend/src/seeders ./src/seeders
+COPY backend/create-credit-tables.sql ./create-credit-tables.sql
 
 # Copiar build da stage anterior
 COPY --from=builder /app/dist ./dist
 
-# Criar usuário não-root para segurança
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+# Copiar entrypoint
+COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Mudar propriedade dos arquivos
-RUN chown -R nodejs:nodejs /app
+# Criar usuário não-root
+RUN groupadd -g 1001 nodejs && \
+    useradd -u 1001 -g nodejs --shell /bin/bash --create-home nodejs && \
+    chown -R nodejs:nodejs /app
 
-# Usar usuário não-root
 USER nodejs
 
 # Expor porta
@@ -58,5 +62,6 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Comando para iniciar (com migrations e seed)
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/prisma/seed.js && npm start"]
+# Usar entrypoint para garantir que as migrations rodem sempre
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["npm", "start"]

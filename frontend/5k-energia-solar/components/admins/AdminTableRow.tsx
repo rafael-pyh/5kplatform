@@ -18,11 +18,20 @@ function AdminTableRow({ admin, currentUserId, onEdit, onDelete }: AdminTableRow
     <tr className="hover:bg-gray-50">
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center">
-          <div className="h-10 w-10 flex-shrink-0">
-            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <span className="text-blue-600 font-medium text-sm">
-                {admin.name.charAt(0).toUpperCase()}
-              </span>
+          <div className="h-10 w-10 shrink-0">
+            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
+              {((admin as User).photoBase64) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={(admin as User).photoBase64}
+                  alt={`${admin.name} avatar`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-blue-600 font-medium text-sm">
+                  {admin.name.charAt(0).toUpperCase()}
+                </span>
+              )}
             </div>
           </div>
           <div className="ml-4">

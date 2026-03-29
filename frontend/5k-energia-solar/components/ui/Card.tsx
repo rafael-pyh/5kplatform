@@ -3,19 +3,20 @@ import { cn } from '@/lib/utils/cn';
 export interface CardProps {
   children: React.ReactNode;
   className?: string;
-  padding?: 'none' | 'sm' | 'md' | 'lg';
+  padding?: 'none' | 'xs' | 'sm' | 'md' | 'lg';
 }
 
 export default function Card({ children, className, padding = 'md' }: CardProps) {
   const paddings = {
     none: '',
-    sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8',
+    xs: 'p-1 md:p-2',
+    sm: 'p-2 md:p-4',
+    md: 'p-4 md:p-6',
+    lg: 'p-6 md:p-8',
   };
 
   return (
-    <div className={cn('bg-white rounded-lg shadow', paddings[padding], className)}>
+    <div className={cn('bg-white rounded-lg shadow text-slate-700', paddings[padding], className)}>
       {children}
     </div>
   );

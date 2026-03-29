@@ -1,9 +1,12 @@
-import prisma from "../database/prisma";
+import sequelize from "../database/sequelize";
+import { Person, PersonRole } from "../models/Person";
 import { hashPassword, comparePassword } from "../utils/bcrypt";
 import { generateToken } from "../utils/jwt";
 import { Validator } from "../shared/Validator";
 import { UnauthorizedError, NotFoundError, BadRequestError } from "../shared/errors";
 import crypto from "crypto";
+import { Op } from "sequelize";
+import { sendPasswordResetEmail, sendVerificationEmail } from "../utils/email";
 
 // ==================== DTOs ====================
 export interface SellerLoginDto {
@@ -14,6 +17,8 @@ export interface SellerLoginDto {
 export interface SetPasswordDto {
   token: string;
   password: string;
+  city?: string;
+  state?: string;
 }
 
 export interface VerifyEmailDto {
@@ -29,7 +34,7 @@ export const sellerLogin = async (data: SellerLoginDto) => {
   Validator.email(data.email);
 
   // Busca o vendedor
-  const person = await prisma.person.findUnique({
+  const person = await Person.findOne({
     where: { email: data.email },
   });
 
@@ -44,6 +49,11 @@ export const sellerLogin = async (data: SellerLoginDto) => {
 
   if (!person.emailVerified) {
     throw new UnauthorizedError("Email não verificado. Verifique seu email antes de fazer login.");
+  }
+
+  // Verificação: vendedor deve estar aprovado
+  if (person.approvalStatus !== 'approved') {
+    throw new UnauthorizedError("Sua conta ainda não foi aprovada pelo administrador. Aguarde a aprovação.");
   }
 
   if (!person.password) {
@@ -61,7 +71,7 @@ export const sellerLogin = async (data: SellerLoginDto) => {
   const token = generateToken({
     userId: person.id,
     email: person.email,
-    role: "SELLER",
+    role: PersonRole.SELLER,
   });
 
   return {
@@ -70,8 +80,9 @@ export const sellerLogin = async (data: SellerLoginDto) => {
       email: person.email,
       name: person.name,
       phone: person.phone,
-      photoUrl: person.photoUrl,
+      photoBase64: person.photoBase64,
       qrCode: person.qrCode,
+      qrCodeUrl: person.qrCodeUrl,
     },
     token,
   };
@@ -80,11 +91,11 @@ export const sellerLogin = async (data: SellerLoginDto) => {
 export const verifyEmailToken = async (token: string) => {
   Validator.required(token, 'Token');
 
-  const person = await prisma.person.findFirst({
+  const person = await Person.findOne({
     where: {
       verificationToken: token,
       tokenExpiry: {
-        gte: new Date(), // Token ainda não expirou
+        [Op.gte]: new Date(), // Token ainda não expirou
       },
     },
   });
@@ -104,51 +115,63 @@ export const verifyEmailToken = async (token: string) => {
 export const setPassword = async (data: SetPasswordDto) => {
   Validator.required(data.token, 'Token');
   Validator.required(data.password, 'Senha');
-  Validator.minLength(data.password, 6, 'Senha');
+  Validator.minLength(data.password, 8, 'Senha');
 
   // Busca pessoa pelo token
-  const person = await prisma.person.findFirst({
+  const person = await Person.findOne({
     where: {
       verificationToken: data.token,
       tokenExpiry: {
-        gte: new Date(),
+        [Op.gte]: new Date(),
       },
     },
   });
 
   if (!person) {
+    console.warn('[SellerAuthService] Token inválido ou expirado para setPassword:', data.token);
     throw new BadRequestError("Token inválido ou expirado");
   }
 
   // Hash da senha
   const hashedPassword = await hashPassword(data.password);
 
-  // Atualiza pessoa: define senha, verifica email, remove token
-  const updatedPerson = await prisma.person.update({
-    where: { id: person.id },
-    data: {
-      password: hashedPassword,
-      emailVerified: true,
-      verificationToken: null,
-      tokenExpiry: null,
-    },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      emailVerified: true,
-    },
-  });
+  // Prepara dados para atualizar
+  const updateData: any = {
+    password: hashedPassword,
+    emailVerified: true,
+    verificationToken: null,
+    tokenExpiry: null,
+  };
+
+  // Adiciona cidade se fornecida
+  if (data.city) {
+    updateData.city = data.city;
+  }
+
+  // Adiciona estado se fornecido
+  if (data.state) {
+    updateData.state = data.state?.toUpperCase();
+  }
+
+  // Atualiza pessoa
+  await person.update(updateData);
 
   // Gera token JWT
   const token = generateToken({
-    userId: updatedPerson.id,
-    email: updatedPerson.email!,
-    role: "SELLER",
+    userId: person.id,
+    email: person.email!,
+    role: PersonRole.SELLER,
   });
 
   return {
-    person: updatedPerson,
+    person: {
+      id: person.id,
+      email: person.email,
+      name: person.name,
+      emailVerified: person.emailVerified,
+      city: person.city,
+      state: person.state,
+    },
     token,
   };
 };
@@ -157,7 +180,7 @@ export const requestPasswordReset = async (email: string) => {
   Validator.required(email, 'Email');
   Validator.email(email);
 
-  const person = await prisma.person.findUnique({
+  const person = await Person.findOne({
     where: { email },
   });
 
@@ -171,16 +194,13 @@ export const requestPasswordReset = async (email: string) => {
   const expiry = new Date();
   expiry.setHours(expiry.getHours() + 1); // 1 hora
 
-  await prisma.person.update({
-    where: { id: person.id },
-    data: {
-      verificationToken: token,
-      tokenExpiry: expiry,
-    },
+  await person.update({
+    verificationToken: token,
+    tokenExpiry: expiry,
   });
 
   // TODO: Enviar email de reset (implementar depois)
-  // await sendPasswordResetEmail(person.email, person.name, token);
+  await sendPasswordResetEmail(person.email, person.name, token);
 
   return { message: "Se o email existir, um link de redefinição será enviado." };
 };
@@ -190,11 +210,11 @@ export const resetPassword = async (token: string, newPassword: string) => {
   Validator.required(newPassword, 'Nova senha');
   Validator.minLength(newPassword, 6, 'Nova senha');
 
-  const person = await prisma.person.findFirst({
+  const person = await Person.findOne({
     where: {
       verificationToken: token,
       tokenExpiry: {
-        gte: new Date(),
+        [Op.gte]: new Date(),
       },
     },
   });
@@ -205,34 +225,30 @@ export const resetPassword = async (token: string, newPassword: string) => {
 
   const hashedPassword = await hashPassword(newPassword);
 
-  await prisma.person.update({
-    where: { id: person.id },
-    data: {
-      password: hashedPassword,
-      verificationToken: null,
-      tokenExpiry: null,
-    },
+  await person.update({
+    password: hashedPassword,
+    verificationToken: null,
+    tokenExpiry: null,
   });
 
   return { message: "Senha redefinida com sucesso" };
 };
 
 export const getSellerProfile = async (sellerId: string) => {
-  const person = await prisma.person.findUnique({
-    where: { id: sellerId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      photoUrl: true,
-      qrCode: true,
-      qrCodeUrl: true,
-      scanCount: true,
-      active: true,
-      emailVerified: true,
-      createdAt: true,
-    },
+  const person = await Person.findByPk(sellerId, {
+    attributes: [
+      'id',
+      'name',
+      'email',
+      'phone',
+      'photoBase64',
+      'qrCode',
+      'qrCodeUrl',
+      'scanCount',
+      'active',
+      'emailVerified',
+      'createdAt',
+    ],
   });
 
   if (!person) {
@@ -240,4 +256,37 @@ export const getSellerProfile = async (sellerId: string) => {
   }
 
   return person;
+};
+export const resendVerificationEmail = async (email: string) => {
+  Validator.required(email, 'Email');
+  Validator.email(email);
+
+  const person = await Person.findOne({
+    where: { email },
+  });
+
+  if (!person || !person.email) {
+    // Não revela se o email existe por segurança
+    return { message: "Se o email existir na plataforma, um novo link de verificação será enviado." };
+  }
+
+  // Se o email já foi verificado, avisa
+  if (person.emailVerified) {
+    return { message: "Este email já foi verificado. Você pode fazer login normalmente." };
+  }
+
+  // Gera novo token
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiry = new Date();
+  expiry.setHours(expiry.getHours() + 24); // 24 horas
+
+  await person.update({
+    verificationToken: token,
+    tokenExpiry: expiry,
+  });
+
+  // Envia email com novo token
+  await sendVerificationEmail(person.email, person.name, token);
+
+  return { message: "Um novo link de verificação foi enviado para seu email." };
 };

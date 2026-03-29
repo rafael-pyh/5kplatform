@@ -25,7 +25,8 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const users = await authService.getAllUsers();
-    return ResponseBuilder.success(res, users);
+    const jsonData = Array.isArray(users) ? users.map((item: any) => item.toJSON ? item.toJSON() : item) : users;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -34,7 +35,8 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
 export const getUserById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await authService.getUserById(req.params.id);
-    return ResponseBuilder.success(res, user);
+    const jsonData = user.toJSON ? user.toJSON() : user;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -43,7 +45,8 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
 export const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await authService.updateUser(req.params.id, req.body);
-    return ResponseBuilder.success(res, user);
+    const jsonData = (user as any).toJSON ? (user as any).toJSON() : user;
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -63,7 +66,60 @@ export const createAdminUser = async (req: Request, res: Response, next: NextFun
     // O role do usuário que está fazendo a requisição vem do JWT no middleware authenticate
     const creatorRole = req.user?.role || "";
     const newUser = await authService.createAdminUser(req.body, creatorRole);
-    return ResponseBuilder.created(res, newUser);
+    const jsonData = (newUser as any).toJSON ? (newUser as any).toJSON() : newUser;
+    return ResponseBuilder.created(res, jsonData);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const confirmEmail = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { token } = req.body;
+    const result = await authService.confirmEmail(token);
+    return ResponseBuilder.success(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw new Error("Usuário não autenticado");
+    }
+    const user = await authService.getCurrentUser(userId);
+    return ResponseBuilder.success(res, user);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const validateRememberMeToken = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { rememberMeToken } = req.body;
+    const result = await authService.validateRememberMeToken(rememberMeToken);
+    return ResponseBuilder.success(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
+export const requestPasswordReset = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email } = req.body;
+    const result = await authService.requestPasswordReset(email);
+    return ResponseBuilder.success(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { token, password } = req.body;
+    const result = await authService.resetPassword(token, password);
+    return ResponseBuilder.success(res, result);
   } catch (error) {
     next(error);
   }

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from './errors';
+import { env } from '../config/env';
 
 export const errorHandler = (
   err: Error,
@@ -7,35 +8,61 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
+  // Log detalhado apenas em desenvolvimento
+  if (env.isDevelopment) {
+    console.error('🔴 [ERROR HANDLER] Erro capturado:', {
+      name: err.name,
+      message: err.message,
+      type: err.constructor.name,
+      path: req.path,
+      method: req.method,
+      stack: err.stack,
+    });
+  } else {
+    // Em produção, log apenas informações não sensíveis
+    console.error('🔴 [ERROR HANDLER] Erro:', {
+      name: err.name,
+      message: err.message,
+      path: req.path,
+      method: req.method,
+    });
+  }
+
   if (err instanceof AppError) {
+    console.log(`✅ [ERROR HANDLER] AppError detectado - Status: ${err.statusCode}, Mensagem: ${err.message}`);
     return res.status(err.statusCode).json({
       success: false,
       message: err.message,
     });
   }
 
-  // Trata erros do Prisma
-  if (err.constructor.name === 'PrismaClientKnownRequestError') {
-    const prismaError = err as any;
-    
-    if (prismaError.code === 'P2002') {
-      const target = prismaError.meta?.target || [];
-      const field = Array.isArray(target) ? target[0] : target;
-      return res.status(409).json({
-        success: false,
-        message: `${field === 'email' ? 'Email' : 'Valor'} já está cadastrado no sistema`,
-      });
-    }
-
-    if (prismaError.code === 'P2025') {
-      return res.status(404).json({
-        success: false,
-        message: 'Registro não encontrado',
-      });
-    }
+  // Trata erros do Sequelize
+  if (err.name === 'SequelizeUniqueConstraintError') {
+    const seqError = err as any;
+    const field = seqError.errors?.[0]?.path || 'campo';
+    return res.status(409).json({
+      success: false,
+      message: `${field === 'email' ? 'Email' : 'Valor'} já está cadastrado no sistema`,
+    });
   }
 
-  console.error('Erro não tratado:', err);
+  if (err.name === 'SequelizeValidationError') {
+    const seqError = err as any;
+    const message = seqError.errors?.[0]?.message || 'Erro de validação';
+    return res.status(400).json({
+      success: false,
+      message,
+    });
+  }
+
+  if (err.name === 'SequelizeForeignKeyConstraintError') {
+    return res.status(400).json({
+      success: false,
+      message: 'Erro de referência: registro relacionado não encontrado',
+    });
+  }
+
+  console.error('❌ [ERROR HANDLER] Erro não tratado:', err);
   return res.status(500).json({
     success: false,
     message: 'Erro interno do servidor',

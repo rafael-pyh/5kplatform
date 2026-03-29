@@ -1,17 +1,20 @@
-'use client';
+ 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { cn } from '@/lib/utils/cn';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import { leadService } from '@/lib/services';
 import { Lead } from '@/lib/types';
+import ResponsiveModal from '@/components/ResponsiveModal';
 
 interface UpdateStatusModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   lead: Lead;
+  className?: string;
 }
 
 export default function UpdateStatusModal({
@@ -19,18 +22,30 @@ export default function UpdateStatusModal({
   onClose,
   onSuccess,
   lead,
+  className,
 }: UpdateStatusModalProps) {
   const [loading, setLoading] = useState(false);
-
+  const [showCommissionField, setShowCommissionField] = useState(false);
+  const hasCommission = lead && lead.commissionAmount != null && Number(lead.commissionAmount) > 0;
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
-  } = useForm<{ status: string }>({
+  } = useForm<{ status: string; commissionAmount?: number }>({
     defaultValues: {
       status: lead.status,
+      commissionAmount: lead.commissionAmount || 0, // Use existing or default to 0
     },
   });
+
+  // Observar mudanças no status para mostrar/esconder campo de comissão
+  const watchedStatus = watch('status');
+  useEffect(() => {
+    // Mostrar campo de comissão somente se houver owner, ainda NÃO houver comissão atribuída
+    // e o status selecionado no formulário for BOUGHT (aparece após admin alterar para Comprou)
+    setShowCommissionField(!!lead.owner && !hasCommission && watchedStatus === 'BOUGHT');
+  }, [lead.owner, lead.commissionAmount, watchedStatus]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -48,11 +63,20 @@ export default function UpdateStatusModal({
     };
   }, [isOpen, onClose]);
 
-  const onSubmit = async (data: { status: string }) => {
+  const onSubmit = async (data: { status: string; commissionAmount?: number }) => {
     try {
       setLoading(true);
-      await leadService.updateStatus(lead.id, data.status as any);
-      toast.success('Status atualizado com sucesso!');
+
+      // Envia status e comissionAmount para o backend
+      const updateData: any = { status: data.status };
+      // Só enviar commissionAmount quando o campo estiver visível (evita re-enviar quando já existe)
+      if (showCommissionField && data.commissionAmount != null) {
+        updateData.commissionAmount = Number(data.commissionAmount);
+      }
+
+      await leadService.updateStatus(lead.id, data.status as any, updateData.commissionAmount);
+
+      toast.success(`Status atualizado com sucesso!`);
       onSuccess();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Erro ao atualizar status');
@@ -61,38 +85,14 @@ export default function UpdateStatusModal({
     }
   };
 
-  const handleBackdropClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) onClose();
-    },
-    [onClose]
-  );
-
-  if (!isOpen) return null;
+if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn"
-      onClick={handleBackdropClick}
-    >
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-slideUp">
+    <ResponsiveModal isOpen={isOpen} onClose={onClose} className={className}>
+      <div className="p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4">
           <h2 className="text-xl font-semibold text-gray-900">Atualizar Status</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-            aria-label="Fechar modal"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
         </div>
 
         {/* Lead Info */}
@@ -121,9 +121,46 @@ export default function UpdateStatusModal({
               <p className="text-red-500 text-sm mt-1">{errors.status.message}</p>
             )}
           </div>
-
+          {/* Commission Field - Show when there's an owner and no commission yet. If commission exists, show read-only info */}
+          {showCommissionField ? (
+            <div>
+              <label htmlFor="commissionAmount" className="block text-sm font-medium text-gray-700 mb-1">
+                Comissão para {lead.owner?.name || 'Vendedor/Afiliado'} *
+              </label>
+              <input
+                type="number"
+                id="commissionAmount"
+                {...register('commissionAmount', {
+                  required: showCommissionField ? 'Valor da comissão é obrigatório' : false,
+                  min: { value: 0, message: 'Mínimo R$ 0' },
+                })}
+                step="0.01"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="100.00"
+                min="0"
+              />
+              {errors.commissionAmount && (
+                <p className="mt-1 text-sm text-red-600">{errors.commissionAmount.message}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                Valor em R$ que será atribuído como comissão ao vendedor/afiliado.
+              </p>
+            </div>
+          ) : (
+            hasCommission && (
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm font-medium text-gray-900">Comissão já atribuída</p>
+                <p className="text-sm text-gray-700">
+                  {Number(lead.commissionAmount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </p>
+              </div>
+            )
+          )}
           {/* Actions */}
           <div className="flex gap-3 pt-4">
+            <Button type="button" variant="outline-danger" onClick={onClose} disabled={loading}>
+              Cancelar
+            </Button>
             <Button
               type="submit"
               variant="primary"
@@ -133,12 +170,9 @@ export default function UpdateStatusModal({
             >
               Salvar
             </Button>
-            <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
-              Cancelar
-            </Button>
           </div>
         </form>
       </div>
-    </div>
+    </ResponsiveModal>
   );
 }

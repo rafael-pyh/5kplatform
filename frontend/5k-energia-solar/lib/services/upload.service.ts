@@ -2,7 +2,7 @@ import api from '../api';
 import { ApiResponse } from '../types';
 
 export const uploadService = {
-  // Upload de foto de perfil do vendedor
+  // Upload de foto de perfil do vendedor - retorna URL
   async uploadProfilePhoto(file: File): Promise<string> {
     const formData = new FormData();
     formData.append('file', file);
@@ -20,7 +20,7 @@ export const uploadService = {
     return response.data.data!.url;
   },
 
-  // Upload de conta de energia
+  // Upload de conta de energia - retorna URL
   async uploadEnergyBill(file: File): Promise<string> {
     const formData = new FormData();
     formData.append('file', file);
@@ -38,7 +38,7 @@ export const uploadService = {
     return response.data.data!.url;
   },
 
-  // Upload de foto do telhado
+  // Upload de foto do telhado - retorna URL
   async uploadRoofPhoto(file: File): Promise<string> {
     const formData = new FormData();
     formData.append('file', file);

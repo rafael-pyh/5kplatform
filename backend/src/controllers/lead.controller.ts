@@ -1,16 +1,27 @@
 import { Request, Response, NextFunction } from "express";
-import * as service from "../services/lead.service";
+import { LeadServiceFunctions } from "../services/lead.service";
 import { ResponseBuilder } from "../shared/ResponseBuilder";
+import { LeadStatus } from "../models/Lead";
 
+// Helper: normalize commissionAmount returned as string (DECIMAL from PG) to number
+function normalizeCommission(items: any) {
+  if (!Array.isArray(items)) return items;
+  return items.map((it: any) => {
+    if (it && it.commissionAmount != null && typeof it.commissionAmount === 'string') {
+      const n = Number(it.commissionAmount);
+      // If parse fails, keep original value
+      it.commissionAmount = Number.isNaN(n) ? it.commissionAmount : n;
+    }
+    return it;
+  });
+}
 // ==================== LEAD CONTROLLER (Single Responsibility: HTTP handling) ====================
-
-// Definir os tipos manualmente até o Prisma Client ser gerado
-type LeadStatus = "BOUGHT" | "CANCELLED" | "NEGOTIATION";
 
 export const createLead = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const data = await service.createLead(req.body);
-    return ResponseBuilder.created(res, data);
+    const data = await LeadServiceFunctions.createLead(req.body);
+    const jsonData = data.toJSON ? data.toJSON() : data;
+    return ResponseBuilder.created(res, normalizeCommission([jsonData])[0]);
   } catch (error) {
     next(error);
   }
@@ -18,14 +29,18 @@ export const createLead = async (req: Request, res: Response, next: NextFunction
 
 export const getAllLeads = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { status, ownerId } = req.query;
+    const { status, ownerId, limit, offset } = req.query;
     
     const filters: any = {};
     if (status) filters.status = status as LeadStatus;
     if (ownerId) filters.ownerId = ownerId as string;
+    if (limit) filters.limit = parseInt(limit as string);
+    if (offset) filters.offset = parseInt(offset as string);
 
-    const data = await service.getAllLeads(filters);
-    return ResponseBuilder.success(res, data);
+    const data = await LeadServiceFunctions.getAllLeads(filters);
+    let jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    jsonData = normalizeCommission(jsonData);
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -33,8 +48,15 @@ export const getAllLeads = async (req: Request, res: Response, next: NextFunctio
 
 export const getLeadsByOwner = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const data = await service.getLeadsByOwner(req.params.ownerId);
-    return ResponseBuilder.success(res, data);
+    const { limit, offset } = req.query;
+    const data = await LeadServiceFunctions.getLeadsByOwner(
+      req.params.ownerId,
+      limit ? parseInt(limit as string) : undefined,
+      offset ? parseInt(offset as string) : undefined,
+    );
+    let jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    jsonData = normalizeCommission(jsonData);
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }
@@ -42,8 +64,9 @@ export const getLeadsByOwner = async (req: Request, res: Response, next: NextFun
 
 export const getLeadById = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const data = await service.getLeadById(req.params.id);
-    return ResponseBuilder.success(res, data);
+    const data = await LeadServiceFunctions.getLeadById(req.params.id);
+    const jsonData = data.toJSON ? data.toJSON() : data;
+    return ResponseBuilder.success(res, normalizeCommission([jsonData])[0]);
   } catch (error) {
     next(error);
   }
@@ -51,8 +74,9 @@ export const getLeadById = async (req: Request, res: Response, next: NextFunctio
 
 export const updateLead = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const data = await service.updateLead(req.params.id, req.body);
-    return ResponseBuilder.success(res, data);
+    const data = await LeadServiceFunctions.updateLead(req.params.id, req.body);
+    const jsonData = data.toJSON ? data.toJSON() : data;
+    return ResponseBuilder.success(res, normalizeCommission([jsonData])[0]);
   } catch (error) {
     next(error);
   }
@@ -60,9 +84,20 @@ export const updateLead = async (req: Request, res: Response, next: NextFunction
 
 export const updateLeadStatus = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { status } = req.body;
-    const data = await service.updateLeadStatus(req.params.id, status);
-    return ResponseBuilder.success(res, data);
+    const { status, commissionAmount } = req.body; // Allow commissionAmount input
+
+    // Parse commissionAmount only if provided
+    let commissionNum: number | undefined = undefined;
+    if (commissionAmount != null) {
+      commissionNum = Number(commissionAmount);
+      if (isNaN(commissionNum)) {
+        return next(new Error('Invalid commission amount'));
+      }
+    }
+
+    const data = await LeadServiceFunctions.updateLeadStatus(req.params.id, status, commissionNum);
+    const jsonData = data.toJSON ? data.toJSON() : data;
+    return ResponseBuilder.success(res, normalizeCommission([jsonData])[0]);
   } catch (error) {
     next(error);
   }
@@ -70,7 +105,7 @@ export const updateLeadStatus = async (req: Request, res: Response, next: NextFu
 
 export const deleteLead = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const data = await service.deleteLead(req.params.id);
+    const data = await LeadServiceFunctions.deleteLead(req.params.id);
     return ResponseBuilder.success(res, data);
   } catch (error) {
     next(error);
@@ -79,7 +114,7 @@ export const deleteLead = async (req: Request, res: Response, next: NextFunction
 
 export const getLeadsStats = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const data = await service.getLeadsStats();
+    const data = await LeadServiceFunctions.getLeadsStats();
     return ResponseBuilder.success(res, data);
   } catch (error) {
     next(error);
@@ -89,8 +124,35 @@ export const getLeadsStats = async (req: Request, res: Response, next: NextFunct
 export const getNewLeads = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const days = req.query.days ? parseInt(req.query.days as string) : 7;
-    const data = await service.getNewLeads(days);
-    return ResponseBuilder.success(res, data);
+    const data = await LeadServiceFunctions.getNewLeads(days);
+    let jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    jsonData = normalizeCommission(jsonData);
+    return ResponseBuilder.success(res, jsonData);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Endpoint para pegar leads do vendedor/afiliado autenticado com filtragem por role
+export const getMyLeads = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req.user as any)?.userId;
+    const userRole = (req.user as any)?.role;
+    const { limit, offset } = req.query;
+
+    if (!userId) {
+      return next(new Error('Usuário não autenticado'));
+    }
+
+    const data = await LeadServiceFunctions.getLeadsByPersonRole(
+      userId,
+      userRole,
+      limit ? parseInt(limit as string) : undefined,
+      offset ? parseInt(offset as string) : undefined,
+    );
+    let jsonData = Array.isArray(data) ? data.map((item: any) => item.toJSON ? item.toJSON() : item) : data;
+    jsonData = normalizeCommission(jsonData);
+    return ResponseBuilder.success(res, jsonData);
   } catch (error) {
     next(error);
   }

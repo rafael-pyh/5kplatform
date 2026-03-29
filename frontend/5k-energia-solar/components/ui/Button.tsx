@@ -2,11 +2,12 @@ import { ButtonHTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/utils/cn';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'success';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: 'gradient' | 'primary' | 'secondary' | 'danger' | 'ghost' | 'success' | 'outline' | 'outline-danger' | 'outline-success' | 'outline-green' | 'outline-blue' | 'none' | 'link' | 'link-primary' | 'link-danger' | 'back';
+  size?: 'sm' | 'md' | 'lg' | 'none';
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  fullWidth?: boolean;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -19,32 +20,52 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       disabled,
       leftIcon,
       rightIcon,
+      fullWidth = false,
       children,
       ...props
     },
     ref
   ) => {
     const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
-    
+
     const variants = {
-      primary: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
+      gradient: "bg-linear-to-r from-blue-500 to-green-500 text-white hover:from-blue-600 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition",
+      primary: 'bg-linear-to-r from-blue-500 to-green-500 text-white hover:from-blue-600 hover:to-green-600 focus:ring-blue-500',
       secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500',
       danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
       ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
       success: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
+      outline: 'border border-gray-300 text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+      'outline-success': 'border border-blue-600 text-blue-600 hover:bg-blue-50 focus:ring-blue-500',
+      'outline-danger': 'border border-red-600 text-red-600 hover:bg-red-50 focus:ring-red-500',
+      'outline-green': 'border border-green-600 text-green-600 hover:bg-green-50 focus:ring-green-500',
+      'outline-blue': 'border border-blue-600 text-blue-600 hover:bg-blue-50 focus:ring-blue-500',
+      none: '',
+      link: "text-primary underline-offset-4 hover:underline",
+      "link-primary": "text-[#5821D9] underline-offset-4 hover:underline",
+      "link-danger": "text-destructive underline-offset-4 hover:underline",
+      back: "bg-[#E3DFEA] text-[#5821D9] shadow hover:bg-[#DAD6E3]/90",
     };
 
     const sizes = {
-      sm: 'px-3 py-1.5 text-sm',
+      sm: 'px-2 py-1.5 text-sm',
       md: 'px-4 py-2 text-base',
       lg: 'px-6 py-3 text-lg',
+      none: '',
     };
 
     return (
       <button
         ref={ref}
         disabled={disabled || isLoading}
-        className={cn(baseStyles, variants[variant], sizes[size], className)}
+        className={cn(
+          baseStyles,
+          variants[variant],
+          sizes[size],
+          fullWidth && 'w-full',
+          className,
+          'cursor-pointer'
+        )}
         {...props}
       >
         {isLoading ? (

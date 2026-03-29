@@ -7,11 +7,16 @@ import DashboardLayout from '@/components/DashboardLayout';
 import SellerFilters from '@/components/sellers/SellerFilters';
 import SellerTabs from '@/components/sellers/SellerTabs';
 import SellerTable from '@/components/sellers/SellerTable';
-import { Card } from '@/components/ui';
+import { Card, Button } from '@/components/ui';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { usePersons, useToggle } from '@/hooks';
+import { useAuth } from '@/contexts/AuthContext';
 import { personService } from '@/lib/services';
-import { Person } from '@/lib/types';
+import { Person } from '@/types/Person';
+import { exportToCSV } from '@/lib/utils/exportToCSV';
+import { Icon } from '@/components/ui/Icon';
+import { isValidQRCode } from '@/lib/utils/imageUrl';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 // Lazy load modals for better performance
 const NewSellerModal = dynamic(() => import('@/components/NewSellerModal'), {
@@ -26,14 +31,34 @@ const QRCodeModal = dynamic(() => import('@/components/QRCodeModal'), {
   ssr: false,
 });
 
-export default function VendedoresPage() {
+export default function SellersPage() {
+  const { user } = useAuth();
   const [filter, setFilter] = useState<'all' | 'active'>('all');
   const [isModalOpen, toggleModal, setIsModalOpen] = useToggle(false);
   const [isEditModalOpen, toggleEditModal, setIsEditModalOpen] = useToggle(false);
   const [qrModalOpen, toggleQRModal, setQrModalOpen] = useToggle(false);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+  const [activateModalOpen, setActivateModalOpen] = useState(false);
+  const [personToActivate, setPersonToActivate] = useState<string | null>(null);
+  const [additionalFilters, setAdditionalFilters] = useState<{
+    name: string;
+    city: string;
+    state: string;
+    status: string;
+    role: string;
+    month?: string;
+    year?: string;
+  }>({
+    name: '',
+    city: '',
+    state: '',
+    status: 'all',
+    role: '',
+    month: '',
+    year: '',
+  });
 
-  const { persons, loading, refetch } = usePersons(filter === 'active');
+  const { persons, loading, refetch } = usePersons(false);
 
   // Memoized counts for tabs
   const counts = useMemo(() => {
@@ -44,9 +69,12 @@ export default function VendedoresPage() {
     };
   }, [persons]);
 
+
   // Memoized handlers
   const handleOpenQRModal = useCallback((person: Person) => {
-    if (!person.qrCodeUrl) {
+    
+    if (!isValidQRCode(person.qrCodeUrl)) {
+      console.error('[Sellers Page] Falha: person.qrCodeUrl está inválido ou vazio');
       toast.error('QR Code não disponível');
       return;
     }
@@ -55,8 +83,6 @@ export default function VendedoresPage() {
   }, [setQrModalOpen]);
 
   const handleDeactivate = useCallback(async (id: string) => {
-    if (!confirm('Tem certeza que deseja desativar este vendedor?')) return;
-
     try {
       await personService.deactivate(id);
       toast.success('Vendedor desativado com sucesso!');
@@ -65,6 +91,25 @@ export default function VendedoresPage() {
       toast.error('Erro ao desativar vendedor');
     }
   }, [refetch]);
+
+  const handleActivate = useCallback((id: string) => {
+    setPersonToActivate(id);
+    setActivateModalOpen(true);
+  }, []);
+
+  const handleConfirmActivate = useCallback(async () => {
+    if (!personToActivate) return;
+
+    try {
+      await personService.activate(personToActivate);
+      toast.success('Vendedor reativado com sucesso!');
+      setActivateModalOpen(false);
+      setPersonToActivate(null);
+      refetch();
+    } catch (error) {
+      toast.error('Erro ao reativar vendedor');
+    }
+  }, [personToActivate, refetch]);
 
   const handleModalSuccess = useCallback(() => {
     refetch();
@@ -87,75 +132,168 @@ export default function VendedoresPage() {
     setSelectedPerson(null);
   }, [refetch, setIsEditModalOpen]);
 
+  const exportFilteredDataToCSV = () => {
+    const filteredData = persons.map(({ photoBase64, ...rest }) => rest);
+    exportToCSV(filteredData, 'sellers.csv');
+  };
+
+  // Apply additional filters to the persons data
+  const filteredPersons = useMemo(() => {
+    return persons.filter((person) => {
+      // Filtro de aba
+      if (filter === 'active' && !person.active) return false;
+
+      // Filtro de role: apenas SELLER e AFFILIATE
+      const isValidRole = person.role === 'SELLER' || person.role === 'AFFILIATE';
+      if (!isValidRole) return false;
+
+      const matchesName = additionalFilters.name ? person.name.toLowerCase().includes(additionalFilters.name.toLowerCase()) : true;
+      const matchesCity = additionalFilters.city ? person.city.toLowerCase().includes(additionalFilters.city.toLowerCase()) : true;
+      const matchesState = additionalFilters.state ? person.state.toLowerCase() === additionalFilters.state.toLowerCase() : true;
+      const matchesStatus = additionalFilters.status === 'all' || (additionalFilters.status === 'active' ? person.active : !person.active);
+      const matchesRole = additionalFilters.role === '' || additionalFilters.role === 'all' || person.role === (additionalFilters.role as any);
+
+      const matchesMonth = additionalFilters.month && person.createdAt
+        ? new Date(person.createdAt).getMonth() + 1 === Number(additionalFilters.month)
+        : true;
+
+      const matchesYear = additionalFilters.year && person.createdAt
+        ? new Date(person.createdAt).getFullYear() === Number(additionalFilters.year)
+        : true;
+
+      return matchesName && matchesCity && matchesState && matchesStatus && matchesRole && matchesMonth && matchesYear;
+    });
+  }, [persons, additionalFilters, filter]);
+
+  const cities = useMemo(() => {
+    return Array.from(new Set(persons.map(p => p.city).filter(Boolean))).sort();
+  }, [persons]);
+
+  const states = useMemo(() => {
+    return Array.from(new Set(persons.map(p => p.state).filter(Boolean))).sort();
+  }, [persons]);
+
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="md:mb-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-700">Vendedores</h1>
+              <p className="mt-1 text-gray-600">
+                Gerencie os vendedores e seus QR codes
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-4 h-full items-start self-start">
+            <Button onClick={() => setIsModalOpen(true)} size="md" variant="outline-green">
+              <svg
+                className="w-5 h-5 md:mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              <p className="hidden md:inline-block">Novo Vendedor</p>
+            </Button>
+            <Button
+              onClick={exportFilteredDataToCSV}
+              variant='outline-blue'
+              disabled={persons.length === 0}
+            >
+              <Icon icon="bi-filetype-csv" className="w-5 h-5 md:mr-2" />
+              <p className="hidden md:inline-block">Exportar CSV</p>
+            </Button>
+          </div>
+        </div>
+
         <SellerFilters
-          filter={filter}
-          onFilterChange={setFilter}
-          onAddNew={() => setIsModalOpen(true)}
+          additionalFilters={additionalFilters}
+          onAdditionalFiltersChange={setAdditionalFilters}
+          cities={cities}
+          states={states}
+          years={Array.from(new Set(persons.filter(p => p.createdAt).map(p => new Date(p.createdAt).getFullYear().toString()))).sort((a,b) => Number(b) - Number(a))}
         />
 
-        <Card padding="none">
-          <div className="px-6 pt-6">
-            <SellerTabs
-              activeTab={filter}
-              onTabChange={setFilter}
-              allCount={counts.all}
-              activeCount={counts.active}
+        <Card padding="xs">
+          <SellerTabs
+            activeTab={filter}
+            onTabChange={setFilter}
+            allCount={counts.all}
+            activeCount={counts.active}
+          />
+          {loading ? (
+            <LoadingSpinner size="lg" text="Carregando vendedores..." />
+          ) : (
+            <SellerTable
+              persons={filteredPersons}
+              onViewQRCode={handleOpenQRModal}
+              onEdit={handleOpenEditModal}
+              onDeactivate={handleDeactivate}
+              onActivate={handleActivate}
+              onRefetch={refetch}
             />
-          </div>
-
-          <div className="p-6">
-            {loading ? (
-              <LoadingSpinner size="lg" text="Carregando vendedores..." />
-            ) : (
-              <SellerTable
-                persons={persons}
-                onViewQRCode={handleOpenQRModal}
-                onEdit={handleOpenEditModal}
-                onDeactivate={handleDeactivate}
-              />
-            )}
-          </div>
+          )}
         </Card>
+
+        {/* Modals - Only render when open */}
+        {isModalOpen && (
+          <Suspense fallback={null}>
+            <NewSellerModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              onSuccess={handleModalSuccess}
+            />
+          </Suspense>
+        )}
+
+        {isEditModalOpen && selectedPerson && (
+          <Suspense fallback={null}>
+            <EditSellerModal
+              isOpen={isEditModalOpen}
+              onClose={() => {
+                setIsEditModalOpen(false);
+                setSelectedPerson(null);
+              }}
+              onSuccess={handleEditModalSuccess}
+              person={selectedPerson}
+            />
+          </Suspense>
+        )}
+
+        {qrModalOpen && selectedPerson && (
+          <Suspense fallback={null}>
+            <QRCodeModal
+              isOpen={qrModalOpen}
+              onClose={handleCloseQRModal}
+              qrCodeBase64={selectedPerson.qrCodeUrl || ''}
+              personName={selectedPerson.name}
+              qrCode={selectedPerson.qrCode}
+              userRole={user?.role as 'SELLER' | 'ADMIN' | 'SUPER_ADMIN' | undefined}
+            />
+          </Suspense>
+        )}
+
+        <ConfirmationModal
+          isOpen={activateModalOpen}
+          title="Reativar Vendedor"
+          message={`Tem certeza que deseja reativar este vendedor? Isso o permitirá gerar novos leads novamente.`}
+          confirmText="Reativar"
+          cancelText="Cancelar"
+          isDangerous={false}
+          onConfirm={handleConfirmActivate}
+          onCancel={() => {
+            setActivateModalOpen(false);
+            setPersonToActivate(null);
+          }}
+        />
       </div>
-
-      {/* Modals - Only render when open */}
-      {isModalOpen && (
-        <Suspense fallback={null}>
-          <NewSellerModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onSuccess={handleModalSuccess}
-          />
-        </Suspense>
-      )}
-
-      {isEditModalOpen && selectedPerson && (
-        <Suspense fallback={null}>
-          <EditSellerModal
-            isOpen={isEditModalOpen}
-            onClose={() => {
-              setIsEditModalOpen(false);
-              setSelectedPerson(null);
-            }}
-            onSuccess={handleEditModalSuccess}
-            person={selectedPerson}
-          />
-        </Suspense>
-      )}
-
-      {qrModalOpen && selectedPerson && (
-        <Suspense fallback={null}>
-          <QRCodeModal
-            isOpen={qrModalOpen}
-            onClose={handleCloseQRModal}
-            qrCodeUrl={selectedPerson.qrCodeUrl || ''}
-            personName={selectedPerson.name}
-          />
-        </Suspense>
-      )}
     </DashboardLayout>
   );
 }
